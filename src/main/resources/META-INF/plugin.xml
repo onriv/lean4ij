@@ -5,12 +5,28 @@
     <vendor>onriv</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.ultimate</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.onriv.ijpluginlean.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+
+        <!-- LSP -->
+        <platform.lsp.serverSupportProvider implementation="com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider"/>
+
     </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+        <action id="MyCustomAction" class="com.github.onriv.ijpluginlean.actions.MyCustomAction" text="Say Hello" description="A custom action to say hello">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+        <!-- Add your actions here -->
+        <action id="OpenLeanInfoView" class="com.github.onriv.ijpluginlean.actions.OpenLeanInfoView" text="Lean open info view" description="Lean open info view">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+    </actions>
 
     <applicationListeners>
         <listener class="com.github.onriv.ijpluginlean.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>

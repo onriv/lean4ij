@@ -1,5 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp
 
+import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -80,5 +81,5 @@ internal interface LeanLanguageServer : LanguageServer {
     fun rpcConnect(params: RpcConnectParams): CompletableFuture<RpcConnectResp>;
 
     @JsonRequest("\$/lean/rpc/call")
-    fun rpcCall(params: RpcConnectParams): CompletableFuture<RpcConnectResp>;
+    fun rpcCall(params: RpcCallParams): CompletableFuture<Any>;
 }

@@ -25,19 +25,19 @@ class MyCustomAction : AnAction() {
 }
 
 class OpenLeanInfoView : AnAction() {
-    private val sessions = ConcurrentHashMap<String, String>()
+    private val sessions = ConcurrentHashMap<String, Long>()
 
     override fun actionPerformed(e: AnActionEvent) {
         val currentFile: VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
         e.project?.let { project -> currentFile?.let {file ->
             runBlocking {
                 rpcConnect(project, file).collect { value ->
-//                    sessions[file] = value.
-                    println(value)
+                   sessions[file.toString()] = value
                 }
             }
         }}
     }
+
 
     // copy from https://github.com/huggingface/llm-intellij/blob/main/src/main/kotlin/co/huggingface/llmintellij/LlmLsCompletionProvider.kt#L42
     // TODO better way and pos for this?
@@ -47,6 +47,15 @@ class OpenLeanInfoView : AnAction() {
         if (lspServer != null) {
             val resp = lspServer.sendRequest { (it as LeanLanguageServer).rpcConnect(RpcConnectParams(file.url)) }
             resp?.let{r -> send(r.sessionId)}
+        }
+        awaitClose()
+    }
+
+    fun rcpCall(project: Project, file: VirtualFile) : Flow<Unit> = channelFlow {
+        val lspServer = LspServerManager.getInstance(project)
+            .getServersForProvider(LeanLspServerSupportProvider::class.java).firstOrNull()
+        if (lspServer != null) {
+            val resp = lspServer.sendRequest { (it as LeanLanguageServer).rpcConnect(RpcConnectParams(file.url)) }
         }
         awaitClose()
     }

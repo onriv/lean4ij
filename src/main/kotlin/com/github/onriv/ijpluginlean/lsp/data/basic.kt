@@ -3,6 +3,8 @@
  */
 package com.github.onriv.ijpluginlean.lsp.data
 
+import org.eclipse.lsp4j.TextDocumentIdentifier
+
 /**
  * lean doc:
 /-- We adopt the convention that zero-based UTF-16 positions as sent by LSP clients
@@ -12,15 +14,15 @@ offsets. For diagnostics, one-based `Lean.Position`s are used internally.
 TODO dont know what the above doc mean
  */
 class Position (
-    line : Int,
-    character : Int
+    val line : Int,
+    val character : Int
 )
 
-class TextDocumentIdentifier (
-    val url : String
-)
-
+//class TextDocumentIdentifier (
+//    val uri : String
+//)
+//
 open class TextDocumentPositionParams (
-    val textDocument : TextDocumentIdentifier,
-    val position : Position
+    val textDocument : TextDocumentIdentifier?,
+    val position : Position?
 )

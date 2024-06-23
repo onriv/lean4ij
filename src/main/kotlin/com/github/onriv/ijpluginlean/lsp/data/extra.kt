@@ -1,4 +1,7 @@
 package com.github.onriv.ijpluginlean.lsp.data
+
+import org.eclipse.lsp4j.TextDocumentIdentifier
+
 /**
 /-- `$/lean/plainGoal` client->server request.
 
@@ -45,10 +48,12 @@ errors with `RpcNeedsReconnect`.
 Extending TDPP is weird. But in Lean, symbols exist in the context of a position within a source
 file. So we need this to refer to code in the environment at that position. -/
  TODO it seems there is duplicated params here...
+ TODO Connect return Uint64 but here it's String... Although the source is Uint64...
 */
 class RpcCallParams(
-    val sessionId : Long,
+    val sessionId : String,
     val method: String,
     val params: Any,
-    textDocument: TextDocumentIdentifier, position: Position) :
-    TextDocumentPositionParams(textDocument, position)
+    textDocument: TextDocumentIdentifier,
+    position: Position) :
+TextDocumentPositionParams(textDocument, position)

@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.*
+import com.intellij.platform.lsp.api.customization.LspCompletionSupport
 import org.eclipse.lsp4j.ClientCapabilities
 import org.eclipse.lsp4j.CodeActionResolveSupportCapabilities
 import org.eclipse.lsp4j.InitializeParams
@@ -36,10 +37,18 @@ private class LeanLspServerDescriptor(project: Project) : ProjectWideLspServerDe
 
     override fun isSupportedFile(file: VirtualFile) = file.extension == "lean"
     override fun createCommandLine() = GeneralCommandLine(
-        "~/.elan/toolchains/leanprover--lean4---v4.8.0-rc2/bin/lean".replaceFirst("~", System.getProperty("user.home"))
+        // TODO configurable path for lake
+        "~/.elan/toolchains/leanprover--lean4---v4.8.0-rc2/bin/lake".replaceFirst("~", System.getProperty("user.home"))
             .replace("/", File.separator),
-        "--server", project.basePath
-    ).withEnvironment("LEAN_SERVER_LOG_DIR", System.getProperty("user.home"))
+        "serve", "--", project.basePath
+    )
+        // TODO handle this...
+        // TODO don't know if this is necessary or not, but, any way vscode run it in project root
+        .withWorkDirectory("~/GitRepo/mathematics_in_lean".replaceFirst("~", System.getProperty("user.home")))
+        .withEnvironment("LEAN_SERVER_LOG_DIR", System.getProperty("user.home"))
+
+    override val lspGoToDefinitionSupport: Boolean = true
+    override val lspHoverSupport: Boolean = true
 
     override fun createInitializeParams(): InitializeParams {
         val ret = super.createInitializeParams()
@@ -513,6 +522,14 @@ private class LeanLspServerDescriptor(project: Project) : ProjectWideLspServerDe
         return ret
     }
 
+    override fun getLanguageId(file: VirtualFile): String {
+        // This is get from comparing vscode's lsp trace log
+        // TODO don't know if there more robust way to do it, or if it's relavant
+        return "lean4"
+    }
+
+
+
     /**
      * copied from https://github.com/tomblachut/svelte-intellij/blob/master/src/main/java/dev/blachut/svelte/lang/service/SvelteLspServerSupportProvider.kt
      * and
@@ -633,7 +650,7 @@ class LeanLsp4jClient(serverNotificationsHandler: LspServerNotificationsHandler)
 
     @JsonNotification("\$/lean/fileProgress")
     fun leanFileProgress(params: LeanFileProgressProcessingInfo) {
-        println(params)
+//        println(params)
     }
 
 }

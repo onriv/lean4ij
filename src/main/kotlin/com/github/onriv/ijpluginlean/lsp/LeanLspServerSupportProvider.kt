@@ -1,5 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp
 
+import com.github.onriv.ijpluginlean.listeners.EditorCaretListener
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
 import com.google.common.collect.Lists
@@ -26,7 +27,6 @@ internal class LeanLspServerSupportProvider : LspServerSupportProvider {
     override fun fileOpened(project: Project, file: VirtualFile, serverStarter: LspServerSupportProvider.LspServerStarter) {
         if (file.extension == "lean") {
             serverStarter.ensureServerStarted(LeanLspServerDescriptor(project))
-
         }
     }
 }

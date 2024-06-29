@@ -30,10 +30,7 @@ class LeanLspServerManager (private val lspServer: LspServer) {
         val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
         // val position = Position(line=line!!, character = column!!)
         val logicalPosition = caret.logicalPosition
-        val line = logicalPosition.line
-        // TODO weird, from vscode's request, it seems the character, i.e., the column number here is 0
-        val position = Position(line=line, character = 0)
-        // TODO
+        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
         val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).leanPlainGoal(
             PlainGoalParams( textDocument = textDocument, position = position )
         )}

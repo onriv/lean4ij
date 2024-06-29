@@ -45,6 +45,6 @@ class EditorCaretListener : CaretListener {
         // from https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
         val infoViewWindow = ToolWindowManager.getInstance(project).getToolWindow("LeanInfoViewWindow")!!.contentManager.contents[0].component as
                 LeanInfoViewWindowFactory.LeanInfoViewWindow
-        infoViewWindow.updateGoal(plainGoal.joinToString { "\n" })
+        infoViewWindow.updateGoal(plainGoal.joinToString("\n"))
     }
 }

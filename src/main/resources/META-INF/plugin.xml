@@ -10,7 +10,7 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.onriv.ijpluginlean.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <toolWindow factoryClass="com.github.onriv.ijpluginlean.toolWindow.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
 
         <!-- LSP -->
         <platform.lsp.serverSupportProvider implementation="com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider"/>

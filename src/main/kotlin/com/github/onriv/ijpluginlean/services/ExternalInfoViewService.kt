@@ -29,8 +29,10 @@ class ExternalInfoViewService(project: Project) {
          * Here we create and start a Netty embedded server listening to the port 8080
          * and define the main application module.
          */
-        embeddedServer(Netty, port = 8080, module = externalInfoViewModuleFactory(observe())).start(wait = false)
+        embeddedServer(Netty, port = 8080, module = externalInfoViewModuleFactory(this)).start(wait = false)
     }
+
+    var serviceInitialized: String? = null
 
     private val channel = MutableSharedFlow<String>()
 
@@ -78,7 +80,7 @@ suspend fun ApplicationCall.respondSse(eventFlow: Flow<String>) {
     }
 }
 
-fun externalInfoViewModuleFactory(flow: Flow<String>): Application.() -> Unit {
+fun externalInfoViewModuleFactory(service : ExternalInfoViewService): Application.() -> Unit {
     /**
      * We produce a [SharedFlow] from a function
      * that sends an [SseEvent] instance each second.
@@ -86,7 +88,7 @@ fun externalInfoViewModuleFactory(flow: Flow<String>): Application.() -> Unit {
     val sseFlow = flow {
         var n = 0
         while (true) {
-            emit(SseEvent("demo$n"))
+            emit("demo$n")
             delay(1.seconds)
             n++
         }
@@ -103,7 +105,19 @@ fun externalInfoViewModuleFactory(flow: Flow<String>): Application.() -> Unit {
          * that uses the [SharedFlow] to collect sse events.
          */
         get("/api/events") {
-            call.respondSse(flow)
+            call.respondSse(sseFlow)
+        }
+
+        // I dont understand sse, hence this very poor impl...
+        get("/api/serverInitialized") {
+            if (service.serviceInitialized == null) {
+                call.respondText(
+                    "{}", ContentType.Application.Json
+                )
+            }
+            call.respondText(
+                service.serviceInitialized!!, ContentType.Application.Json
+            )
         }
         /**
          * Route to be executed when the client perform a GET `/` request.

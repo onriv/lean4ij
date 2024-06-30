@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.*
 import com.intellij.platform.lsp.api.customization.LspCompletionSupport
+import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification
@@ -662,6 +663,7 @@ class LeanLspServerListener (val project: Project): LspServerListener {
     private val infoViewService = project.service<ExternalInfoViewService>()
 
     override fun serverInitialized(params: InitializeResult) {
-        async {infoViewService.send(gson.toJson(params))}
+        infoViewService.serviceInitialized = gson.toJson(params)
+        // runBlocking {infoViewService.send(gson.toJson(params))}
     }
 }

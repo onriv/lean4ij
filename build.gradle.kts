@@ -28,6 +28,8 @@ dependencies {
     // from https://github.com/ktorio/ktor-samples/blob/main/sse/build.gradle.kts
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
+//    implementation("io.ktor:ktor-serialization-gson")
+//    implementation("io.ktor:ktor-server-content-negotiation")
 //    implementation(libs.exampleLibrary)
 }
 

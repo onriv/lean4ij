@@ -47,9 +47,19 @@ class ServerEventSource {
 export class DummyEditorApi implements EditorApi {
     async sendClientRequest(uri: string, method: string, params: any): Promise<any> {
         console.log(`Sending client request: ${method} for URI: ${uri}`);
-        // Implement your logic here for making requests to the LSP server.
-        // Return a placeholder response for demonstration purposes.
-        return { result: 'dummy response' };
+        const res = await fetch('/api/sendClientRequest', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(params)
+            }
+        );
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const result = await res.json();
+        return result;
     }
 
     async sendClientNotification(uri: string, method: string, params: any): Promise<void> {
@@ -105,9 +115,19 @@ export class DummyEditorApi implements EditorApi {
 
     async createRpcSession(uri: DocumentUri): Promise<string> {
         console.log(`Creating RPC session for URI: ${uri}`);
-        // Implement your logic here for creating an RPC session.
-        // Return a placeholder session ID for demonstration purposes.
-        return 'dummy-session-id';
+        const res = await fetch('/api/createRpcSession', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({uri: uri})
+            }
+        );
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const result = await res.json();
+        return result.session;
     }
 
     async closeRpcSession(sessionId: string): Promise<void> {
@@ -140,9 +160,9 @@ function App() {
         window.addEventListener('message', e => rpc.messageReceived(e.data))
         const infoViewApi: InfoviewApi = renderInfoview(new DummyEditorApi(), div.current!)
         rpc.register(infoViewApi)
-        window.postMessage({hello: "world"}, '*')
-
-        infoViewApi.serverRestarted()
+        // window.postMessage({hello: "world"}, '*')
+        //
+        // infoViewApi.serverRestarted()
         // I dont understand sse, hence this very poor impl...
         const intervalId = setInterval(async () => {
             const res = await fetch('/api/serverInitialized');
@@ -154,6 +174,20 @@ function App() {
             clearInterval(intervalId)
             // Handle the response here
         }, 2000); // Sends the API request every 2 seconds
+
+        // I dont understand sse, hence this very poor impl...
+        const intervalId1 = setInterval(async () => {
+            const res = await fetch('/api/changedCursorLocation');
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const result = await res.json();
+            if (result.uri == undefined) {
+                return
+            }
+            infoViewApi.changedCursorLocation(result)
+            // Handle the response here
+        }, 40); // Sends the API request every 2 seconds
     }, []);
     //sconst myEventSource = new ServerEventSource('/api/events', 'events');
 

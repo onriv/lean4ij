@@ -59,6 +59,15 @@ class RpcCallParams(
     position: Position) :
 TextDocumentPositionParams(textDocument, position)
 
+
+class InteractiveGoalsParams(
+    val sessionId : String,
+    val method: String,
+    val params: PlainGoalParams,
+    textDocument: TextDocumentIdentifier,
+    position: Position) :
+    TextDocumentPositionParams(textDocument, position)
+
 // TODO this is Lean's source code's def, but the json seems to be just String
 // data class FVarId (val name: String)
 

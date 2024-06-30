@@ -643,7 +643,7 @@ internal interface LeanLanguageServer : LanguageServer, TextDocumentService {
     fun rpcConnect(params: RpcConnectParams): CompletableFuture<RpcConnected>
 
     @JsonRequest("\$/lean/rpc/call")
-    fun rpcCall(params: RpcCallParams): CompletableFuture<Any?>
+    fun rpcCall(params: Any): CompletableFuture<Any?>
 
 
 }

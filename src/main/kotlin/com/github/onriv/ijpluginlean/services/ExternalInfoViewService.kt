@@ -1,21 +1,37 @@
 package com.github.onriv.ijpluginlean.services
 
 // copy from https://github.com/ktorio/ktor-samples/blob/main/sse/src/main/kotlin/io/ktor/samples/sse/SseApplication.kt
+import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
+import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
+import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoalsParams
+import com.github.onriv.ijpluginlean.lsp.data.Position
+import com.google.common.collect.ImmutableMap
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.intellij.build.install
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.routing.Routing.Plugin
+import io.ktor.server.routing.Routing.Plugin.install
 import io.ktor.util.cio.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.seconds
+
+data class Range(val start: Position, val end: Position)
+// for infoview, vscode's data structure
+data class CursorLocation(val uri: String, val range: Range)
 
 /**
  * An SSE (Server-Sent Events) sample application.
@@ -29,10 +45,12 @@ class ExternalInfoViewService(project: Project) {
          * Here we create and start a Netty embedded server listening to the port 8080
          * and define the main application module.
          */
-        embeddedServer(Netty, port = 8080, module = externalInfoViewModuleFactory(this)).start(wait = false)
+        embeddedServer(Netty, port = 8080, module = externalInfoViewModuleFactory(project, this)).start(wait = false)
     }
 
     var serviceInitialized: String? = null
+    var cursorLocation : CursorLocation? = null
+    var changedCursorLocation : Boolean = false
 
     private val channel = MutableSharedFlow<String>()
 
@@ -44,6 +62,11 @@ class ExternalInfoViewService(project: Project) {
     // Sending an event
     suspend fun send(event: String) {
         channel.emit(event) // This gets sent to the ViewModel/Presenter
+    }
+
+    fun changedCursorLocation(cursorLocation: CursorLocation) {
+        this.cursorLocation = cursorLocation
+        changedCursorLocation = true
     }
 
 
@@ -80,7 +103,7 @@ suspend fun ApplicationCall.respondSse(eventFlow: Flow<String>) {
     }
 }
 
-fun externalInfoViewModuleFactory(service : ExternalInfoViewService): Application.() -> Unit {
+fun externalInfoViewModuleFactory(project: Project, service : ExternalInfoViewService): Application.() -> Unit {
     /**
      * We produce a [SharedFlow] from a function
      * that sends an [SseEvent] instance each second.
@@ -98,7 +121,8 @@ fun externalInfoViewModuleFactory(service : ExternalInfoViewService): Applicatio
      * We use the [Routing] plugin to declare [Route] that will be
      * executed per call
      */
-    return {routing {
+    return {
+        routing {
         /**
          * Route to be executed when the client perform a GET `/sse` request.
          * It will respond using the [respondSse] extension method defined in this same file
@@ -118,6 +142,36 @@ fun externalInfoViewModuleFactory(service : ExternalInfoViewService): Applicatio
             call.respondText(
                 service.serviceInitialized!!, ContentType.Application.Json
             )
+        }
+
+        get("/api/changedCursorLocation") {
+            if (!service.changedCursorLocation) {
+                call.respondText(
+                    "{}", ContentType.Application.Json
+                )
+            }
+            call.respondText(
+                Gson().toJson(service.cursorLocation), ContentType.Application.Json
+            )
+            service.changedCursorLocation = false
+        }
+        val type = object : TypeToken<Map<String, String>>() {}.type
+
+        post("/api/createRpcSession") {
+            val data: Map<String, String> = Gson().fromJson(call.receiveText(), type)
+            val uri = data["uri"]
+            val session = LeanLspServerManager.getInstance(project = project).getSession(uri!!)
+            call.respondText(
+                Gson().toJson(ImmutableMap.of("session", session)), ContentType.Application.Json
+            )
+        }
+        post("/api/sendClientRequest") {
+            val text = call.receiveText()
+            val resp = LeanLspServerManager.getInstance(project = project).lspServer.sendRequestSync{ (it as LeanLanguageServer).rpcCall(Gson().fromJson(text, InteractiveGoalsParams::class.java))}
+            call.respondText(
+                Gson().toJson(resp), ContentType.Application.Json
+            )
+
         }
         /**
          * Route to be executed when the client perform a GET `/` request.

@@ -3,6 +3,8 @@ package com.github.onriv.ijpluginlean.lsp
 import com.github.onriv.ijpluginlean.listeners.EditorCaretListener
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
+import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
+import com.intellij.openapi.components.service
 import com.google.common.collect.Lists
 import com.google.gson.Gson
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -10,10 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.*
 import com.intellij.platform.lsp.api.customization.LspCompletionSupport
-import org.eclipse.lsp4j.ClientCapabilities
-import org.eclipse.lsp4j.CodeActionResolveSupportCapabilities
-import org.eclipse.lsp4j.InitializeParams
-import org.eclipse.lsp4j.WorkspaceEditChangeAnnotationSupportCapabilities
+import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
@@ -542,6 +541,9 @@ private class LeanLspServerDescriptor(project: Project) : ProjectWideLspServerDe
     override fun createLsp4jClient(handler: LspServerNotificationsHandler): Lsp4jClient {
         return LeanLsp4jClient(handler);
     }
+
+    override val lspServerListener: LspServerListener = LeanLspServerListener(project)
+
 }
 
 class RpcConnectParams(
@@ -655,3 +657,11 @@ class LeanLsp4jClient(serverNotificationsHandler: LspServerNotificationsHandler)
 
 }
 
+class LeanLspServerListener (val project: Project): LspServerListener {
+    private val gson = MessageJsonHandler(null).gson
+    private val infoViewService = project.service<ExternalInfoViewService>()
+
+    override fun serverInitialized(params: InitializeResult) {
+        async {infoViewService.send(gson.toJson(params))}
+    }
+}

@@ -1,5 +1,7 @@
 package com.github.onriv.ijpluginlean.toolWindow
 
+import com.github.onriv.ijpluginlean.listeners.InfoViewHoverListener
+import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -9,6 +11,7 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
 import com.github.onriv.ijpluginlean.services.MyProjectService
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -27,7 +30,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // from https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
             val infoViewWindow = ToolWindowManager.getInstance(project).getToolWindow("LeanInfoViewWindow")!!.contentManager.contents[0].component as
                     LeanInfoViewWindowFactory.LeanInfoViewWindow
-            infoViewWindow.updateGoal(plainGoal.joinToString("\n"))
+            infoViewWindow.updateGoal(plainGoal.joinToString("\n\n"))
         }
 
     }
@@ -47,12 +50,14 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
     class LeanInfoViewWindow(toolWindow: ToolWindow) : SimpleToolWindowPanel(true) {
 
         private val service = toolWindow.project.service<MyProjectService>()
+        private val infoViewService = toolWindow.project.service<ExternalInfoViewService>()
         private val goals = JEditorPane()
         private var editor : EditorEx
 
         private val BORDER = BorderFactory.createEmptyBorder(3, 0, 5, 0)
 
         init {
+            // TODO this is copy from intellij-arend and it's wrong (it's fro SearchRender in intellij-arend)
             goals.contentType = "text/html"
             goals.border = BORDER
             goals.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
@@ -79,6 +84,11 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             editor.isRendererMode = true
 
             setContent(editor.component)
+            // TODO this is commented out, it's no easy to impl
+            //      interactive goal inside intellij idea
+            // editor.addEditorMouseMotionListener(InfoViewHoverListener())
+            // TODO it must setup a language for the goal infoview...
+            // editor = EditorFactory.
         }
 
         fun updateGoal(goal: String) {

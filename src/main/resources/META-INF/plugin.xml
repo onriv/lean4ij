@@ -15,6 +15,10 @@
         <!-- LSP -->
         <platform.lsp.serverSupportProvider implementation="com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider"/>
 
+        <!-- documentation for infoview -->
+        <lang.documentationProvider language="LeanInfoview"
+            implementationClass="com.github.onriv.ijpluginlean.infoview.InfoViewDocumentationProvider"/>
+
     </extensions>
 
     <actions>

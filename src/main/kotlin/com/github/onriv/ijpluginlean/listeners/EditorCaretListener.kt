@@ -2,17 +2,12 @@ package com.github.onriv.ijpluginlean.listeners
 
 import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 import com.github.onriv.ijpluginlean.toolWindow.LeanInfoViewWindowFactory
-import com.google.common.base.Supplier
-import com.google.common.base.Suppliers
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.components.JBTextArea
-import java.util.concurrent.atomic.AtomicBoolean
 
 class EditorCaretListener : CaretListener {
 
@@ -25,6 +20,7 @@ class EditorCaretListener : CaretListener {
             if (registered) {
                 return
             }
+            // TODO add a editor null check here, there are cases here npe
             val editor: Editor = FileEditorManager.getInstance(project).selectedTextEditor!!
             val caretModel: CaretModel = editor.caretModel
             caretModel.addCaretListener(EditorCaretListener())
@@ -41,6 +37,7 @@ class EditorCaretListener : CaretListener {
             return
         }
         val plainGoal = LeanLspServerManager.getInstance(project).getPlainGoal(file, event.caret!!)
+        val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
         LeanInfoViewWindowFactory.updateGoal(project, plainGoal)
     }
 }

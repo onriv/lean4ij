@@ -1,5 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp.data
 
+import io.opentelemetry.sdk.trace.data.StatusData
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
 /**
@@ -57,3 +58,43 @@ class RpcCallParams(
     textDocument: TextDocumentIdentifier,
     position: Position) :
 TextDocumentPositionParams(textDocument, position)
+
+// TODO this is Lean's source code's def, but the json seems to be just String
+// data class FVarId (val name: String)
+
+// see: tests/lean/interactive/run.lean:11
+data class SubexprInfo (val subexprPos: String, val dataStatus: String)
+
+interface CodeWithInfos
+data class CodeWithInfosText (val text: String) : CodeWithInfos
+data class CodeWithInfosAppend (val append: List<CodeWithInfos>) : CodeWithInfos
+data class CodeWithInfosTag (val a1: SubexprInfo, val a2: CodeWithInfos) : CodeWithInfos
+
+// from src/Lean/Widget/InteractiveGoal.lean:51
+data class InteractiveHypothesisBundle(
+    val names: List<String>,
+    val fvarIds: List<String>,
+    val type: CodeWithInfos,
+    val value: CodeWithInfos? = null,
+    val isInstance: Boolean? = null,
+    val isType: Boolean? = null,
+    val isInserted: Boolean? = null,
+    val isRemoved: Boolean? = null
+)
+
+//data class InteractiveGoalCore(
+//    val hyps: Array<InteractiveHypothesisBundle>,
+//    val type: CodeWithInfos,
+//    val ctx: ContextInfo
+//)
+//
+//data class InteractiveGoal(
+//    val hyps: Array<InteractiveHypothesisBundle>,
+//    val type: CodeWithInfos,
+//    val ctx: ContextInfo,
+//    val userName: String? = null,
+//    val goalPrefix: String,
+//    val mvarId: MVarId,
+//    val isInserted: Boolean? = null,
+//    val isRemoved: Boolean? = null
+//)

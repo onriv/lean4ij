@@ -2,6 +2,7 @@ package com.github.onriv.ijpluginlean.lsp
 
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.Position
+import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,15 +37,35 @@ class LeanLspServerManager (private val lspServer: LspServer) {
         )}
         return resp!!.goals;
     }
-//
-//    private fun connectRpc(file : VirtualFile) : String {
-//        val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcConnect(RpcConnectParams(
-//            com.github.onriv.ijpluginlean.actions.tryFixWinUrl(file.url)
-//        )) }
-//        // TODO handle exception here
-//        return resp!!.sessionId
-//    }
-//
+
+    fun getInteractiveGoals(file: VirtualFile, caret: Caret): Any {
+        val sessionId = sessions.computeIfAbsent(file) {connectRpc(it)}
+        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+        val logicalPosition = caret.logicalPosition
+        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+        val rpcParams = RpcCallParams(
+            sessionId = sessionId,
+            method = "Lean.Widget.getInteractiveGoals",
+            params = PlainGoalParams(
+                textDocument = textDocument,
+                position = position
+            ),
+            textDocument = textDocument,
+            position = position
+        )
+        // TODO according to lean's src code, here it's chance it failed
+        //      and must reconnect
+        val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
+        return resp!!
+    }
+
+    private fun connectRpc(file : VirtualFile) : String {
+        val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcConnect(RpcConnectParams(
+            tryFixWinUrl(file.url)
+        )) }
+        // TODO handle exception here
+        return resp!!.sessionId
+    }
 
     /**
      * See the document of [com.intellij.platform.lsp.api.LspServerDescriptor#getFileUri]

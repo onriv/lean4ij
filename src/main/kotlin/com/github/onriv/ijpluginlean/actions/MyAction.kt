@@ -54,6 +54,7 @@ class OpenLeanInfoView : AnAction() {
 
     override fun update(e: AnActionEvent) {
         // TODO dont know if it's a good position add it here or nos
+        // TODO real log
         e.project?.let { EditorCaretListener.register(it) }
         println("TODO")
     }

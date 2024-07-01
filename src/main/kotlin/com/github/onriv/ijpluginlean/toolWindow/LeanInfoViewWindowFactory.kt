@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.JBLabel
@@ -22,7 +23,7 @@ import java.awt.BorderLayout
 import javax.swing.BorderFactory
 import javax.swing.JEditorPane
 
-
+// TODO not shown if indexing, the doc seems saying it's an option for it
 class LeanInfoViewWindowFactory : ToolWindowFactory {
 
     companion object {

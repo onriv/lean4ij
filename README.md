@@ -24,6 +24,19 @@ This specific section is a source for the [plugin.xml](/src/main/resources/META-
 To keep everything working, do not remove `<!-- ... -->` sections. 
 <!-- Plugin description end -->
 
+## Usage
+
+## Implementation
+
+### LSP
+using official impl: [LSP](https://plugins.jetbrains.com/docs/intellij/language-server-protocol.html)
+
+### Highlight
+
+### Unicode input
+
+### InfoView
+
 ## Installation
 
 - Using the IDE built-in plugin system:

@@ -80,7 +80,11 @@ class LeanLspServerManager (val lspServer: LspServer) {
         val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).leanPlainGoal(
             PlainGoalParams( textDocument = textDocument, position = position )
         )}
-        return resp!!.goals;
+        // TODO handle this null more seriously  and show it in the ui
+        if (resp == null) {
+            return ArrayList()
+        }
+        return resp.goals;
     }
 
     fun getInteractiveGoals(file: VirtualFile, caret: Caret): Any {

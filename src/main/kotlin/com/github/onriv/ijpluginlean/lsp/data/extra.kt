@@ -1,5 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp.data
 
+import com.github.onriv.ijpluginlean.lsp.Range
 import io.opentelemetry.sdk.trace.data.StatusData
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
@@ -39,6 +40,12 @@ the method
 */
 class PlainGoalParams(textDocument: TextDocumentIdentifier, position: Position) :
     TextDocumentPositionParams(textDocument, position)
+
+class PlainTermGoalParams(textDocument: TextDocumentIdentifier, position: Position) :
+    TextDocumentPositionParams(textDocument, position)
+
+class PlainTermGoal(val goal : String, val range: Range)
+
 
 /**
 /-- `$/lean/rpc/call` client->server request.

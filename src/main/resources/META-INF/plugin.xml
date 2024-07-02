@@ -19,6 +19,8 @@
         <lang.documentationProvider language="LeanInfoview"
             implementationClass="com.github.onriv.ijpluginlean.infoview.InfoViewDocumentationProvider"/>
 
+        <!-- TODO this seems not working, and hence it's commented out -->
+<!--        <fileEditorManagerListener implementation="com.github.onriv.ijpluginlean.listeners.LeanFileEditorManagerListener" />-->
     </extensions>
 
     <actions>

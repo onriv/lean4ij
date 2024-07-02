@@ -1,10 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp
 
-import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoalsParams
-import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
-import com.github.onriv.ijpluginlean.lsp.data.Position
-import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
-import com.google.gson.Gson
+import com.github.onriv.ijpluginlean.lsp.data.*
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,7 +9,7 @@ import com.intellij.platform.lsp.api.LspServerManager
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import java.util.concurrent.ConcurrentHashMap
 
-class LeanLspServerManager (val lspServer: LspServer) {
+class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
 
     companion object {
         private val projects = ConcurrentHashMap<Project, LeanLspServerManager>()
@@ -21,7 +17,7 @@ class LeanLspServerManager (val lspServer: LspServer) {
             return projects.computeIfAbsent(project) { k ->
                 val lspServer = LspServerManager.getInstance(k)
                     .getServersForProvider(LeanLspServerSupportProvider::class.java).firstOrNull();
-                LeanLspServerManager(lspServer!!)
+                LeanLspServerManager(k, lspServer!!)
             }
         }
 
@@ -72,12 +68,12 @@ class LeanLspServerManager (val lspServer: LspServer) {
 
     private val sessions = ConcurrentHashMap<String, String>()
 
-    fun getPlainGoal(file: VirtualFile, caret: Caret) : List<String> {
+    fun plainGoal(file: VirtualFile, caret: Caret) : List<String> {
         val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
         // val position = Position(line=line!!, character = column!!)
         val logicalPosition = caret.logicalPosition
         val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-        val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).leanPlainGoal(
+        val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).plainGoal(
             PlainGoalParams( textDocument = textDocument, position = position )
         )}
         // TODO handle this null more seriously  and show it in the ui
@@ -85,6 +81,21 @@ class LeanLspServerManager (val lspServer: LspServer) {
             return ArrayList()
         }
         return resp.goals;
+    }
+
+    fun plainTermGoal(file: VirtualFile, caret: Caret) : String {
+        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+        // val position = Position(line=line!!, character = column!!)
+        val logicalPosition = caret.logicalPosition
+        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+        val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).plainTermGoal(
+            PlainTermGoalParams( textDocument = textDocument, position = position )
+        )}
+        // TODO handle this null more seriously  and show it in the ui
+        if (resp == null) {
+            return ""
+        }
+        return resp.goal;
     }
 
     fun getInteractiveGoals(file: VirtualFile, caret: Caret): Any {

@@ -1,25 +1,19 @@
 package com.github.onriv.ijpluginlean.toolWindow
 
-import com.github.onriv.ijpluginlean.listeners.InfoViewHoverListener
 import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
 import com.github.onriv.ijpluginlean.services.MyProjectService
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextArea
-import java.awt.BorderLayout
 import javax.swing.BorderFactory
 import javax.swing.JEditorPane
 
@@ -27,11 +21,11 @@ import javax.swing.JEditorPane
 class LeanInfoViewWindowFactory : ToolWindowFactory {
 
     companion object {
-        fun updateGoal(project: Project,  plainGoal: List<String>) {
+        fun updateGoal(project: Project, plainGoal: List<String>, plainTermGoal: String) {
             // from https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
             val infoViewWindow = ToolWindowManager.getInstance(project).getToolWindow("LeanInfoViewWindow")!!.contentManager.contents[0].component as
                     LeanInfoViewWindowFactory.LeanInfoViewWindow
-            infoViewWindow.updateGoal(plainGoal.joinToString("\n\n"))
+            infoViewWindow.updateGoal(plainGoal.joinToString("\n\n")+"\n\n"+plainTermGoal)
         }
 
     }

@@ -1,18 +1,14 @@
 package com.github.onriv.ijpluginlean.lsp
 
-import com.github.onriv.ijpluginlean.listeners.EditorCaretListener
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
-import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
+import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoal
+import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoalParams
 import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.intellij.openapi.components.service
-import com.google.common.collect.Lists
-import com.google.gson.Gson
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.*
-import com.intellij.platform.lsp.api.customization.LspCompletionSupport
-import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification
@@ -20,7 +16,6 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import org.eclipse.lsp4j.services.LanguageServer
 import org.eclipse.lsp4j.services.TextDocumentService
 import java.io.File
-import java.lang.UnsupportedOperationException
 import java.util.concurrent.CompletableFuture
 
 internal class LeanLspServerSupportProvider : LspServerSupportProvider {
@@ -574,10 +569,15 @@ class PlainGoal(
     val goals: List<String>
 )
 
+/** there are two structures of range */
 class Range(
-    val start: Integer,
-    val stop: Integer,
-    val step: Integer
+    val start: Position,
+    val end: Position,
+)
+
+class ProcessingInfo(
+    val range: Range,
+    val kind: Int
 )
 
 /**
@@ -587,13 +587,8 @@ kind : LeanFileProgressKind := LeanFileProgressKind.processing
 deriving FromJson, ToJson
 */
 class LeanFileProgressProcessingInfo(
-    var range: Range,
-    /**
-    inductive LeanFileProgressKind
-    | processing | fatalError
-    deriving Inhabited, BEq
-     */
-    var kind: Int
+    val textDocument: TextDocumentIdentifier,
+    val processing: List<ProcessingInfo>
 )
 
 /**
@@ -626,7 +621,10 @@ class LeanFileProgressProcessingInfo(
 internal interface LeanLanguageServer : LanguageServer, TextDocumentService {
 
     @JsonRequest("\$/lean/plainGoal")
-    fun leanPlainGoal(params: PlainGoalParams): CompletableFuture<PlainGoal>
+    fun plainGoal(params: PlainGoalParams): CompletableFuture<PlainGoal>
+
+    @JsonRequest("\$/lean/plainTermGoal")
+    fun plainTermGoal(params: PlainTermGoalParams): CompletableFuture<PlainTermGoal>
 
     /**
      * /-- `$/lean/rpc/connect` client->server request.
@@ -653,7 +651,7 @@ class LeanLsp4jClient(serverNotificationsHandler: LspServerNotificationsHandler)
 
     @JsonNotification("\$/lean/fileProgress")
     fun leanFileProgress(params: LeanFileProgressProcessingInfo) {
-//        println(params)
+        FileProgress.run(params)
     }
 
 }

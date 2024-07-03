@@ -8,11 +8,19 @@ import com.github.onriv.ijpluginlean.services.Range
 import com.github.onriv.ijpluginlean.toolWindow.LeanInfoViewWindowFactory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 class EditorCaretListener(val project: Project) : CaretListener {
@@ -37,38 +45,77 @@ class EditorCaretListener(val project: Project) : CaretListener {
 
     private val infoView = project.service<ExternalInfoViewService>()
 
+
+    private fun shouldUpdateGoal(file: VirtualFile, caret: Caret) : Boolean {
+        if (!file.path.endsWith(".lean")) {
+            return false
+        }
+        val document = FileDocumentManager.getInstance().getDocument(file)
+        if (document == null) {
+            thisLogger().debug("${file.path} has no document in FileDocumentManager.")
+            return false
+        }
+        // TODO getting text seems to be a performance issue?
+        val lineContent = document.text.split("\n")[caret.logicalPosition.line]
+        if (lineContent.startsWith("import ")) {
+            thisLogger().debug("${file.path} with caret at import line, skip updating goal")
+            return false
+        }
+        return true
+    }
+
+    private val scope = CoroutineScope(Dispatchers.Main)
+
     override fun caretPositionChanged(event: CaretEvent) {
         val editor = event.editor
         val file = editor.virtualFile
+        // TODO not really understand why here it can be null
+        if (event.caret == null) {
+            thisLogger().debug("${file.path} moved with caret null.")
+//                return@launch
+        }
+        thisLogger().debug("${file.path} moved to ${event.caret}")
+        if (event.editor.project == null) {
+            thisLogger().debug("${file.path} moved with project null.")
+        }
         // TODO handle null
         val project = event.editor.project!!
-        if (!file.path.endsWith(".lean")) {
-            return
-        }
-        thisLogger().debug("cursor move to ${event.caret!!}")
-        try {
-            val plainGoal = LeanLspServerManager.getInstance(project).plainGoal(file, event.caret!!)
-            val plainTermGoal = LeanLspServerManager.getInstance(project).plainTermGoal(file, event.caret!!)
-            LeanInfoViewWindowFactory.updateGoal(project, plainGoal, plainTermGoal)
-            //  Error response from server: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Outdated RPC sessios
-            // val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
-        } catch (e: Exception) {
-            // TODO handle it
-            e.printStackTrace()
+//                return@launch
+        // or, withContext(Dispatchers.IO) ?
+        // TODO check kotlin's coroutine document
+        //      it's no way start coroutine from normal thread except runBlocking
+        //      see: https://stackoverflow.com/questions/76187252/
+        runBackgroundableTask("Updating goal", project) {
+            val caret = event.caret!!
+            if (!shouldUpdateGoal(file, caret)) {
+                return@runBackgroundableTask
+            }
+            try {
+                val plainGoal = LeanLspServerManager.getInstance(project).plainGoal(file, caret)
+                val plainTermGoal = LeanLspServerManager.getInstance(project).plainTermGoal(file, caret)
+                LeanInfoViewWindowFactory.updateGoal(project, plainGoal, plainTermGoal)
+                //  Error response from server: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Outdated RPC sessios
+                // val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
+            } catch (e: Exception) {
+                // TODO handle it
+                e.printStackTrace()
+            }
+
+            try {
+                // TODO DIY
+                val logicalPosition = event.caret!!.logicalPosition
+                val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+                infoView.changedCursorLocation(CursorLocation(
+                    uri = LeanLspServerManager.tryFixWinUrl(file.toString()),
+                    range = Range(start = position, end=position)
+                ))
+            } catch (e: Exception) {
+                // TODO handle it
+                e.printStackTrace()
+            }
+
         }
 
-        try {
-            // TODO DIY
-            val logicalPosition = event.caret!!.logicalPosition
-            val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-            infoView.changedCursorLocation(CursorLocation(
-                uri = LeanLspServerManager.tryFixWinUrl(file.toString()),
-                range = Range(start = position, end=position)
-            ))
-        } catch (e: Exception) {
-            // TODO handle it
-            e.printStackTrace()
-        }
 
 
 

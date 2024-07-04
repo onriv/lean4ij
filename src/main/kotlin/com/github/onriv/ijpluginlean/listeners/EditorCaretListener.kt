@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 
 class EditorCaretListener(val project: Project) : CaretListener {
@@ -50,13 +51,18 @@ class EditorCaretListener(val project: Project) : CaretListener {
         if (!file.path.endsWith(".lean")) {
             return false
         }
-        val document = FileDocumentManager.getInstance().getDocument(file)
-        if (document == null) {
-            thisLogger().debug("${file.path} has no document in FileDocumentManager.")
-            return false
-        }
+
         // TODO getting text seems to be a performance issue?
-        val lineContent = document.text.split("\n")[caret.logicalPosition.line]
+        // TODO is it instant data or from file or from memory?
+        // TODO not fix encoding, handle bom?
+        val lineContent = String(file.contentsToByteArray(), StandardCharsets.UTF_8).split(System.lineSeparator())[caret.logicalPosition.line]
+//        val document = FileDocumentManager.getInstance().getDocument(file)
+//        if (document == null) {
+//            thisLogger().debug("${file.path} has no document in FileDocumentManager.")
+//            return false
+//        }
+//        // TODO getting text seems to be a performance issue?
+//        val lineContent = document.text.split("\n")[caret.logicalPosition.line]
         if (lineContent.startsWith("import ")) {
             thisLogger().debug("${file.path} with caret at import line, skip updating goal")
             return false

@@ -8,6 +8,7 @@ import com.github.onriv.ijpluginlean.lsp.RpcConnectParams
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.Position
 import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -58,7 +59,12 @@ class OpenLeanInfoView : AnAction() {
         e.project?.let { EditorCaretListener.register(it) }
         println("TODO")
     }
-//
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
+
+    //
 //    private fun updateInfoView(project: Project, file: VirtualFile, caret: Caret) {
 //        val lspServer = LspServerManager.getInstance(project)
 //            .getServersForProvider(LeanLspServerSupportProvider::class.java).firstOrNull()

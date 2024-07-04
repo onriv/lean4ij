@@ -1,7 +1,20 @@
 package com.github.onriv.ijpluginlean.lsp
 
 import com.github.onriv.ijpluginlean.lsp.data.*
+import com.intellij.build.DefaultBuildDescriptor
+import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.StartBuildEvent
+import com.intellij.build.events.impl.StartBuildEventImpl
+import com.intellij.build.events.impl.StartEventImpl
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
@@ -129,6 +142,35 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
         )) }
         // TODO handle exception here
         return resp!!.sessionId
+    }
+
+    private val systemId = ProjectSystemId("LEAN4")
+    private val syncView = project.service<SyncViewManager>()
+
+    private var importStarted = false
+
+    @Synchronized
+    fun startImport() {
+        if (importStarted) {
+            return
+        }
+        importStarted = true
+        val action : AnAction = object : AnAction("Sync") {
+            override fun actionPerformed(e: AnActionEvent) {
+                TODO("Not yet implemented")
+            }
+
+            override fun getActionUpdateThread() = ActionUpdateThread.BGT
+        }
+
+        val syncId = ExternalSystemTaskId.create(systemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
+        val descriptor = DefaultBuildDescriptor(syncId, "Sync", project.basePath!!, System.currentTimeMillis())
+            // TODO what is this for?
+            // The code here is copy from
+            // intellij community plugins maven MavenSyncConsole.kt
+            // .withRestartAction()
+            // TODO with
+        syncView.onEvent(descriptor, StartBuildEventImpl(descriptor, "Sync :"+ project.name))
     }
 
 }

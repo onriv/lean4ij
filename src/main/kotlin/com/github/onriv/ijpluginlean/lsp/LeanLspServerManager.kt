@@ -1,16 +1,23 @@
 package com.github.onriv.ijpluginlean.lsp
 
 import com.github.onriv.ijpluginlean.lsp.data.*
+import com.intellij.build.BuildContentDescriptor
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.StartBuildEvent
+import com.intellij.build.events.impl.MessageEventImpl
+import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.events.impl.StartBuildEventImpl
 import com.intellij.build.events.impl.StartEventImpl
+import com.intellij.build.progress.BuildProgressDescriptor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -21,6 +28,7 @@ import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import java.util.concurrent.ConcurrentHashMap
+import javax.swing.JComponent
 
 class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
 
@@ -164,13 +172,29 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
         }
 
         val syncId = ExternalSystemTaskId.create(systemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
-        val descriptor = DefaultBuildDescriptor(syncId, "Sync", project.basePath!!, System.currentTimeMillis())
+        val descriptor = DefaultBuildDescriptor(syncId, "\$lean/fileProgress", project.basePath!!, System.currentTimeMillis())
+            // .withRestartAction(action)
             // TODO what is this for?
             // The code here is copy from
             // intellij community plugins maven MavenSyncConsole.kt
             // .withRestartAction()
             // TODO with
-        syncView.onEvent(descriptor, StartBuildEventImpl(descriptor, "Sync :"+ project.name))
+        syncView.onEvent(descriptor, StartBuildEventImpl(descriptor, project.name))
+        // TODO weird, this seems not working
+        // syncView.onEvent(syncId, OutputBuildEventImpl(syncId, "Test print", true))
+        syncView.onEvent(descriptor, MessageEventImpl(syncId, MessageEvent.Kind.INFO, "test", "test11", "OOO"))
     }
 
+    /**
+     * copy from
+     * https://github.com/intellij-rust/intellij-rust/blob/c6657c02bb62075bf7b7ceb84d000f93dda34dc1/src/main/kotlin/org/rust/cargo/project/model/impl/CargoSyncTask.kt#L13
+     */
+//    fun startImport1() {
+//        thisLogger().debug("Start import ${project.name}")
+//        val syncProgress = SyncViewManager.createBuildProgress(project)
+//
+//        val descriptor = BuildContentDescriptor(null, null, object : JComponent() {}, "File Progress")
+//        val syncId = ExternalSystemTaskId.create(systemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
+//        syncProgress.start(descriptor)
+//    }
 }

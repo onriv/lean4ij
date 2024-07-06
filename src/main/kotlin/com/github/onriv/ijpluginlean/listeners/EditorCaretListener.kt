@@ -1,5 +1,6 @@
 package com.github.onriv.ijpluginlean.listeners
 
+import com.github.onriv.ijpluginlean.lsp.FileProgress
 import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 import com.github.onriv.ijpluginlean.lsp.data.Position
 import com.github.onriv.ijpluginlean.services.CursorLocation
@@ -17,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.Lsp4jClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,21 +54,40 @@ class EditorCaretListener(val project: Project) : CaretListener {
             return false
         }
 
+        // TODO more kotlin style to do this, using ?. etc...
+        val fileProgress = FileProgress.getFileProgress(LeanLspServerManager.tryFixWinUrl(file.url))
+        if (fileProgress == null || fileProgress.isProcessing()) {
+            thisLogger().debug("${file.path} is still processing, skip updating goal")
+            return false
+        }
+
         // TODO getting text seems to be a performance issue?
         // TODO is it instant data or from file or from memory?
         // TODO not fix encoding, handle bom?
-        val lineContent = String(file.contentsToByteArray(), StandardCharsets.UTF_8).split(System.lineSeparator())[caret.logicalPosition.line]
-//        val document = FileDocumentManager.getInstance().getDocument(file)
-//        if (document == null) {
-//            thisLogger().debug("${file.path} has no document in FileDocumentManager.")
+        // TODO getting content is not instant... hence it's comment out
+//        val content = String(file.contentsToByteArray(), StandardCharsets.UTF_8)
+//        val lines = content.split(System.lineSeparator())
+//        if (lines.size <= caret.logicalPosition.line) {
+//            // TODO check why this happen
+//            thisLogger().debug("${file.path} has $content, but the caret line exceeds it with line ${caret.logicalPosition.line}")
 //            return false
 //        }
-//        // TODO getting text seems to be a performance issue?
-//        val lineContent = document.text.split("\n")[caret.logicalPosition.line]
-        if (lineContent.startsWith("import ")) {
-            thisLogger().debug("${file.path} with caret at import line, skip updating goal")
-            return false
-        }
+//        val lineContent = lines[caret.logicalPosition.line]
+////        val document = FileDocumentManager.getInstance().getDocument(file)
+////        if (document == null) {
+////            thisLogger().debug("${file.path} has no document in FileDocumentManager.")
+////            return false
+////        }
+////        // TODO getting text seems to be a performance issue?
+////        val lineContent = document.text.split("\n")[caret.logicalPosition.line]
+//        if (lineContent.startsWith("import ")) {
+//            thisLogger().debug("${file.path} with caret at import line, skip updating goal")
+//            return false
+//        }
+//        if (lineContent.startsWith("open ")) {
+//            thisLogger().debug("${file.path} with caret at open line, skip updating goal")
+//            return false
+//        }
         return true
     }
 

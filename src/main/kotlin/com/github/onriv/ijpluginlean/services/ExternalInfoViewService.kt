@@ -44,8 +44,9 @@ class ExternalInfoViewService(project: Project) {
         /**
          * Here we create and start a Netty embedded server listening to the port 8080
          * and define the main application module.
+         * TODO  weird, some use 8080?
          */
-        embeddedServer(Netty, port = 8080, module = externalInfoViewModuleFactory(project, this)).start(wait = false)
+        // embeddedServer(Netty, port = 9093, module = externalInfoViewModuleFactory(project, this)).start(wait = false)
     }
 
     var serviceInitialized: String? = null

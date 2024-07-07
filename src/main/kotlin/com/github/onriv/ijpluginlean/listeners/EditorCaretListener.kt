@@ -120,9 +120,10 @@ class EditorCaretListener(val project: Project) : CaretListener {
             try {
                 val plainGoal = LeanLspServerManager.getInstance(project).plainGoal(file, caret)
                 val plainTermGoal = LeanLspServerManager.getInstance(project).plainTermGoal(file, caret)
-                LeanInfoViewWindowFactory.updateGoal(project, plainGoal, plainTermGoal)
+                LeanInfoViewWindowFactory.updateGoal(project, file, caret, plainGoal, plainTermGoal)
                 //  Error response from server: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Outdated RPC sessios
-                // val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
+                val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
+                println(interactiveGoal)
             } catch (e: Exception) {
                 // TODO handle it
                 e.printStackTrace()

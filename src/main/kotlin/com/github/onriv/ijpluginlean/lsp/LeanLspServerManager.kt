@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 
@@ -119,7 +120,7 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
         return resp.goal;
     }
 
-    fun getInteractiveGoals(file: VirtualFile, caret: Caret): Any {
+    fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any {
         val sessionId = getSession(file.toString())
         val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
         val logicalPosition = caret.logicalPosition
@@ -136,8 +137,15 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
         )
         // TODO according to lean's src code, here it's chance it failed
         //      and must reconnect
-        val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
-        return resp!!
+        try {
+            val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
+            return resp!!
+        } catch (e: ResponseErrorException) {
+            if (e.message!!.contains("Outdated RPC session") && retry < 2) {
+                return getInteractiveGoals(file, caret, retry + 1)
+            }
+            throw e;
+        }
     }
 
     fun getSession(uri: String): String {

@@ -643,8 +643,6 @@ internal interface LeanLanguageServer : LanguageServer, TextDocumentService {
 
     @JsonRequest("\$/lean/rpc/call")
     fun rpcCall(params: Any): CompletableFuture<Any?>
-
-
 }
 
 class LeanLsp4jClient(serverNotificationsHandler: LspServerNotificationsHandler) :

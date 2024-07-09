@@ -124,6 +124,7 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
         val sessionId = getSession(file.toString())
         val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
         val logicalPosition = caret.logicalPosition
+        caret.offset
         val position = Position(line=logicalPosition.line, character = logicalPosition.column)
         val rpcParams = InteractiveGoalsParams(
             sessionId = sessionId,
@@ -147,6 +148,11 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
             throw e;
         }
     }
+
+//
+//    fun infoToInteractive(info: ) {
+//
+//    }
 
     fun getSession(uri: String): String {
         return sessions.computeIfAbsent(tryFixWinUrl(uri)) {connectRpc(it)}

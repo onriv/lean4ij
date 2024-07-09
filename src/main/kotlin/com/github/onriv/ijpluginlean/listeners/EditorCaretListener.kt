@@ -34,6 +34,8 @@ class EditorCaretListener(val project: Project) : CaretListener {
 
         @Synchronized
         fun register(project: Project) {
+            // TODO remove this
+             return
             // TODO what's the different with Editor and FileEditor?
             // TODO real log
             val editor: Editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return

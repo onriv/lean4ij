@@ -78,13 +78,57 @@ class InteractiveGoalsParams(
 // TODO this is Lean's source code's def, but the json seems to be just String
 // data class FVarId (val name: String)
 
-// see: tests/lean/interactive/run.lean:11
-data class SubexprInfo (val subexprPos: String, val dataStatus: String)
+/**
+ * TODO weird, this is not consistent with the Lean's code
+ * but the json file seems it only has a p
+ */
+data class ContextInfo(val p : String)
 
-interface CodeWithInfos
-data class CodeWithInfosText (val text: String) : CodeWithInfos
-data class CodeWithInfosAppend (val append: List<CodeWithInfos>) : CodeWithInfos
-data class CodeWithInfosTag (val a1: SubexprInfo, val a2: CodeWithInfos) : CodeWithInfos
+// see: tests/lean/interactive/run.lean:11
+data class SubexprInfo (val subexprPos: String, val info: ContextInfo, val diffStatus: String?)
+
+/**
+ * from
+ * /-- The minimal structure needed to represent "string with interesting (tagged) substrings".
+ * Much like Lean 3 [`sf`](https://github.com/leanprover-community/mathlib/blob/bfa6bbbce69149792cc009ab7f9bc146181dc051/src/tactic/interactive_expr.lean#L38),
+ * but with indentation already stringified. -/
+ * inductive TaggedText (α : Type u) where
+ *   | text   : String → TaggedText α
+ *   /-- Invariants:
+ *   - non-empty
+ *   - no adjacent `text` elements (they should be collapsed)
+ *   - no directly nested `append`s (but `append #[tag _ (append ..)]` is okay) -/
+ *   | append : Array (TaggedText α) → TaggedText α
+ *   | tag    : α → TaggedText α → TaggedText α
+ *   deriving Inhabited, BEq, Repr, FromJson, ToJson
+ *   in file src\Lean\Widget\TaggedText.lean
+ * and
+ *
+/-- Pretty-printed syntax (usually but not necessarily an `Expr`) with embedded `Info`s. -/
+abbrev CodeWithInfos := TaggedText SubexprInfo
+ from src/Lean/Widget/InteractiveCode.lean:45
+ */
+interface CodeWithInfos {
+    fun toInfoViewString() : String
+}
+data class CodeWithInfosText (val text: String) : CodeWithInfos {
+    override fun toInfoViewString() : String {
+        return text
+    }
+}
+
+data class CodeWithInfosAppend (val append: List<CodeWithInfos>) : CodeWithInfos {
+    override fun toInfoViewString() : String {
+        return append.joinToString("") { it.toInfoViewString() }
+    }
+}
+
+data class CodeWithInfosTag (val f0: SubexprInfo, val f1: CodeWithInfos) : CodeWithInfos {
+    override fun toInfoViewString() : String {
+        // TODO handle events
+        return f1.toInfoViewString()
+    }
+}
 
 // from src/Lean/Widget/InteractiveGoal.lean:51
 data class InteractiveHypothesisBundle(
@@ -104,13 +148,42 @@ data class InteractiveHypothesisBundle(
 //    val ctx: ContextInfo
 //)
 //
-//data class InteractiveGoal(
-//    val hyps: Array<InteractiveHypothesisBundle>,
-//    val type: CodeWithInfos,
-//    val ctx: ContextInfo,
-//    val userName: String? = null,
-//    val goalPrefix: String,
-//    val mvarId: MVarId,
-//    val isInserted: Boolean? = null,
-//    val isRemoved: Boolean? = null
-//)
+ class InteractiveGoal(
+    val userName: String? = null,
+    val type: CodeWithInfos,
+    val mvarId: String,
+    val isInserted: Boolean? = null,
+    val hyps: Array<InteractiveHypothesisBundle>,
+    val ctx: ContextInfo,
+    val goalPrefix: String,
+    val isRemoved: Boolean? = null) {
+
+     fun toInfoViewString() : String {
+         val sb = StringBuilder()
+         if (userName != null) {
+             sb.append("case $userName\n")
+         }
+         // TODO hyps
+         sb.append("⊢ ${type.toInfoViewString()}\n")
+         return sb.toString()
+     }
+ }
+
+class InteractiveGoals(
+    val goals : List<InteractiveGoal>) {
+
+    /**
+     * This is from https://github.com/Julian/lean.nvim/blob/03f7437/lua/lean/infoview/components.lua
+     */
+    fun toInfoViewString() : String {
+        val sb = StringBuilder()
+        if (goals.isEmpty()) {
+            return "goals accomplished 🎉\n"
+        }
+        sb.append("${goals.size} goals\n")
+        for (goal in goals) {
+            sb.append(goal.toInfoViewString())
+        }
+        return sb.toString()
+    }
+}

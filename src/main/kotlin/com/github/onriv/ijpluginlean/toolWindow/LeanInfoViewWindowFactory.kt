@@ -1,8 +1,11 @@
 package com.github.onriv.ijpluginlean.toolWindow
 
 // https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html#ui-dsl-basics
+import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoals
+import com.github.onriv.ijpluginlean.lsp.data.gson
 import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.github.onriv.ijpluginlean.services.MyProjectService
+import com.google.common.io.Resources
 import com.google.gson.Gson
 import com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
@@ -37,6 +40,7 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.*
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.dsl.builder.panel
+import java.nio.charset.StandardCharsets
 import javax.swing.*
 
 
@@ -242,30 +246,11 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // setContent(component)
             // setContent(createInfoView())
 
+            // TODO this is for testing, remove it
             val s = tryInteractive()
-            val t = render(s as Map<*, *>)
-            editor.document.setText("""S01_Structures.lean:80:9
-Tactic state
-3 goals
-case x
-a b : Point
-⊢ (match a, b with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
-  (match b, a with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x
-case y
-a b : Point
-⊢ (match a, b with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).y =
-  (match b, a with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).y
-case z
-a b : Point
-⊢ (match a, b with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).z =
-  (match b, a with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).z
-            """)
+            // val t = render(s as Map<*, *>)
+            val goalText = s.toInfoViewString()
+            editor.document.setText(goalText)
             val support = EditorHyperlinkSupport.get(editor)
 //            support.addHighlighter(20, 30,
 //                 TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes
@@ -294,7 +279,10 @@ a b : Point
                     if (hyperLink != null) {
                         support.removeHyperlink(hyperLink!!)
                     }
-                    hyperLink = support.createHyperlink(e.offset, e.offset+10, null, ShowTextPopupHyperlinkInfo("TODO11", "docod111"))
+                    if (!e.isOverText) {
+                        return
+                    }
+                    hyperLink = support.createHyperlink(e.offset, e.offset+10, null, ShowTextPopupHyperlinkInfo("${goalText[e.offset]}", "TODO"))
                 }
             })
             editor.addEditorMouseListener(object : EditorMouseListener {
@@ -521,8 +509,8 @@ a b : Point
             return panel
         }
 
-        fun tryInteractive() : Any {
-            val s =  Gson().fromJson("""
+        fun tryInteractive() : InteractiveGoals {
+            return gson.fromJson("""
                 {
                     "goals": [
                         {
@@ -3813,8 +3801,7 @@ a b : Point
                     ]
                 }
                 
-            """.trimIndent(), Any::class.java)
-            return s
+            """, InteractiveGoals::class.java)
         }
 
     }

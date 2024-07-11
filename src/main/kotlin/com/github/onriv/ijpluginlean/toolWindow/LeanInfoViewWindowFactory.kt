@@ -5,27 +5,23 @@ import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoals
 import com.github.onriv.ijpluginlean.lsp.data.gson
 import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.github.onriv.ijpluginlean.services.MyProjectService
-import com.google.common.io.Resources
-import com.google.gson.Gson
 import com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.openapi.observable.util.addMouseHoverListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -40,7 +36,7 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.*
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.dsl.builder.panel
-import java.nio.charset.StandardCharsets
+import java.awt.Color
 import javax.swing.*
 
 
@@ -282,7 +278,20 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     if (!e.isOverText) {
                         return
                     }
-                    hyperLink = support.createHyperlink(e.offset, e.offset+10, null, ShowTextPopupHyperlinkInfo("${goalText[e.offset]}", "TODO"))
+                    var c = s.getCodeText(e.offset)
+                    if (c == null) {
+                        return
+                    }
+                    hyperLink = support.createHyperlink(
+                        c.startOffset,
+                        c.endOffset,
+                        object : TextAttributes() {
+                            override fun getBackgroundColor(): Color {
+                                return Color.decode("#add6ff")
+                            }
+                        },
+                        ShowTextPopupHyperlinkInfo("${c.codeText}", c.codeText)
+                    )
                 }
             })
             editor.addEditorMouseListener(object : EditorMouseListener {

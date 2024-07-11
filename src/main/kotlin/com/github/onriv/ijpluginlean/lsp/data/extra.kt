@@ -113,25 +113,81 @@ data class SubexprInfo (val subexprPos: String, val info: ContextInfo, val diffS
 abbrev CodeWithInfos := TaggedText SubexprInfo
  from src/Lean/Widget/InteractiveCode.lean:45
  */
-interface CodeWithInfos {
-    fun toInfoViewString() : String
+abstract class CodeWithInfos {
+    @Transient
+    var startOffset : Int = -1
+
+    @Transient
+    var endOffset : Int = -1
+
+    @Transient
+    var codeText : String = ""
+
+    @Transient
+    protected  var parent : CodeWithInfos? = null
+
+    abstract fun toInfoViewString(startOffset: Int, parent : CodeWithInfos?) : String
+
+    // TODO kotlin way to do this
+//    fun getStartOffset() = startOffset
+//
+//    // TODO kotlin way to do this
+//    fun getEndOffset() = endOffset
+
+    // TODO kotlin way to do this
+    abstract fun getCodeText(offset: Int) : CodeWithInfos?
+
 }
-data class CodeWithInfosText (val text: String) : CodeWithInfos {
-    override fun toInfoViewString() : String {
+class CodeWithInfosText (val text: String) : CodeWithInfos() {
+
+    override fun toInfoViewString(startOffset: Int, parent: CodeWithInfos?) : String {
+        this.parent = parent
+        this.startOffset = startOffset
+        this.endOffset = startOffset+text.length
+        this.codeText = text
         return text
     }
-}
 
-data class CodeWithInfosAppend (val append: List<CodeWithInfos>) : CodeWithInfos {
-    override fun toInfoViewString() : String {
-        return append.joinToString("") { it.toInfoViewString() }
+    override fun getCodeText(offset: Int) : CodeWithInfos? {
+        return this.parent
     }
 }
 
-data class CodeWithInfosTag (val f0: SubexprInfo, val f1: CodeWithInfos) : CodeWithInfos {
-    override fun toInfoViewString() : String {
+class CodeWithInfosAppend (val append: List<CodeWithInfos>) : CodeWithInfos() {
+    override fun toInfoViewString(startOffset: Int, parent: CodeWithInfos?) : String {
+        this.parent = parent
+        this.startOffset = startOffset
+        val sb = StringBuilder()
+        for (c in append) {
+            sb.append(c.toInfoViewString(startOffset+sb.length, this))
+        }
+        this.endOffset=startOffset+sb.length
+        this.codeText = sb.toString()
+        return this.codeText
+    }
+
+    override fun getCodeText(offset: Int): CodeWithInfos? {
+        for (c in append) {
+            if (c.startOffset <= offset && offset < c.endOffset) {
+                return c.getCodeText(offset)
+            }
+        }
+        return null
+    }
+}
+
+class CodeWithInfosTag (val f0: SubexprInfo, val f1: CodeWithInfos) : CodeWithInfos() {
+    override fun toInfoViewString(startOffset: Int, parent: CodeWithInfos?) : String {
+        this.parent = parent
         // TODO handle events
-        return f1.toInfoViewString()
+        this.startOffset = startOffset
+        this.codeText = f1.toInfoViewString(startOffset, this)
+        this.endOffset = startOffset+this.codeText.length
+        return this.codeText
+    }
+
+    override fun getCodeText(offset: Int): CodeWithInfos? {
+        return f1.getCodeText(offset)
     }
 }
 
@@ -163,16 +219,36 @@ data class InteractiveHypothesisBundle(
     val goalPrefix: String,
     val isRemoved: Boolean? = null) {
 
-     fun toInfoViewString() : String {
+    @Transient
+     private var startOffset : Int = -1
+
+    @Transient
+    private var endOffset : Int = -1
+
+     fun toInfoViewString(startOffset: Int) : String {
+         this.startOffset = startOffset
          val sb = StringBuilder()
          if (userName != null) {
              sb.append("case $userName\n")
          }
          // TODO hyps
-         sb.append("⊢ ${type.toInfoViewString()}\n")
+         sb.append("⊢ ")
+         sb.append("${type.toInfoViewString(startOffset+sb.length, null)}\n")
+         this.endOffset = startOffset+sb.count()
          return sb.toString()
      }
- }
+
+    // TODO try DIY this
+    // TODO kotlin way to do this
+    fun getStartOffset() = startOffset
+
+    // TODO kotlin way to do this
+    fun getEndOffset() = endOffset
+
+    fun getCodeText(offset: Int) : CodeWithInfos? {
+        return type.getCodeText(offset)
+    }
+}
 
 class InteractiveGoals(
     val goals : List<InteractiveGoal>) {
@@ -187,9 +263,19 @@ class InteractiveGoals(
         }
         sb.append("${goals.size} goals\n")
         for (goal in goals) {
-            sb.append(goal.toInfoViewString())
+            sb.append(goal.toInfoViewString(sb.length))
         }
         return sb.toString()
+    }
+
+    // TODO all these and above can be ut
+    fun getCodeText(offset : Int) : CodeWithInfos? {
+        for (goal in goals) {
+            if (goal.getStartOffset() <= offset && offset < goal.getEndOffset()) {
+                return goal.getCodeText(offset)
+            }
+        }
+        return null
     }
 }
 

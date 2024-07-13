@@ -5,6 +5,7 @@ import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoals
 import com.github.onriv.ijpluginlean.lsp.data.gson
 import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.github.onriv.ijpluginlean.services.MyProjectService
+import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -25,10 +26,12 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.EditorSettingsProvider
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ScrollPaneFactory
@@ -36,7 +39,11 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.*
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.dsl.builder.panel
+import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
+import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.markdown.parser.MarkdownParser
 import java.awt.Color
+import java.awt.Dimension
 import javax.swing.*
 
 
@@ -282,6 +289,17 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     if (c == null) {
                         return
                     }
+                    val src = """
+                                Structure instance. `{ x := e, ... }` assigns `e` to field `x`, which may be
+                                inherited. If `e` is itself a variable called `x`, it can be elided:
+                                `fun y => { x := 1, y }`.
+                                A *structure update* of an existing value can be given via `with`:
+                                `{ point with x := 1 }`.The structure type can be specified if not inferable:
+                                `{ x := 1, y := 2 : Point }`.
+                                """.trimIndent()
+                    val flavour = CommonMarkFlavourDescriptor()
+                    val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(src)
+                    val html = HtmlGenerator(src, parsedTree, flavour).generateHtml()
                     hyperLink = support.createHyperlink(
                         c.startOffset,
                         c.endOffset,
@@ -290,7 +308,56 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                                 return Color.decode("#add6ff")
                             }
                         },
-                        ShowTextPopupHyperlinkInfo("${c.codeText}", c.codeText)
+                        // ref ShowTextPopupHyperlinkInfo
+                        object : HyperlinkInfo {
+                            override fun navigate(project: Project) {
+                                ApplicationManager.getApplication().invokeLater {
+//                                    val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text))
+//                                    val textField = object : EditorTextField(document, project, FileTypes.PLAIN_TEXT, true, false) {
+//                                        override fun createEditor(): EditorEx {
+//                                            val editor = super.createEditor()
+//                                            editor.scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+//                                            editor.scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+//                                            editor.settings.isUseSoftWraps = true
+//                                            return editor
+//                                        }
+//                                    }
+//
+                                    // ref : https://youtrack.jetbrains.com/issue/IJPL-148864/Cant-change-link-style-when-using-JBHtmlEditorKit-JBHtmlPane
+                                    // TODO handling style for this
+                                    val doc = JEditorPane().apply {
+                                        contentType = "text/html"
+                                        text = html
+                                    }
+                                    val expr = createEditor()
+                                    expr.document.setText("""(match a, b with
+    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
+  (match b, a with
+    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x""")
+                                    val popup = panel {
+                                        row {
+                                            cell(expr.component)
+                                        }
+                                        row {
+                                            cell(doc)
+                                        }
+                                    }
+                                    WindowManager.getInstance().getFrame(project)?.size?.let {
+                                        doc.preferredSize = Dimension(it.width / 2, it.height / 2)
+                                    }
+
+                                    JBPopupFactory.getInstance()
+                                        .createComponentPopupBuilder(popup, popup)
+                                        // .setTitle(title)
+                                        // .setResizable(true)
+                                        .setMovable(true)
+                                        .setRequestFocus(true)
+                                        .createPopup()
+                                        .showCenteredInCurrentWindow(project)
+                                }
+                            }
+
+                        }
                     )
                 }
             })

@@ -36,10 +36,13 @@ class CodeWithInfosDocumentationHyperLink(
         val type: CodeWithInfos = gson.fromJson(gson.toJson(infoToInteractive["type"]), CodeWithInfos::class.java)
         val exprExplicit: CodeWithInfos =
             gson.fromJson(gson.toJson(infoToInteractive["exprExplicit"]), CodeWithInfos::class.java)
-        val markdownDoc: String = infoToInteractive["doc"] as String
-        val flavour = CommonMarkFlavourDescriptor()
-        val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
-        val htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
+        var htmlDoc : String? = null
+        if (infoToInteractive["doc"] != null) {
+            val markdownDoc: String = infoToInteractive["doc"] as String
+            val flavour = CommonMarkFlavourDescriptor()
+            val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
+            htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
+        }
         val typeStr = type.toInfoViewString(0, null)
         val exprStr = exprExplicit.toInfoViewString(0, null)
         createPopupPanel("$exprStr : $typeStr", htmlDoc)
@@ -71,17 +74,19 @@ class CodeWithInfosDocumentationHyperLink(
         return editor
     }
 
-    fun createPopupPanel(typeAndExpr: String, doc: String) {
-        val typeAndExpr = createExprPanel(typeAndExpr)
-        val docPanel = createDocPanel(doc)
+    fun createPopupPanel(typeAndExpr: String, doc: String?) {
+        val factory = JBPopupFactory.getInstance()
+        val typeAndExprPanel = createExprPanel(typeAndExpr)
         val jPanel = JPanel(VerticalLayout(1))
-        jPanel.add(typeAndExpr.component)
-        jPanel.add(docPanel)
+        jPanel.add(typeAndExprPanel.component)
+        if (doc != null) {
+            val docPanel = createDocPanel(doc)
+            jPanel.add(docPanel)
+        }
         val popup = JBScrollPane(jPanel)
         popup.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
         popup.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 
-        val factory = JBPopupFactory.getInstance()
         factory.createComponentPopupBuilder(popup, popup)
             // .setTitle(title)
             // .setResizable(true)

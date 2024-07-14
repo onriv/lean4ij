@@ -5,8 +5,9 @@ import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoals
 import com.github.onriv.ijpluginlean.lsp.data.gson
 import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.github.onriv.ijpluginlean.services.MyProjectService
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMaxWidth
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMinWidth
 import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -22,11 +23,13 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -36,9 +39,16 @@ import com.intellij.ui.EditorSettingsProvider
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.components.*
+import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.util.maximumWidth
+import com.intellij.ui.util.preferredHeight
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.MarkdownParser
@@ -330,30 +340,115 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                                         text = html
                                     }
                                     val expr = createEditor()
+                                    val testT = """(match a, b with
+    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
+  (match b, a with
+    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x"""
                                     expr.document.setText("""(match a, b with
     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
   (match b, a with
     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x""")
+                                    val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(testT))
+                                    val textField = object : EditorTextField(document, project, FileTypes.PLAIN_TEXT, true, false) {
+                                        override fun createEditor(): EditorEx {
+                                            val editor = super.createEditor()
+                                            editor.scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+                                            editor.scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+                                            editor.settings.isUseSoftWraps = true
+                                            return editor
+                                        }
+                                    }
+                                    val popup1 = JBScrollPane()
+                                    popup1.add(expr.component)
+                                    popup1.add(doc)
                                     val popup = panel {
                                         row {
-                                            cell(expr.component)
+                                            scrollCell(expr.component)
                                         }
                                         row {
-                                            cell(doc)
+                                            scrollCell(doc)
                                         }
                                     }
+                                    val size = toolWindow.component.size
+                                    val fontSize = expr.colorsScheme.editorFontSize
+                                    val lineSpacing = expr.lineHeight
                                     WindowManager.getInstance().getFrame(project)?.size?.let {
-                                        doc.preferredSize = Dimension(it.width / 2, it.height / 2)
+                                         doc.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+                                         val result = doc.preferredSize
+                                         doc.preferredSize = Dimension(size.width*8/10, result.height)
+                                         // TODO call size
+                                         expr.component.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+                                         val result1 = expr.component.preferredSize
+                                        expr.component.size = Dimension(size.width*8/10, result1.height)
                                     }
+                                    popup1.preferredSize = Dimension(size.width*8/10, size.height*2/5)
+                                    popup.withPreferredWidth(size.width*8/10)
 
-                                    JBPopupFactory.getInstance()
-                                        .createComponentPopupBuilder(popup, popup)
+                                    // val p = object:JFrame() {
+                                    //     init {
+                                    //         add(expr.component)
+                                    //         add(doc)
+                                    //     }
+                                    //
+                                    //     // override fun getMinimumSize() : Dimension {
+                                    //     //     return Dimension(size.width*8/10, size.height)
+                                    //     // }
+                                    //     // override fun getPreferredSize(): Dimension {
+                                    //     //     // return super.getPreferredSize()
+                                    //     //     // expr.component.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+                                    //     //     // doc.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+                                    //     //     // expr.component.revalidate()
+                                    //     //     // doc.revalidate()
+                                    //     //     // return Dimension(size.width*8/10, 2*(expr.component.preferredHeight+doc.preferredHeight))
+                                    //     //     return Dimension(0, 300)
+                                    //     // }
+                                    // }
+                                    val p = JFrame()
+                                    p.layout = VerticalLayout(1)
+                                    // Add components vertically
+                                    p.add(expr.component)
+                                    p.add(doc)
+                                    p.pack()
+                                    p.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+                                    p.revalidate()
+                                    val p1 = JPanel(VerticalLayout(1))
+                                    p1.add(expr.component)
+                                    p1.add(doc)
+                                    // p1.preferredSize = Dimension(size.width*8/10, expr.height)
+                                    val popup2 = object: JBScrollPane(p1) {
+                                        // override fun getPreferredSize(): Dimension {
+                                        //     // return super.getPreferredSize()
+                                        //     return p.size
+                                        // }
+
+                                        // override fun getMinimumSize() : Dimension {
+                                        //     return Dimension(size.width*8/10, size.height*6/10)
+                                        // }
+                                    }
+//                                    popup2.add(expr.component)
+//                                    popup2.add(doc)
+//                                    popup2.revalidate();
+                                   popup2.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+                                   // popup2.preferredSize = p.size
+                                   // popup2.minimumHeight = doc.minimumHeight + expr.component.minimumHeight
+                                   //  popup2.size = Dimension(size.width*8/10, Math.min(doc.height + expr.component.height + 2, size.height*3/5))
+                                   popup2.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+                                    // popup2.preferredSize = Dimension(size.width*8/10, size.height*2/5)
+                                    // popup2.withPreferredWidth(size.width*8/10)
+                                    // popup2.withPreferredHeight(size.height*8/10)
+//                                    val popup2 = DocumentationScrollPane(p)
+                                    val factory = JBPopupFactory.getInstance()
+                                    factory.createComponentPopupBuilder(popup2, popup2)
                                         // .setTitle(title)
                                         // .setResizable(true)
                                         .setMovable(true)
                                         .setRequestFocus(true)
                                         .createPopup()
-                                        .showCenteredInCurrentWindow(project)
+                                        // .showInBestPositionFor(editor)
+                                        // .showInCenterOf(toolWindow.component)
+                                         // .showInFocusCenter()
+                                         .show(factory.guessBestPopupLocation(editor))
+//                                        .showCenteredInCurrentWindow(project)
                                 }
                             }
 
@@ -3881,4 +3976,24 @@ a b : Point
         }
 
     }
+
+    /**
+     * copy from com.intellij.codeInsight.documentation.DocumentationEditorPane#getPreferredContentWidth ...
+     */
+    private fun getPreferredContentWidth(textLength: Int): Int {
+        // Heuristics to calculate popup width based on the amount of the content.
+        // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
+        // 200 chars and less is 300px, 1000 chars and more is 500px.
+        // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
+        val contentLengthPreferredSize = if (textLength < 200) {
+            docPopupPreferredMinWidth
+        } else if (textLength > 200 && textLength < 1000) {
+            docPopupPreferredMinWidth +
+                    (textLength - 200) * (docPopupPreferredMaxWidth - docPopupPreferredMinWidth) / (1000 - 200)
+        } else {
+            docPopupPreferredMaxWidth
+        }
+        return scale(contentLengthPreferredSize)
+    }
+
 }

@@ -34,8 +34,6 @@ class EditorCaretListener(val project: Project) : CaretListener {
 
         @Synchronized
         fun register(project: Project) {
-            // TODO remove this
-             return
             // TODO what's the different with Editor and FileEditor?
             // TODO real log
             val editor: Editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
@@ -122,9 +120,10 @@ class EditorCaretListener(val project: Project) : CaretListener {
             try {
                 val plainGoal = LeanLspServerManager.getInstance(project).plainGoal(file, caret)
                 val plainTermGoal = LeanLspServerManager.getInstance(project).plainTermGoal(file, caret)
-                LeanInfoViewWindowFactory.updateGoal(project, file, caret, plainGoal, plainTermGoal)
+                // LeanInfoViewWindowFactory.updateGoal(project, file, caret, plainGoal, plainTermGoal)
                 //  Error response from server: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Outdated RPC sessios
                 val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
+                LeanInfoViewWindowFactory.updateInteractiveGoal(project, file, caret, interactiveGoal)
                 println(interactiveGoal)
             } catch (e: Exception) {
                 // TODO handle it

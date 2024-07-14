@@ -80,6 +80,17 @@ class InteractiveGoalsParams(
     position: Position) :
     TextDocumentPositionParams(textDocument, position)
 
+/**
+ * TODO DRY
+ */
+class InteractiveInfoParams(
+    val sessionId : String,
+    val method: String,
+    val params: ContextInfo,
+    textDocument: TextDocumentIdentifier,
+    position: Position) :
+    TextDocumentPositionParams(textDocument, position)
+
 // TODO this is Lean's source code's def, but the json seems to be just String
 // data class FVarId (val name: String)
 
@@ -124,7 +135,7 @@ abstract class CodeWithInfos {
     var codeText : String = ""
 
     @Transient
-    protected  var parent : CodeWithInfos? = null
+    var parent : CodeWithInfos? = null
 
     abstract fun toInfoViewString(startOffset: Int, parent : CodeWithInfos?) : String
 
@@ -149,7 +160,7 @@ class CodeWithInfosText (val text: String) : CodeWithInfos() {
     }
 
     override fun getCodeText(offset: Int) : CodeWithInfos? {
-        return this.parent
+        return this
     }
 }
 

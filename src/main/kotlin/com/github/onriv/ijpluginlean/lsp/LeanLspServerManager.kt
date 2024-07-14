@@ -121,10 +121,9 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
     }
 
     fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any {
-        val sessionId = getSession(file.toString())
+        val sessionId = getSession(file.toString(), retry > 1)
         val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
         val logicalPosition = caret.logicalPosition
-        caret.offset
         val position = Position(line=logicalPosition.line, character = logicalPosition.column)
         val rpcParams = InteractiveGoalsParams(
             sessionId = sessionId,
@@ -136,10 +135,11 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
             textDocument = textDocument,
             position = position
         )
-        // TODO according to lean's src code, here it's chance it failed
-        //      and must reconnect
         try {
             val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
+            if (resp == null && retry < 2) {
+                return getInteractiveGoals(file, caret, retry + 1)
+            }
             return resp!!
         } catch (e: ResponseErrorException) {
             if (e.message!!.contains("Outdated RPC session") && retry < 2) {
@@ -149,12 +149,37 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
         }
     }
 
-//
-//    fun infoToInteractive(info: ) {
-//
-//    }
+    fun infoToInteractive(file: VirtualFile, caret: Caret, params: ContextInfo, retry: Int = 0): Any {
+        // TODO DRY
+        val sessionId = getSession(file.toString(), retry > 1)
+        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+        val logicalPosition = caret.logicalPosition
+        val position = Position(line = logicalPosition.line, character = logicalPosition.column)
+        val rpcParams = InteractiveInfoParams(
+            sessionId = sessionId,
+            method = "Lean.Widget.InteractiveDiagnostics.infoToInteractive",
+            params = params,
+            textDocument = textDocument,
+            position = position
+        )
+        try {
+            val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
+            if (resp == null && retry < 2) {
+                return infoToInteractive(file, caret, params, retry + 1)
+            }
+            return resp!!
+        } catch (e: ResponseErrorException) {
+            if (e.message!!.contains("Outdated RPC session") && retry < 2) {
+                return infoToInteractive(file, caret, params,retry + 1)
+            }
+            throw e;
+        }
+    }
 
-    fun getSession(uri: String): String {
+    fun getSession(uri: String, force: Boolean = false): String {
+        if (force) {
+            sessions.remove(tryFixWinUrl(uri))
+        }
         return sessions.computeIfAbsent(tryFixWinUrl(uri)) {connectRpc(it)}
     }
 

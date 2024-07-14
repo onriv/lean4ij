@@ -1,6 +1,7 @@
 package com.github.onriv.ijpluginlean.toolWindow
 
 // https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html#ui-dsl-basics
+import com.github.onriv.ijpluginlean.lsp.data.CodeWithInfosTag
 import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoals
 import com.github.onriv.ijpluginlean.lsp.data.gson
 import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
@@ -8,6 +9,7 @@ import com.github.onriv.ijpluginlean.services.MyProjectService
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMaxWidth
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMinWidth
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -93,6 +95,57 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             infoViewWindow.updateGoal(contentBuilder.toString())
         }
 
+        fun updateInteractiveGoal(project: Project, file: VirtualFile?, caret: Caret, interactiveGoalsAny: Any) {
+            // from https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
+            val infoViewWindow = ToolWindowManager.getInstance(project).getToolWindow("LeanInfoViewWindow")!!.contentManager.contents[0].component as
+                    LeanInfoViewWindowFactory.LeanInfoViewWindow
+            val interactiveGoals : InteractiveGoals = gson.fromJson(gson.toJson(interactiveGoalsAny), InteractiveGoals::class.java)
+            val interactiveGoalsText = interactiveGoals.toInfoViewString()
+
+            ApplicationManager.getApplication().invokeLater {
+                val infoViewWindowEditorEx: EditorEx = infoViewWindow.createEditor()
+                infoViewWindowEditorEx.document.setText(interactiveGoalsText)
+                val support = EditorHyperlinkSupport.get(infoViewWindowEditorEx)
+                infoViewWindow.setContent(infoViewWindowEditorEx.component)
+                infoViewWindowEditorEx.addEditorMouseMotionListener(object : EditorMouseMotionListener {
+                    var hyperLink: RangeHighlighter? = null
+                    override fun mouseMoved(e: EditorMouseEvent) {
+                        if (hyperLink != null) {
+                            support.removeHyperlink(hyperLink!!)
+                        }
+                        if (!e.isOverText) {
+                            return
+                        }
+                        val c = interactiveGoals.getCodeText(e.offset) ?: return
+                        var codeWithInfosTag : CodeWithInfosTag? = null
+                        if (c is CodeWithInfosTag) {
+                            codeWithInfosTag = c
+                        } else if (c.parent != null && c.parent!! is CodeWithInfosTag) {
+                            codeWithInfosTag = c.parent!! as CodeWithInfosTag
+                        } else if (c.parent != null && c.parent!!.parent != null && c.parent!!.parent!! is CodeWithInfosTag) {
+                            codeWithInfosTag = c.parent!!.parent!! as CodeWithInfosTag
+                        }
+                        if (codeWithInfosTag == null) {
+                            return
+                        }
+
+                        if (c.parent == null || c.parent!!.parent == null) {
+                            return
+                        }
+                        hyperLink = support.createHyperlink(
+                            c.parent!!.startOffset,
+                            c.parent!!.endOffset,
+                            object : TextAttributes() {
+                                override fun getBackgroundColor(): Color {
+                                    return Color.decode("#add6ff")
+                                }
+                            },
+                            CodeWithInfosDocumentationHyperLink(infoViewWindow, file!!, caret, codeWithInfosTag)
+                        )
+                    }
+                })
+            }
+        }
 
     }
 
@@ -113,417 +166,417 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         private val service = toolWindow.project.service<MyProjectService>()
         private val infoViewService = toolWindow.project.service<ExternalInfoViewService>()
         private val goals = JEditorPane()
-        private var editor : EditorEx
+        private var editor : EditorEx = createEditor()
 
         private val BORDER = BorderFactory.createEmptyBorder(3, 0, 5, 0)
 
-        init {
-            // TODO this is copy from intellij-arend and it's wrong (it's fro SearchRender in intellij-arend)
-            goals.contentType = "text/html"
-            goals.border = BORDER
-            goals.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
-            goals.font = JBTextArea().font
-
-            editor = EditorFactory.getInstance().createViewer(DocumentImpl(" ", true), toolWindow.project) as EditorEx
-            with(editor.settings) {
-                isRightMarginShown = false
-                isLineNumbersShown = false
-                isLineMarkerAreaShown = false
-                isRefrainFromScrolling = true
-                isCaretRowShown = false
-                isUseSoftWraps = true
-                setGutterIconsShown(false)
-                additionalLinesCount = 0
-                additionalColumnsCount = 1
-                isFoldingOutlineShown = false
-                isVirtualSpace = false
-            }
-            editor.headerComponent = null
-            editor.setCaretEnabled(false)
-            editor.setHorizontalScrollbarVisible(false)
-            editor.setVerticalScrollbarVisible(false)
-            editor.isRendererMode = true
-
-            val list = JBList(arrayOf("Item 1", "Item 2", "Item 3"))
-            list.selectionMode = ListSelectionModel.SINGLE_SELECTION
-
-            val scrollPane = JBScrollPane()
-            scrollPane.isVisible = true // Initially visible
-
-            // Add your custom logic to toggle visibility (e.g., button click)
-
-            scrollPane.add(list)
-            // scrollPane.add(editor.component)
-
-            // setContent(editor.component)
-
-//            val mySplitter = JBSplitter(true, 0.35f, 0.15f, 0.85f)
-//            mySplitter.setDividerWidth(3);
-//            val myComponent = JBUI.Panels.simplePanel();
-//            // myComponent.add(mySplitter, BorderLayout.CENTER);
-//            val currentMessages = JBUI.Panels.simplePanel()
-//            val tacticState = JBUI.Panels.simplePanel()
-//            val goals = JBUI.Panels.simplePanel()
-//            val expectedType = JBUI.Panels.simplePanel()
-            val expectedTypeEditor = createEditor()
-            expectedTypeEditor.document.setText("""⊢ ∀ {C : Type u} [inst : Category.{v, u} C] [inst_1 : HasLimits C] {D : Type u'} [inst_2 : Category.{v', u'} D] [inst_3 : HasLimits D] (F : C ⥤ D) [inst_4 : PreservesLimits F] {W X Y Z S T : C} (f₁ : W ⟶ S) (f₂ : X ⟶ S) (g₁ : Y ⟶ T) (g₂ : Z ⟶ T) (i₁ : W ⟶ Y) (i₂ : X ⟶ Z) (i₃ : S ⟶ T) (eq₁ : f₁ ≫ i₃ = i₁ ≫ g₁) (eq₂ : f₂ ≫ i₃ = i₂ ≫ g₂), F.map (pullback.map f₁ f₂ g₁ g₂ i₁ i₂ i₃ eq₁ eq₂) ≫ (PreservesPullback.iso F g₁ g₂).hom = (PreservesPullback.iso F f₁ f₂).hom ≫ pullback.map (F.map f₁) (F.map f₂) (F.map g₁) (F.map g₂) (F.map i₁) (F.map i₂) (F.map i₃) ⋯ ⋯ """)
-//            expectedType.add(JBLabel("▼ Current Message"))
-//            expectedType.add(expectedTypeEditor.component)
-//            tacticState.add(goals)
-//            currentMessages.add(tacticState)
-//            currentMessages.add(expectedType)
-////                JBLabel("▼ Current ")
-//            myComponent.add(currentMessages)
-//            // mySplitter.firstComponent = loadingLabel
-//            val secondComponent = JBUI.Panels.simplePanel(editor.component)
-            // mySplitter.secondComponent = secondComponent
-
-//            val myComponent = object : DialogPanel {
-//                collapsibleGroup("Title") {
-//                    row("Row:") {
-//                        textField()
-//                    }
-//                }
-//            }
-//            val component = panel {
-//                panel {
-//                    collapsibleGroup("Current Line (TODO)") {
-//                        collapsibleGroup("Tactic State (TODO)") {
-//                            row {
-//                                cell(expectedTypeEditor.component)
-//                            }
-//                        }
-//                    }
-//                }
-//                panel {
-//                    collapsibleGroup("All Messages") {
-//                    }
-//                }
+//         init {
+//             // TODO this is copy from intellij-arend and it's wrong (it's fro SearchRender in intellij-arend)
+//             goals.contentType = "text/html"
+//             goals.border = BORDER
+//             goals.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
+//             goals.font = JBTextArea().font
 //
-////                rowsRange {
-////                    row("Panel.rowsRange row:") {
-////                        textField()
-////                    }.rowComment("Panel.rowsRange is similar to Panel.panel but uses the same grid as parent. " +
-////                            "Useful when grouped content should be managed together with RowsRange.enabledIf for example")
-////                }
-////
-////                group("Panel.group") {
-////                    row("Panel.group row:") {
-////                        textField()
-////                    }.rowComment("Panel.group adds panel with independent grid, title and some vertical space before/after the group")
-////                }
-////
-////                groupRowsRange("Panel.groupRowsRange") {
-////                    row("Panel.groupRowsRange row:") {
-////                        textField()
-////                    }.rowComment("Panel.groupRowsRange is similar to Panel.group but uses the same grid as parent. " +
-////                            "See how aligned Panel.rowsRange row")
-////                }
-////
-////                collapsibleGroup("Panel.collapsible&Group") {
-////                    row("Panel.collapsibleGroup row:") {
-////                        textField()
-////                    }.rowComment("Panel.collapsibleGroup adds collapsible panel with independent grid, title and some vertical " +
-////                            "space before/after the group. The group title is focusable via the Tab key and supports mnemonics")
-////                }
-////
-////                var value = true
-////                buttonsGroup("Panel.buttonGroup:") {
-////                    row {
-////                        radioButton("true", true)
-////                    }
-////                    row {
-////                        radioButton("false", false)
-////                    }.rowComment("Panel.buttonGroup unions Row.radioButton in one group. Must be also used for Row.checkBox if they are grouped " +
-////                            "with some title")
-////                }.bind({ value }, { value = it })
-////
-////                separator()
-////                    .rowComment("Use separator() for horizontal separator")
-////
-////                row {
-////                    label("Use Row.panel for creating panel in a cell:")
-////                    panel {
-////                        row("Sub panel row 1:") {
-////                            textField()
-////                        }
-////                        row("Sub panel row 2:") {
-////                            textField()
-////                        }
-////                    }
-////                }
-//            }
-
-
-
-            // setContent(component)
-            // setContent(createInfoView())
-
-            // TODO this is for testing, remove it
-            val s = tryInteractive()
-            // val t = render(s as Map<*, *>)
-            val goalText = s.toInfoViewString()
-            editor.document.setText(goalText)
-            val support = EditorHyperlinkSupport.get(editor)
-//            support.addHighlighter(20, 30,
-//                 TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes
-//                )
-//            support.createHyperlink(1, 10,
-//                null,
-//                // TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes,
-//                ShowTextPopupHyperlinkInfo("TODO", "docod"))
-//            var createHyperlink = support.createHyperlink(
-//                0, 1,
-//                null,
-//                // TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes,
-//                ShowTextPopupHyperlinkInfo("TODO11", "docod111")
-//            )
-//            var createHyperlink1 = support.createHyperlink(
-//                10, 12,
-//                null,
-//                // TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes,
-//                ShowTextPopupHyperlinkInfo("TODO11", "docod111")
-//            )
-            setContent(editor.component)
-//            editor.addEditor
-            editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-                var hyperLink: RangeHighlighter? = null
-                override fun mouseMoved(e: EditorMouseEvent) {
-                    if (hyperLink != null) {
-                        support.removeHyperlink(hyperLink!!)
-                    }
-                    if (!e.isOverText) {
-                        return
-                    }
-                    var c = s.getCodeText(e.offset)
-                    if (c == null) {
-                        return
-                    }
-                    val src = """
-                                Structure instance. `{ x := e, ... }` assigns `e` to field `x`, which may be
-                                inherited. If `e` is itself a variable called `x`, it can be elided:
-                                `fun y => { x := 1, y }`.
-                                A *structure update* of an existing value can be given via `with`:
-                                `{ point with x := 1 }`.The structure type can be specified if not inferable:
-                                `{ x := 1, y := 2 : Point }`.
-                                """.trimIndent()
-                    val flavour = CommonMarkFlavourDescriptor()
-                    val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(src)
-                    val html = HtmlGenerator(src, parsedTree, flavour).generateHtml()
-                    hyperLink = support.createHyperlink(
-                        c.startOffset,
-                        c.endOffset,
-                        object : TextAttributes() {
-                            override fun getBackgroundColor(): Color {
-                                return Color.decode("#add6ff")
-                            }
-                        },
-                        // ref ShowTextPopupHyperlinkInfo
-                        object : HyperlinkInfo {
-                            override fun navigate(project: Project) {
-                                ApplicationManager.getApplication().invokeLater {
-//                                    val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text))
-//                                    val textField = object : EditorTextField(document, project, FileTypes.PLAIN_TEXT, true, false) {
-//                                        override fun createEditor(): EditorEx {
-//                                            val editor = super.createEditor()
-//                                            editor.scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-//                                            editor.scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-//                                            editor.settings.isUseSoftWraps = true
-//                                            return editor
-//                                        }
-//                                    }
+//             editor = EditorFactory.getInstance().createViewer(DocumentImpl(" ", true), toolWindow.project) as EditorEx
+//             with(editor.settings) {
+//                 isRightMarginShown = false
+//                 isLineNumbersShown = false
+//                 isLineMarkerAreaShown = false
+//                 isRefrainFromScrolling = true
+//                 isCaretRowShown = false
+//                 isUseSoftWraps = true
+//                 setGutterIconsShown(false)
+//                 additionalLinesCount = 0
+//                 additionalColumnsCount = 1
+//                 isFoldingOutlineShown = false
+//                 isVirtualSpace = false
+//             }
+//             editor.headerComponent = null
+//             editor.setCaretEnabled(false)
+//             editor.setHorizontalScrollbarVisible(false)
+//             editor.setVerticalScrollbarVisible(false)
+//             editor.isRendererMode = true
 //
-                                    // ref : https://youtrack.jetbrains.com/issue/IJPL-148864/Cant-change-link-style-when-using-JBHtmlEditorKit-JBHtmlPane
-                                    // TODO handling style for this
-                                    val doc = JEditorPane().apply {
-                                        contentType = "text/html"
-                                        text = html
-                                    }
-                                    val expr = createEditor()
-                                    val testT = """(match a, b with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
-  (match b, a with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x"""
-                                    expr.document.setText("""(match a, b with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
-  (match b, a with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x""")
-                                    val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(testT))
-                                    val textField = object : EditorTextField(document, project, FileTypes.PLAIN_TEXT, true, false) {
-                                        override fun createEditor(): EditorEx {
-                                            val editor = super.createEditor()
-                                            editor.scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-                                            editor.scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-                                            editor.settings.isUseSoftWraps = true
-                                            return editor
-                                        }
-                                    }
-                                    val popup1 = JBScrollPane()
-                                    popup1.add(expr.component)
-                                    popup1.add(doc)
-                                    val popup = panel {
-                                        row {
-                                            scrollCell(expr.component)
-                                        }
-                                        row {
-                                            scrollCell(doc)
-                                        }
-                                    }
-                                    val size = toolWindow.component.size
-                                    val fontSize = expr.colorsScheme.editorFontSize
-                                    val lineSpacing = expr.lineHeight
-                                    WindowManager.getInstance().getFrame(project)?.size?.let {
-                                         doc.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
-                                         val result = doc.preferredSize
-                                         doc.preferredSize = Dimension(size.width*8/10, result.height)
-                                         // TODO call size
-                                         expr.component.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
-                                         val result1 = expr.component.preferredSize
-                                        expr.component.size = Dimension(size.width*8/10, result1.height)
-                                    }
-                                    popup1.preferredSize = Dimension(size.width*8/10, size.height*2/5)
-                                    popup.withPreferredWidth(size.width*8/10)
-
-                                    // val p = object:JFrame() {
-                                    //     init {
-                                    //         add(expr.component)
-                                    //         add(doc)
-                                    //     }
-                                    //
-                                    //     // override fun getMinimumSize() : Dimension {
-                                    //     //     return Dimension(size.width*8/10, size.height)
-                                    //     // }
-                                    //     // override fun getPreferredSize(): Dimension {
-                                    //     //     // return super.getPreferredSize()
-                                    //     //     // expr.component.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
-                                    //     //     // doc.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
-                                    //     //     // expr.component.revalidate()
-                                    //     //     // doc.revalidate()
-                                    //     //     // return Dimension(size.width*8/10, 2*(expr.component.preferredHeight+doc.preferredHeight))
-                                    //     //     return Dimension(0, 300)
-                                    //     // }
-                                    // }
-                                    val p = JFrame()
-                                    p.layout = VerticalLayout(1)
-                                    // Add components vertically
-                                    p.add(expr.component)
-                                    p.add(doc)
-                                    p.pack()
-                                    p.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
-                                    p.revalidate()
-                                    val p1 = JPanel(VerticalLayout(1))
-                                    p1.add(expr.component)
-                                    p1.add(doc)
-                                    // p1.preferredSize = Dimension(size.width*8/10, expr.height)
-                                    val popup2 = object: JBScrollPane(p1) {
-                                        // override fun getPreferredSize(): Dimension {
-                                        //     // return super.getPreferredSize()
-                                        //     return p.size
-                                        // }
-
-                                        // override fun getMinimumSize() : Dimension {
-                                        //     return Dimension(size.width*8/10, size.height*6/10)
-                                        // }
-                                    }
-//                                    popup2.add(expr.component)
-//                                    popup2.add(doc)
-//                                    popup2.revalidate();
-                                   popup2.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-                                   // popup2.preferredSize = p.size
-                                   // popup2.minimumHeight = doc.minimumHeight + expr.component.minimumHeight
-                                   //  popup2.size = Dimension(size.width*8/10, Math.min(doc.height + expr.component.height + 2, size.height*3/5))
-                                   popup2.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-                                    // popup2.preferredSize = Dimension(size.width*8/10, size.height*2/5)
-                                    // popup2.withPreferredWidth(size.width*8/10)
-                                    // popup2.withPreferredHeight(size.height*8/10)
-//                                    val popup2 = DocumentationScrollPane(p)
-                                    val factory = JBPopupFactory.getInstance()
-                                    factory.createComponentPopupBuilder(popup2, popup2)
-                                        // .setTitle(title)
-                                        // .setResizable(true)
-                                        .setMovable(true)
-                                        .setRequestFocus(true)
-                                        .createPopup()
-                                        // .showInBestPositionFor(editor)
-                                        // .showInCenterOf(toolWindow.component)
-                                         // .showInFocusCenter()
-                                         .show(factory.guessBestPopupLocation(editor))
-//                                        .showCenteredInCurrentWindow(project)
-                                }
-                            }
-
-                        }
-                    )
-                }
-            })
-            editor.addEditorMouseListener(object : EditorMouseListener {
-
-            })
-            var editorTextField = EditorTextField("""S01_Structures.lean:80:9
-Tactic state
-3 goals
-case x
-a b : Point
-⊢ (match a, b with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
-  (match b, a with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x
-case y
-a b : Point
-⊢ (match a, b with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).y =
-  (match b, a with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).y
-case z
-a b : Point
-⊢ (match a, b with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).z =
-  (match b, a with
-    | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).z
-            """, toolWindow.project, PlainTextFileType.INSTANCE)
-            editorTextField.addSettingsProvider(object : EditorSettingsProvider {
-                override fun customizeSettings(editor: EditorEx?) {
-                    if (editor == null) {
-                        return
-                    }
-                    with(editor.settings) {
-                        isRightMarginShown = false
-                        isLineNumbersShown = false
-                        isLineMarkerAreaShown = false
-                        isRefrainFromScrolling = true
-                        isCaretRowShown = false
-                        isUseSoftWraps = true
-                        setGutterIconsShown(false)
-                        additionalLinesCount = 0
-                        additionalColumnsCount = 1
-                        isFoldingOutlineShown = false
-                        isVirtualSpace = false
-                    }
-                    editor.headerComponent = null
-                    editor.setCaretEnabled(false)
-                    editor.setHorizontalScrollbarVisible(false)
-                    editor.setVerticalScrollbarVisible(true)
-                    editor.isRendererMode = false
-                }
-            })
-            val editorColorsManager = EditorColorsManager.getInstance()
-            val editorFont  = editorColorsManager.globalScheme.getFont(EditorFontType.PLAIN)
-              editorTextField.font = editorFont
-             // setContent(editorTextField)
-
-
-
-//            editor.addFocusListener(object: FocusChangeListener(){
+//             val list = JBList(arrayOf("Item 1", "Item 2", "Item 3"))
+//             list.selectionMode = ListSelectionModel.SINGLE_SELECTION
 //
-//            })
-
-
-            // TODO this is commented out, it's no easy to impl
-            //      interactive goal inside intellij idea
-            // editor.addEditorMouseMotionListener(InfoViewHoverListener())
-            // TODO it must setup a language for the goal infoview...
-            // editor = EditorFactory.
-        }
+//             val scrollPane = JBScrollPane()
+//             scrollPane.isVisible = true // Initially visible
+//
+//             // Add your custom logic to toggle visibility (e.g., button click)
+//
+//             scrollPane.add(list)
+//             // scrollPane.add(editor.component)
+//
+//             // setContent(editor.component)
+//
+// //            val mySplitter = JBSplitter(true, 0.35f, 0.15f, 0.85f)
+// //            mySplitter.setDividerWidth(3);
+// //            val myComponent = JBUI.Panels.simplePanel();
+// //            // myComponent.add(mySplitter, BorderLayout.CENTER);
+// //            val currentMessages = JBUI.Panels.simplePanel()
+// //            val tacticState = JBUI.Panels.simplePanel()
+// //            val goals = JBUI.Panels.simplePanel()
+// //            val expectedType = JBUI.Panels.simplePanel()
+// //             val expectedTypeEditor = createEditor()
+// //             expectedTypeEditor.document.setText("""⊢ ∀ {C : Type u} [inst : Category.{v, u} C] [inst_1 : HasLimits C] {D : Type u'} [inst_2 : Category.{v', u'} D] [inst_3 : HasLimits D] (F : C ⥤ D) [inst_4 : PreservesLimits F] {W X Y Z S T : C} (f₁ : W ⟶ S) (f₂ : X ⟶ S) (g₁ : Y ⟶ T) (g₂ : Z ⟶ T) (i₁ : W ⟶ Y) (i₂ : X ⟶ Z) (i₃ : S ⟶ T) (eq₁ : f₁ ≫ i₃ = i₁ ≫ g₁) (eq₂ : f₂ ≫ i₃ = i₂ ≫ g₂), F.map (pullback.map f₁ f₂ g₁ g₂ i₁ i₂ i₃ eq₁ eq₂) ≫ (PreservesPullback.iso F g₁ g₂).hom = (PreservesPullback.iso F f₁ f₂).hom ≫ pullback.map (F.map f₁) (F.map f₂) (F.map g₁) (F.map g₂) (F.map i₁) (F.map i₂) (F.map i₃) ⋯ ⋯ """)
+// //            expectedType.add(JBLabel("▼ Current Message"))
+// //            expectedType.add(expectedTypeEditor.component)
+// //            tacticState.add(goals)
+// //            currentMessages.add(tacticState)
+// //            currentMessages.add(expectedType)
+// ////                JBLabel("▼ Current ")
+// //            myComponent.add(currentMessages)
+// //            // mySplitter.firstComponent = loadingLabel
+// //            val secondComponent = JBUI.Panels.simplePanel(editor.component)
+//             // mySplitter.secondComponent = secondComponent
+//
+// //            val myComponent = object : DialogPanel {
+// //                collapsibleGroup("Title") {
+// //                    row("Row:") {
+// //                        textField()
+// //                    }
+// //                }
+// //            }
+// //            val component = panel {
+// //                panel {
+// //                    collapsibleGroup("Current Line (TODO)") {
+// //                        collapsibleGroup("Tactic State (TODO)") {
+// //                            row {
+// //                                cell(expectedTypeEditor.component)
+// //                            }
+// //                        }
+// //                    }
+// //                }
+// //                panel {
+// //                    collapsibleGroup("All Messages") {
+// //                    }
+// //                }
+// //
+// ////                rowsRange {
+// ////                    row("Panel.rowsRange row:") {
+// ////                        textField()
+// ////                    }.rowComment("Panel.rowsRange is similar to Panel.panel but uses the same grid as parent. " +
+// ////                            "Useful when grouped content should be managed together with RowsRange.enabledIf for example")
+// ////                }
+// ////
+// ////                group("Panel.group") {
+// ////                    row("Panel.group row:") {
+// ////                        textField()
+// ////                    }.rowComment("Panel.group adds panel with independent grid, title and some vertical space before/after the group")
+// ////                }
+// ////
+// ////                groupRowsRange("Panel.groupRowsRange") {
+// ////                    row("Panel.groupRowsRange row:") {
+// ////                        textField()
+// ////                    }.rowComment("Panel.groupRowsRange is similar to Panel.group but uses the same grid as parent. " +
+// ////                            "See how aligned Panel.rowsRange row")
+// ////                }
+// ////
+// ////                collapsibleGroup("Panel.collapsible&Group") {
+// ////                    row("Panel.collapsibleGroup row:") {
+// ////                        textField()
+// ////                    }.rowComment("Panel.collapsibleGroup adds collapsible panel with independent grid, title and some vertical " +
+// ////                            "space before/after the group. The group title is focusable via the Tab key and supports mnemonics")
+// ////                }
+// ////
+// ////                var value = true
+// ////                buttonsGroup("Panel.buttonGroup:") {
+// ////                    row {
+// ////                        radioButton("true", true)
+// ////                    }
+// ////                    row {
+// ////                        radioButton("false", false)
+// ////                    }.rowComment("Panel.buttonGroup unions Row.radioButton in one group. Must be also used for Row.checkBox if they are grouped " +
+// ////                            "with some title")
+// ////                }.bind({ value }, { value = it })
+// ////
+// ////                separator()
+// ////                    .rowComment("Use separator() for horizontal separator")
+// ////
+// ////                row {
+// ////                    label("Use Row.panel for creating panel in a cell:")
+// ////                    panel {
+// ////                        row("Sub panel row 1:") {
+// ////                            textField()
+// ////                        }
+// ////                        row("Sub panel row 2:") {
+// ////                            textField()
+// ////                        }
+// ////                    }
+// ////                }
+// //            }
+//
+//
+//
+//             // setContent(component)
+//             // setContent(createInfoView())
+//
+//             // TODO this is for testing, remove it
+//             val s = tryInteractive()
+//             // val t = render(s as Map<*, *>)
+//             val goalText = s.toInfoViewString()
+//             editor.document.setText(goalText)
+//             val support = EditorHyperlinkSupport.get(editor)
+// //            support.addHighlighter(20, 30,
+// //                 TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes
+// //                )
+// //            support.createHyperlink(1, 10,
+// //                null,
+// //                // TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes,
+// //                ShowTextPopupHyperlinkInfo("TODO", "docod"))
+// //            var createHyperlink = support.createHyperlink(
+// //                0, 1,
+// //                null,
+// //                // TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes,
+// //                ShowTextPopupHyperlinkInfo("TODO11", "docod111")
+// //            )
+// //            var createHyperlink1 = support.createHyperlink(
+// //                10, 12,
+// //                null,
+// //                // TextAttributesKey.createTextAttributesKey("PROPERTIES.KEY", DefaultLanguageHighlighterColors.KEYWORD).defaultAttributes,
+// //                ShowTextPopupHyperlinkInfo("TODO11", "docod111")
+// //            )
+// //             setContent(editor.component)
+// //            editor.addEditor
+//             editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
+//                 var hyperLink: RangeHighlighter? = null
+//                 override fun mouseMoved(e: EditorMouseEvent) {
+//                     if (hyperLink != null) {
+//                         support.removeHyperlink(hyperLink!!)
+//                     }
+//                     if (!e.isOverText) {
+//                         return
+//                     }
+//                     var c = s.getCodeText(e.offset)
+//                     if (c == null) {
+//                         return
+//                     }
+//                     val src = """
+//                                 Structure instance. `{ x := e, ... }` assigns `e` to field `x`, which may be
+//                                 inherited. If `e` is itself a variable called `x`, it can be elided:
+//                                 `fun y => { x := 1, y }`.
+//                                 A *structure update* of an existing value can be given via `with`:
+//                                 `{ point with x := 1 }`.The structure type can be specified if not inferable:
+//                                 `{ x := 1, y := 2 : Point }`.
+//                                 """.trimIndent()
+//                     val flavour = CommonMarkFlavourDescriptor()
+//                     val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(src)
+//                     val html = HtmlGenerator(src, parsedTree, flavour).generateHtml()
+//                     hyperLink = support.createHyperlink(
+//                         c.startOffset,
+//                         c.endOffset,
+//                         object : TextAttributes() {
+//                             override fun getBackgroundColor(): Color {
+//                                 return Color.decode("#add6ff")
+//                             }
+//                         },
+//                         // ref ShowTextPopupHyperlinkInfo
+//                         object : HyperlinkInfo {
+//                             override fun navigate(project: Project) {
+//                                 ApplicationManager.getApplication().invokeLater {
+// //                                    val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text))
+// //                                    val textField = object : EditorTextField(document, project, FileTypes.PLAIN_TEXT, true, false) {
+// //                                        override fun createEditor(): EditorEx {
+// //                                            val editor = super.createEditor()
+// //                                            editor.scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+// //                                            editor.scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+// //                                            editor.settings.isUseSoftWraps = true
+// //                                            return editor
+// //                                        }
+// //                                    }
+// //
+//                                     // ref : https://youtrack.jetbrains.com/issue/IJPL-148864/Cant-change-link-style-when-using-JBHtmlEditorKit-JBHtmlPane
+//                                     // TODO handling style for this
+//                                     val doc = JEditorPane().apply {
+//                                         contentType = "text/html"
+//                                         text = html
+//                                     }
+//                                     val expr = createEditor()
+//                                     val testT = """(match a, b with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
+//   (match b, a with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x"""
+//                                     expr.document.setText("""(match a, b with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
+//   (match b, a with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x""")
+//                                     val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(testT))
+//                                     val textField = object : EditorTextField(document, project, FileTypes.PLAIN_TEXT, true, false) {
+//                                         override fun createEditor(): EditorEx {
+//                                             val editor = super.createEditor()
+//                                             editor.scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+//                                             editor.scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+//                                             editor.settings.isUseSoftWraps = true
+//                                             return editor
+//                                         }
+//                                     }
+//                                     val popup1 = JBScrollPane()
+//                                     popup1.add(expr.component)
+//                                     popup1.add(doc)
+//                                     val popup = panel {
+//                                         row {
+//                                             scrollCell(expr.component)
+//                                         }
+//                                         row {
+//                                             scrollCell(doc)
+//                                         }
+//                                     }
+//                                     val size = toolWindow.component.size
+//                                     val fontSize = expr.colorsScheme.editorFontSize
+//                                     val lineSpacing = expr.lineHeight
+//                                     WindowManager.getInstance().getFrame(project)?.size?.let {
+//                                          doc.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+//                                          val result = doc.preferredSize
+//                                          doc.preferredSize = Dimension(size.width*8/10, result.height)
+//                                          // TODO call size
+//                                          expr.component.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+//                                          val result1 = expr.component.preferredSize
+//                                         expr.component.size = Dimension(size.width*8/10, result1.height)
+//                                     }
+//                                     popup1.preferredSize = Dimension(size.width*8/10, size.height*2/5)
+//                                     popup.withPreferredWidth(size.width*8/10)
+//
+//                                     // val p = object:JFrame() {
+//                                     //     init {
+//                                     //         add(expr.component)
+//                                     //         add(doc)
+//                                     //     }
+//                                     //
+//                                     //     // override fun getMinimumSize() : Dimension {
+//                                     //     //     return Dimension(size.width*8/10, size.height)
+//                                     //     // }
+//                                     //     // override fun getPreferredSize(): Dimension {
+//                                     //     //     // return super.getPreferredSize()
+//                                     //     //     // expr.component.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+//                                     //     //     // doc.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+//                                     //     //     // expr.component.revalidate()
+//                                     //     //     // doc.revalidate()
+//                                     //     //     // return Dimension(size.width*8/10, 2*(expr.component.preferredHeight+doc.preferredHeight))
+//                                     //     //     return Dimension(0, 300)
+//                                     //     // }
+//                                     // }
+//                                     val p = JFrame()
+//                                     p.layout = VerticalLayout(1)
+//                                     // Add components vertically
+//                                     p.add(expr.component)
+//                                     p.add(doc)
+//                                     p.pack()
+//                                     p.size = Dimension(size.width*8/10, Short.MAX_VALUE.toInt())
+//                                     p.revalidate()
+//                                     val p1 = JPanel(VerticalLayout(1))
+//                                     p1.add(expr.component)
+//                                     p1.add(doc)
+//                                     // p1.preferredSize = Dimension(size.width*8/10, expr.height)
+//                                     val popup2 = object: JBScrollPane(p1) {
+//                                         // override fun getPreferredSize(): Dimension {
+//                                         //     // return super.getPreferredSize()
+//                                         //     return p.size
+//                                         // }
+//
+//                                         // override fun getMinimumSize() : Dimension {
+//                                         //     return Dimension(size.width*8/10, size.height*6/10)
+//                                         // }
+//                                     }
+// //                                    popup2.add(expr.component)
+// //                                    popup2.add(doc)
+// //                                    popup2.revalidate();
+//                                    popup2.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+//                                    // popup2.preferredSize = p.size
+//                                    // popup2.minimumHeight = doc.minimumHeight + expr.component.minimumHeight
+//                                    //  popup2.size = Dimension(size.width*8/10, Math.min(doc.height + expr.component.height + 2, size.height*3/5))
+//                                    popup2.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+//                                     // popup2.preferredSize = Dimension(size.width*8/10, size.height*2/5)
+//                                     // popup2.withPreferredWidth(size.width*8/10)
+//                                     // popup2.withPreferredHeight(size.height*8/10)
+// //                                    val popup2 = DocumentationScrollPane(p)
+//                                     val factory = JBPopupFactory.getInstance()
+//                                     factory.createComponentPopupBuilder(popup2, popup2)
+//                                         // .setTitle(title)
+//                                         // .setResizable(true)
+//                                         .setMovable(true)
+//                                         .setRequestFocus(true)
+//                                         .createPopup()
+//                                         // .showInBestPositionFor(editor)
+//                                         // .showInCenterOf(toolWindow.component)
+//                                          // .showInFocusCenter()
+//                                          .show(factory.guessBestPopupLocation(editor))
+// //                                        .showCenteredInCurrentWindow(project)
+//                                 }
+//                             }
+//
+//                         }
+//                     )
+//                 }
+//             })
+//             editor.addEditorMouseListener(object : EditorMouseListener {
+//
+//             })
+//             var editorTextField = EditorTextField("""S01_Structures.lean:80:9
+// Tactic state
+// 3 goals
+// case x
+// a b : Point
+// ⊢ (match a, b with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x =
+//   (match b, a with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).x
+// case y
+// a b : Point
+// ⊢ (match a, b with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).y =
+//   (match b, a with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).y
+// case z
+// a b : Point
+// ⊢ (match a, b with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).z =
+//   (match b, a with
+//     | { x := x₁, y := y₁, z := z₁ }, { x := x₂, y := y₂, z := z₂ } => { x := x₁ + x₂, y := y₁ + y₂, z := z₁ + z₂ }).z
+//             """, toolWindow.project, PlainTextFileType.INSTANCE)
+//             editorTextField.addSettingsProvider(object : EditorSettingsProvider {
+//                 override fun customizeSettings(editor: EditorEx?) {
+//                     if (editor == null) {
+//                         return
+//                     }
+//                     with(editor.settings) {
+//                         isRightMarginShown = false
+//                         isLineNumbersShown = false
+//                         isLineMarkerAreaShown = false
+//                         isRefrainFromScrolling = true
+//                         isCaretRowShown = false
+//                         isUseSoftWraps = true
+//                         setGutterIconsShown(false)
+//                         additionalLinesCount = 0
+//                         additionalColumnsCount = 1
+//                         isFoldingOutlineShown = false
+//                         isVirtualSpace = false
+//                     }
+//                     editor.headerComponent = null
+//                     editor.setCaretEnabled(false)
+//                     editor.setHorizontalScrollbarVisible(false)
+//                     editor.setVerticalScrollbarVisible(true)
+//                     editor.isRendererMode = false
+//                 }
+//             })
+//             val editorColorsManager = EditorColorsManager.getInstance()
+//             val editorFont  = editorColorsManager.globalScheme.getFont(EditorFontType.PLAIN)
+//               editorTextField.font = editorFont
+//              // setContent(editorTextField)
+//
+//
+//
+// //            editor.addFocusListener(object: FocusChangeListener(){
+// //
+// //            })
+//
+//
+//             // TODO this is commented out, it's no easy to impl
+//             //      interactive goal inside intellij idea
+//             // editor.addEditorMouseMotionListener(InfoViewHoverListener())
+//             // TODO it must setup a language for the goal infoview...
+//             // editor = EditorFactory.
+//         }
 
         // TODO
         private fun render(map: Map<*, *>): String {

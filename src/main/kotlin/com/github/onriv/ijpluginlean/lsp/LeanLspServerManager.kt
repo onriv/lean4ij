@@ -8,10 +8,7 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.StartBuildEvent
-import com.intellij.build.events.impl.MessageEventImpl
-import com.intellij.build.events.impl.OutputBuildEventImpl
-import com.intellij.build.events.impl.StartBuildEventImpl
-import com.intellij.build.events.impl.StartEventImpl
+import com.intellij.build.events.impl.*
 import com.intellij.build.progress.BuildProgressDescriptor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -210,18 +207,37 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
             override fun getActionUpdateThread() = ActionUpdateThread.BGT
         }
 
+
+       val syncProgress = SyncViewManager.createBuildProgress(project)
+
+       // val descriptor = BuildProgressImpl(null, null, object : JComponent() {}, "curl --version")
+       // syncProgress.start()
+
+        // val syncId = ExternalSystemTaskId.create(systemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
+        // val descriptor = DefaultBuildDescriptor(syncId, "curl --version", project.basePath!!, System.currentTimeMillis())
+        // syncView.onEvent(descriptor, MessageEventImpl(syncId, MessageEvent.Kind.INFO, "test", "test11", "OOO"))
+
+
         val syncId = ExternalSystemTaskId.create(systemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
-        val descriptor = DefaultBuildDescriptor(syncId, "\$lean/fileProgress", project.basePath!!, System.currentTimeMillis())
-            // .withRestartAction(action)
-            // TODO what is this for?
-            // The code here is copy from
-            // intellij community plugins maven MavenSyncConsole.kt
-            // .withRestartAction()
-            // TODO with
-        syncView.onEvent(descriptor, StartBuildEventImpl(descriptor, project.name))
-        // TODO weird, this seems not working
-        // syncView.onEvent(syncId, OutputBuildEventImpl(syncId, "Test print", true))
-        syncView.onEvent(descriptor, MessageEventImpl(syncId, MessageEvent.Kind.INFO, "test", "test11", "OOO"))
+        val descriptor = DefaultBuildDescriptor(syncId, "curl", project.basePath!!, System.currentTimeMillis())
+        var curlEvent = StartBuildEventImpl(descriptor, "--version")
+        syncView.onEvent(descriptor, curlEvent)
+        //
+        syncView.onEvent(descriptor, OutputBuildEventImpl(syncId, "Test print", true))
+        syncView.onEvent(descriptor, FinishBuildEventImpl(syncId, syncId, System.currentTimeMillis()+1000*50L, "DONE", SuccessResultImpl()))
+         // syncView.onEvent(descriptor,kMessageEventImpl("curl", MessageEvent.Kind.INFO, "test", "test", "test"))
+
+
+        // val descriptor = DefaultBuildDescriptor(syncId, "\$lean/fileProgress", project.basePath!!, System.currentTimeMillis())
+        //     // .withRestartAction(action)
+        //     // TODO what is this for?
+        //     // The code here is copy from
+        //     // intellij community plugins maven MavenSyncConsole.kt
+        //     // .withRestartAction()
+        //     // TODO with
+        // // TODO weird, this seems not working
+        // // syncView.onEvent(syncId, OutputBuildEventImpl(syncId, "Test print", true))
+        // syncView.onEvent(descriptor, MessageEventImpl(syncId, MessageEvent.Kind.INFO, "test", "test11", "OOO"))
     }
 
     /**

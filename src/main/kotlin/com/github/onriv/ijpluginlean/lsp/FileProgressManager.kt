@@ -17,7 +17,7 @@ class FileProgress(val project: Project, val file: String) {
                 info.textDocument.uri.startsWith(
                     LeanLspServerManager.tryFixWinUrl("file://"+it.basePath!!))}
             // don't need to do this... kind of hard to design, remove it now
-            // LeanLspServerManager.getInstance(project!!).startImport()
+            LeanLspServerManager.getInstance(project!!).startImport()
             val fp = progresses.computeIfAbsent(info.textDocument.uri) {
                 FileProgress(project!!, info.textDocument.uri)
             }

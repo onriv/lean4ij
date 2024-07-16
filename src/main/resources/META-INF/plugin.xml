@@ -10,6 +10,14 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
+
+        <fileType
+                name="Lean4 File"
+                implementationClass="com.github.onriv.ijpluginlean.language.Lean4FileType"
+                fieldName="INSTANCE"
+                language="Lean4"
+                extensions="lean"/>
+
         <toolWindow factoryClass="com.github.onriv.ijpluginlean.toolWindow.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
 
         <!-- LSP -->

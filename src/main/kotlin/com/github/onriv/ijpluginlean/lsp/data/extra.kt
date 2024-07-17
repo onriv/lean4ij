@@ -1,5 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp.data
 
+// import com.github.onriv.ijpluginlean.lsp.Range
 import com.github.onriv.ijpluginlean.lsp.Range
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializationContext

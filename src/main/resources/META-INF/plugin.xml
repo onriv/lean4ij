@@ -5,30 +5,51 @@
     <vendor>onriv</vendor>
 
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.ultimate</depends>
+<!--    <depends>com.intellij.modules.ultimate</depends>-->
+    <depends>com.redhat.devtools.lsp4ij</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
 
-        <fileType
-                name="Lean4 File"
-                implementationClass="com.github.onriv.ijpluginlean.language.Lean4FileType"
-                fieldName="INSTANCE"
-                language="Lean4"
-                extensions="lean"/>
+<!--        lsp4ij says:-->
+<!--        Indeed, when you manually define a File type for some file name patterns, you loose the TextMate syntax coloration.-->
+<!--        see: https://github.com/redhat-developer/lsp4ij/blob/main/docs/DeveloperGuide.md#declare-file-mappings-->
+<!--        indeed, this cannot use-->
+<!--        <fileType-->
+<!--                name="Lean4 File"-->
+<!--                implementationClass="com.github.onriv.ijpluginlean.language.Lean4FileType"-->
+<!--                fieldName="INSTANCE"-->
+<!--                language="Lean4"-->
+<!--                extensions="lean"/>-->
 
         <toolWindow factoryClass="com.github.onriv.ijpluginlean.toolWindow.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
 
         <!-- LSP -->
-        <platform.lsp.serverSupportProvider implementation="com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider"/>
+<!--        <platform.lsp.serverSupportProvider implementation="com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider"/>-->
+
 
         <!-- documentation for infoview -->
+        <!-- TODO This seems not working on now -->
         <lang.documentationProvider language="LeanInfoview"
             implementationClass="com.github.onriv.ijpluginlean.infoview.InfoViewDocumentationProvider"/>
 
         <!-- TODO this seems not working, and hence it's commented out -->
 <!--        <fileEditorManagerListener implementation="com.github.onriv.ijpluginlean.listeners.LeanFileEditorManagerListener" />-->
+    </extensions>
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <server id="Lean4LanguageServerId"
+                name="Lean4 Language Server"
+                factoryClass="com.github.onriv.ijpluginlean.lsp.Lean4LanguageServerFactory">
+            <description><![CDATA[
+        Some description written in HTML to display it in the LSP consoles view and Language Servers settings. TODO
+        ]]>
+            </description>
+        </server>
+
+        <fileNamePatternMapping patterns="*.lean4;*.lean"
+                                serverId="Lean4LanguageServerId"
+                                languageId="lean4"/>
     </extensions>
 
     <actions>

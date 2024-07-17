@@ -1,42 +1,36 @@
 package com.github.onriv.ijpluginlean.lsp
 
 import com.github.onriv.ijpluginlean.lsp.data.*
-import com.intellij.build.BuildContentDescriptor
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
-import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.OutputBuildEvent
-import com.intellij.build.events.StartBuildEvent
 import com.intellij.build.events.impl.*
-import com.intellij.build.progress.BuildProgressDescriptor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
-import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
+import com.redhat.devtools.lsp4ij.LanguageServiceAccessor
+import org.eclipse.lsp4j.ServerCapabilities
+import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.ConcurrentHashMap
-import javax.swing.JComponent
 
-class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
+
+class LeanLspServerManager (val project: Project, val languageServer: LanguageServer) {
 
     companion object {
         private val projects = ConcurrentHashMap<Project, LeanLspServerManager>()
         fun getInstance(project: Project): LeanLspServerManager {
+
             return projects.computeIfAbsent(project) { k ->
-                val lspServer = LspServerManager.getInstance(k)
-                    .getServersForProvider(LeanLspServerSupportProvider::class.java).firstOrNull();
-                LeanLspServerManager(k, lspServer!!)
+                val servers = LanguageServiceAccessor.getInstance(project)
+                    .getActiveLanguageServers{true}
+                val server1 = servers.get(0)
+                LeanLspServerManager(project, server1)
             }
         }
 
@@ -87,106 +81,106 @@ class LeanLspServerManager (val project: Project, val lspServer: LspServer) {
 
     private val sessions = ConcurrentHashMap<String, String>()
 
-    fun plainGoal(file: VirtualFile, caret: Caret) : List<String> {
-        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-        // val position = Position(line=line!!, character = column!!)
-        val logicalPosition = caret.logicalPosition
-        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-        val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).plainGoal(
-            PlainGoalParams( textDocument = textDocument, position = position )
-        )}
-        // TODO handle this null more seriously  and show it in the ui
-        if (resp == null) {
-            return ArrayList()
-        }
-        return resp.goals;
-    }
+    // fun plainGoal(file: VirtualFile, caret: Caret) : List<String> {
+    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+    //     // val position = Position(line=line!!, character = column!!)
+    //     val logicalPosition = caret.logicalPosition
+    //     val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+    //     val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).plainGoal(
+    //         PlainGoalParams( textDocument = textDocument, position = position )
+    //     )}
+    //     // TODO handle this null more seriously  and show it in the ui
+    //     if (resp == null) {
+    //         return ArrayList()
+    //     }
+    //     return resp.goals;
+    // }
 
-    fun plainTermGoal(file: VirtualFile, caret: Caret) : String {
-        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-        // val position = Position(line=line!!, character = column!!)
-        val logicalPosition = caret.logicalPosition
-        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-        val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).plainTermGoal(
-            PlainTermGoalParams( textDocument = textDocument, position = position )
-        )}
-        // TODO handle this null more seriously  and show it in the ui
-        if (resp == null) {
-            return ""
-        }
-        return resp.goal;
-    }
+    // fun plainTermGoal(file: VirtualFile, caret: Caret) : String {
+    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+    //     // val position = Position(line=line!!, character = column!!)
+    //     val logicalPosition = caret.logicalPosition
+    //     val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+    //     val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).plainTermGoal(
+    //         PlainTermGoalParams( textDocument = textDocument, position = position )
+    //     )}
+    //     // TODO handle this null more seriously  and show it in the ui
+    //     if (resp == null) {
+    //         return ""
+    //     }
+    //     return resp.goal;
+    // }
 
-    fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any {
-        val sessionId = getSession(file.toString(), retry > 1)
-        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-        val logicalPosition = caret.logicalPosition
-        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-        val rpcParams = InteractiveGoalsParams(
-            sessionId = sessionId,
-            method = "Lean.Widget.getInteractiveGoals",
-            params = PlainGoalParams(
-                textDocument = textDocument,
-                position = position
-            ),
-            textDocument = textDocument,
-            position = position
-        )
-        try {
-            val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
-            if (resp == null && retry < 2) {
-                return getInteractiveGoals(file, caret, retry + 1)
-            }
-            return resp!!
-        } catch (e: ResponseErrorException) {
-            if (e.message!!.contains("Outdated RPC session") && retry < 2) {
-                return getInteractiveGoals(file, caret, retry + 1)
-            }
-            throw e;
-        }
-    }
+    // fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any {
+    //     val sessionId = getSession(file.toString(), retry > 1)
+    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+    //     val logicalPosition = caret.logicalPosition
+    //     val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+    //     val rpcParams = InteractiveGoalsParams(
+    //         sessionId = sessionId,
+    //         method = "Lean.Widget.getInteractiveGoals",
+    //         params = PlainGoalParams(
+    //             textDocument = textDocument,
+    //             position = position
+    //         ),
+    //         textDocument = textDocument,
+    //         position = position
+    //     )
+    //     try {
+    //         val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
+    //         if (resp == null && retry < 2) {
+    //             return getInteractiveGoals(file, caret, retry + 1)
+    //         }
+    //         return resp!!
+    //     } catch (e: ResponseErrorException) {
+    //         if (e.message!!.contains("Outdated RPC session") && retry < 2) {
+    //             return getInteractiveGoals(file, caret, retry + 1)
+    //         }
+    //         throw e;
+    //     }
+    // }
 
-    fun infoToInteractive(file: VirtualFile, caret: Caret, params: ContextInfo, retry: Int = 0): Any {
-        // TODO DRY
-        val sessionId = getSession(file.toString(), retry > 1)
-        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-        val logicalPosition = caret.logicalPosition
-        val position = Position(line = logicalPosition.line, character = logicalPosition.column)
-        val rpcParams = InteractiveInfoParams(
-            sessionId = sessionId,
-            method = "Lean.Widget.InteractiveDiagnostics.infoToInteractive",
-            params = params,
-            textDocument = textDocument,
-            position = position
-        )
-        try {
-            val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
-            if (resp == null && retry < 2) {
-                return infoToInteractive(file, caret, params, retry + 1)
-            }
-            return resp!!
-        } catch (e: ResponseErrorException) {
-            if (e.message!!.contains("Outdated RPC session") && retry < 2) {
-                return infoToInteractive(file, caret, params,retry + 1)
-            }
-            throw e;
-        }
-    }
+    // fun infoToInteractive(file: VirtualFile, caret: Caret, params: ContextInfo, retry: Int = 0): Any {
+    //     // TODO DRY
+    //     val sessionId = getSession(file.toString(), retry > 1)
+    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+    //     val logicalPosition = caret.logicalPosition
+    //     val position = Position(line = logicalPosition.line, character = logicalPosition.column)
+    //     val rpcParams = InteractiveInfoParams(
+    //         sessionId = sessionId,
+    //         method = "Lean.Widget.InteractiveDiagnostics.infoToInteractive",
+    //         params = params,
+    //         textDocument = textDocument,
+    //         position = position
+    //     )
+    //     try {
+    //         val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
+    //         if (resp == null && retry < 2) {
+    //             return infoToInteractive(file, caret, params, retry + 1)
+    //         }
+    //         return resp!!
+    //     } catch (e: ResponseErrorException) {
+    //         if (e.message!!.contains("Outdated RPC session") && retry < 2) {
+    //             return infoToInteractive(file, caret, params,retry + 1)
+    //         }
+    //         throw e;
+    //     }
+    // }
 
-    fun getSession(uri: String, force: Boolean = false): String {
-        if (force) {
-            sessions.remove(tryFixWinUrl(uri))
-        }
-        return sessions.computeIfAbsent(tryFixWinUrl(uri)) {connectRpc(it)}
-    }
+    // fun getSession(uri: String, force: Boolean = false): String {
+    //     if (force) {
+    //         sessions.remove(tryFixWinUrl(uri))
+    //     }
+    //     return sessions.computeIfAbsent(tryFixWinUrl(uri)) {connectRpc(it)}
+    // }
 
-    private fun connectRpc(file : String) : String {
-        val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcConnect(RpcConnectParams(
-            file
-        )) }
-        // TODO handle exception here
-        return resp!!.sessionId
-    }
+    // private fun connectRpc(file : String) : String {
+    //     val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcConnect(RpcConnectParams(
+    //         file
+    //     )) }
+    //     // TODO handle exception here
+    //     return resp!!.sessionId
+    // }
 
     private val systemId = ProjectSystemId("LEAN4")
     private val syncView = project.service<SyncViewManager>()

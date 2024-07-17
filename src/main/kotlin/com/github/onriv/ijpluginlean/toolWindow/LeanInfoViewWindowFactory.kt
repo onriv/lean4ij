@@ -4,7 +4,7 @@ package com.github.onriv.ijpluginlean.toolWindow
 import com.github.onriv.ijpluginlean.lsp.data.CodeWithInfosTag
 import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoals
 import com.github.onriv.ijpluginlean.lsp.data.gson
-import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
+// import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.github.onriv.ijpluginlean.services.MyProjectService
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMaxWidth
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMinWidth
@@ -164,7 +164,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
     class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(true) {
 
         private val service = toolWindow.project.service<MyProjectService>()
-        private val infoViewService = toolWindow.project.service<ExternalInfoViewService>()
+        // private val infoViewService = toolWindow.project.service<ExternalInfoViewService>()
         private val goals = JEditorPane()
         private var editor : EditorEx = createEditor()
 

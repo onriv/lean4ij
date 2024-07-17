@@ -1,3 +1,11 @@
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
+import java.time.temporal.ChronoUnit
+import java.util.regex.Pattern
+
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
@@ -39,13 +47,28 @@ kotlin {
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
+// this is copied from https://github.com/redhat-developer/intellij-quarkus/blob/main/build.gradle.kts
 intellij {
     pluginName = properties("pluginName")
     version = properties("platformVersion")
     type = properties("platformType")
+    updateSinceUntilBuild = false
 
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    plugins = properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }
+    val platformPlugins =  ArrayList<Any>()
+    val localLsp4ij = file("../lsp4ij/build/idea-sandbox/plugins/LSP4IJ").absoluteFile
+    if (localLsp4ij.isDirectory) {
+        // In case Gradle fails to build because it can't find some missing jar, try deleting
+        // ~/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.idea/unzipped.com.jetbrains.plugins/com.redhat.devtools.lsp4ij*
+        platformPlugins.add(localLsp4ij)
+    } else {
+        // When running on CI or when there's no local lsp4ij
+        val latestLsp4ijNightlyVersion = fetchLatestLsp4ijNightlyVersion()
+        platformPlugins.add("com.redhat.devtools.lsp4ij:$latestLsp4ijNightlyVersion@nightly")
+    }
+    //Uses `platformPlugins` property from the gradle.properties file.
+    platformPlugins.addAll(properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }.get())
+    println("platformPlugins: $platformPlugins")
+    plugins = platformPlugins
 }
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -125,4 +148,28 @@ tasks {
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels = properties("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
     }
+}
+
+fun fetchLatestLsp4ijNightlyVersion(): String {
+    val client = HttpClient.newBuilder().build();
+    var onlineVersion = ""
+    try {
+        val request: HttpRequest = HttpRequest.newBuilder()
+            .uri(URI("https://plugins.jetbrains.com/api/plugins/23257/updates?channel=nightly&size=1"))
+            .GET()
+            .timeout(Duration.of(10, ChronoUnit.SECONDS))
+            .build()
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        val pattern = Pattern.compile("\"version\":\"([^\"]+)\"")
+        val matcher = pattern.matcher(response.body())
+        if (matcher.find()) {
+            onlineVersion = matcher.group(1)
+            println("Latest approved nightly build: $onlineVersion")
+        }
+    } catch (e:Exception) {
+        println("Failed to fetch LSP4IJ nightly build version: ${e.message}")
+    }
+
+    val minVersion = "0.0.1-20231213-012910"
+    return if (minVersion < onlineVersion) onlineVersion else minVersion
 }

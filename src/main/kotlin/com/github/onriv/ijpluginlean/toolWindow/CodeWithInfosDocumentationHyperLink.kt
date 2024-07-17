@@ -30,22 +30,22 @@ class CodeWithInfosDocumentationHyperLink(
     val codeWithInfosTag: CodeWithInfosTag
 ) : HyperlinkInfo {
     override fun navigate(project: Project) {
-        var infoToInteractive =
-            LeanLspServerManager.getInstance(project)
-                .infoToInteractive(file, caret, codeWithInfosTag.f0.info) as Map<String, Any>
-        val type: CodeWithInfos = gson.fromJson(gson.toJson(infoToInteractive["type"]), CodeWithInfos::class.java)
-        val exprExplicit: CodeWithInfos =
-            gson.fromJson(gson.toJson(infoToInteractive["exprExplicit"]), CodeWithInfos::class.java)
-        var htmlDoc : String? = null
-        if (infoToInteractive["doc"] != null) {
-            val markdownDoc: String = infoToInteractive["doc"] as String
-            val flavour = CommonMarkFlavourDescriptor()
-            val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
-            htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
-        }
-        val typeStr = type.toInfoViewString(0, null)
-        val exprStr = exprExplicit.toInfoViewString(0, null)
-        createPopupPanel("$exprStr : $typeStr", htmlDoc)
+        // var infoToInteractive =
+        //     LeanLspServerManager.getInstance(project)
+        //         .infoToInteractive(file, caret, codeWithInfosTag.f0.info) as Map<String, Any>
+        // val type: CodeWithInfos = gson.fromJson(gson.toJson(infoToInteractive["type"]), CodeWithInfos::class.java)
+        // val exprExplicit: CodeWithInfos =
+        //     gson.fromJson(gson.toJson(infoToInteractive["exprExplicit"]), CodeWithInfos::class.java)
+        // var htmlDoc : String? = null
+        // if (infoToInteractive["doc"] != null) {
+        //     val markdownDoc: String = infoToInteractive["doc"] as String
+        //     val flavour = CommonMarkFlavourDescriptor()
+        //     val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
+        //     htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
+        // }
+        // val typeStr = type.toInfoViewString(0, null)
+        // val exprStr = exprExplicit.toInfoViewString(0, null)
+        // createPopupPanel("$exprStr : $typeStr", htmlDoc)
     }
 
     fun createDocPanel(doc: String): JEditorPane {

@@ -1,10 +1,10 @@
 package com.github.onriv.ijpluginlean.actions
 
 import com.github.onriv.ijpluginlean.listeners.EditorCaretListener
-import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
-import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
-import com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider
-import com.github.onriv.ijpluginlean.lsp.RpcConnectParams
+// import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
+// import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
+// import com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider
+// import com.github.onriv.ijpluginlean.lsp.RpcConnectParams
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.Position
 import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams

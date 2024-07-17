@@ -3,9 +3,9 @@ package com.github.onriv.ijpluginlean.listeners
 import com.github.onriv.ijpluginlean.lsp.FileProgress
 import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 import com.github.onriv.ijpluginlean.lsp.data.Position
-import com.github.onriv.ijpluginlean.services.CursorLocation
-import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
-import com.github.onriv.ijpluginlean.services.Range
+// import com.github.onriv.ijpluginlean.services.CursorLocation
+// import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
+// import com.github.onriv.ijpluginlean.services.Range
 import com.github.onriv.ijpluginlean.toolWindow.LeanInfoViewWindowFactory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -46,7 +46,7 @@ class EditorCaretListener(val project: Project) : CaretListener {
         }
     }
 
-    private val infoView = project.service<ExternalInfoViewService>()
+    // private val infoView = project.service<ExternalInfoViewService>()
 
 
     private fun shouldUpdateGoal(file: VirtualFile, caret: Caret) : Boolean {
@@ -117,31 +117,32 @@ class EditorCaretListener(val project: Project) : CaretListener {
             if (!shouldUpdateGoal(file, caret)) {
                 return@runBackgroundableTask
             }
-            try {
-                val plainGoal = LeanLspServerManager.getInstance(project).plainGoal(file, caret)
-                val plainTermGoal = LeanLspServerManager.getInstance(project).plainTermGoal(file, caret)
-                // LeanInfoViewWindowFactory.updateGoal(project, file, caret, plainGoal, plainTermGoal)
-                //  Error response from server: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Outdated RPC sessios
-                val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
-                LeanInfoViewWindowFactory.updateInteractiveGoal(project, file, caret, interactiveGoal)
-                println(interactiveGoal)
-            } catch (e: Exception) {
-                // TODO handle it
-                e.printStackTrace()
-            }
+            println(LeanLspServerManager.getInstance(project))
+            // try {
+            //     val plainGoal = LeanLspServerManager.getInstance(project).plainGoal(file, caret)
+            //     val plainTermGoal = LeanLspServerManager.getInstance(project).plainTermGoal(file, caret)
+            //     // LeanInfoViewWindowFactory.updateGoal(project, file, caret, plainGoal, plainTermGoal)
+            //     //  Error response from server: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Outdated RPC sessios
+            //     val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
+            //     LeanInfoViewWindowFactory.updateInteractiveGoal(project, file, caret, interactiveGoal)
+            //     println(interactiveGoal)
+            // } catch (e: Exception) {
+            //     // TODO handle it
+            //     e.printStackTrace()
+            // }
 
-            try {
-                // TODO DIY
-                val logicalPosition = event.caret!!.logicalPosition
-                val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-                infoView.changedCursorLocation(CursorLocation(
-                    uri = LeanLspServerManager.tryFixWinUrl(file.toString()),
-                    range = Range(start = position, end=position)
-                ))
-            } catch (e: Exception) {
-                // TODO handle it
-                e.printStackTrace()
-            }
+            // try {
+            //     // TODO DIY
+            //     val logicalPosition = event.caret!!.logicalPosition
+            //     val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+            //     infoView.changedCursorLocation(CursorLocation(
+            //         uri = LeanLspServerManager.tryFixWinUrl(file.toString()),
+            //         range = Range(start = position, end=position)
+            //     ))
+            // } catch (e: Exception) {
+            //     // TODO handle it
+            //     e.printStackTrace()
+            // }
 
         }
 

@@ -20,16 +20,15 @@ import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.ConcurrentHashMap
 
 
-class LeanLspServerManager (val project: Project, val languageServer: LanguageServer) {
+class LeanLspServerManager (val project: Project, val languageServer: LeanLanguageServer) {
 
     companion object {
         private val projects = ConcurrentHashMap<Project, LeanLspServerManager>()
         fun getInstance(project: Project): LeanLspServerManager {
-
             return projects.computeIfAbsent(project) { k ->
                 val servers = LanguageServiceAccessor.getInstance(project)
                     .getActiveLanguageServers{true}
-                val server1 = servers.get(0)
+                val server1 = servers.get(0) as LeanLanguageServer
                 LeanLspServerManager(project, server1)
             }
         }

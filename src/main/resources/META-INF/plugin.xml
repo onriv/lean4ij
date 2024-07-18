@@ -6,11 +6,19 @@
 
     <depends>com.intellij.modules.platform</depends>
 <!--    <depends>com.intellij.modules.ultimate</depends>-->
+    <depends>org.jetbrains.plugins.textmate</depends>
     <depends>com.redhat.devtools.lsp4ij</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
+        <defaultLiveTemplates file="/liveTemplates/Lean4.xml"/>
+        <liveTemplateContext
+                contextId="Lean4"
+                implementation="com.github.onriv.ijpluginlean.language.Lean4Context"/>
+<!--        // from https://github.com/JetBrains/godot-support/blob/master/rider/src/main/resources/META-INF/plugin.xml-->
+<!--        https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/src/main/resources/META-INF/plugin.xml#L26-->
+        <textmate.bundleProvider implementation="com.github.onriv.ijpluginlean.language.TextMateBundleProvider"/>
 
 <!--        lsp4ij says:-->
 <!--        Indeed, when you manually define a File type for some file name patterns, you loose the TextMate syntax coloration.-->

@@ -12,17 +12,24 @@ class FileProgress(val project: Project, val file: String) {
     companion object {
         val progresses: ConcurrentHashMap<String, FileProgress> = ConcurrentHashMap()
 
-        // fun run(info: LeanFileProgressProcessingInfo) {
-        //     val project = ProjectManager.getInstance().openProjects.find {
-        //         info.textDocument.uri.startsWith(
-        //             LeanLspServerManager.tryFixWinUrl("file://"+it.basePath!!))}
-        //     // don't need to do this... kind of hard to design, remove it now
-        //     LeanLspServerManager.getInstance(project!!).startImport()
-        //     val fp = progresses.computeIfAbsent(info.textDocument.uri) {
-        //         FileProgress(project!!, info.textDocument.uri)
-        //     }
-        //     fp.update(info)
-        // }
+        fun run(project: Project, info: LeanFileProgressProcessingInfo) {
+            // val project = ProjectManager.getInstance().openProjects.find {
+            //     // TODO here ignore the lowercase/uppercase...
+            //     //      maily it's only an issue for Windows's disk name like file:///C:/ and file:///c:/
+            //     info.textDocument.uri.lowercase().startsWith(
+            //         // TODO as above, better way to handle all this path...
+            //         LeanLspServerManager.tryFixWinUrl("file://"+it.basePath!!).replace("%3A", ":").lowercase())}
+            // if(project == null) {
+            //     // TODO weird, sometimes it's null
+            //     return
+            // }
+            // don't need to do this... kind of hard to design, remove it now
+            LeanLspServerManager.getInstance(project!!).startImport()
+            val fp = progresses.computeIfAbsent(info.textDocument.uri) {
+                FileProgress(project!!, info.textDocument.uri)
+            }
+            fp.update(info)
+        }
 
         fun getFileProgress(file: String) = progresses[file]
     }

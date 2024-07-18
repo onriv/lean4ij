@@ -1,0 +1,28 @@
+{
+  "name": "lean4",
+  "version": "1.0.0",
+  "description": "lean4",
+  "license": "apache2",
+  "contributes": {
+    "languages": [
+      {
+        "id": "lean4",
+        "extensions": [
+          ".lean"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lean4",
+        "scopeName": "source",
+        "path": "./lean4.json"
+      },
+      {
+        "language": "lean4-markdown",
+        "scopeName": "source",
+        "path": "./lean4-markdown.json"
+      }
+    ]
+  }
+}

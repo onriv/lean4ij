@@ -25,5 +25,5 @@ fileContent = f"""<templateSet group="Lean4">
 {tplSet}
 </templateSet>
 """
-with open("Lean4.xml", "w", encoding="utf-8") as f:
+with open("../src/main/resources/Lean4.xml", "w", encoding="utf-8") as f:
     f.write(fileContent)

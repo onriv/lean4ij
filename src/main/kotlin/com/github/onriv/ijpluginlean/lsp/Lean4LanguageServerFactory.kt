@@ -5,11 +5,14 @@ import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoal
 import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.Position
 import com.intellij.openapi.project.Project
+import com.intellij.platform.lsp.api.Lsp4jClient
+import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.jsonrpc.services.JsonNotification
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import org.eclipse.lsp4j.services.LanguageServer
 import org.eclipse.lsp4j.services.TextDocumentService
@@ -82,7 +85,16 @@ class LeanFileProgressProcessingInfo(
     val processing: List<ProcessingInfo>
 )
 
-internal interface LeanLanguageServer : LanguageServer, TextDocumentService {
+class LeanRpcCallParam {
+
+}
+
+class LeanRpcCallResp {
+
+}
+
+
+interface LeanLanguageServer : LanguageServer, TextDocumentService {
 
     @JsonRequest("\$/lean/plainGoal")
     fun plainGoal(params: PlainGoalParams): CompletableFuture<PlainGoal>
@@ -108,6 +120,20 @@ internal interface LeanLanguageServer : LanguageServer, TextDocumentService {
     fun rpcCall(params: Any): CompletableFuture<Any?>
 
 }
+
+class LeanLsp4jClient(project: Project) :
+    LanguageClientImpl(project) {
+
+    @JsonNotification("\$/lean/fileProgress")
+    fun leanFileProgress(params: LeanFileProgressProcessingInfo) {
+        // TODO... should not run this with backprogram task indicator...
+        //         if the lean file in .lake update, it's huge tasks
+        FileProgress.run(project, params)
+    }
+
+}
+
+
 //
 //
 /**
@@ -118,11 +144,10 @@ class Lean4LanguageServerFactory : LanguageServerFactory {
         return Lean4LanguageServer(project)
     }
 
-    // @NotNull  // If you need to provide client specific features
-    // override fun createLanguageClient(@NotNull project: Project?): LanguageClientImpl {
-    //     return MyLanguageClient(project)
-    // }
-    //
+    override fun createLanguageClient(project: Project): LanguageClientImpl {
+        return LeanLsp4jClient(project)
+    }
+
     override fun getServerInterface(): Class<out LanguageServer> {
         return LeanLanguageServer::class.java
     }

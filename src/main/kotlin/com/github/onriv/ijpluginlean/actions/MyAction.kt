@@ -53,12 +53,29 @@ class OpenLeanInfoView : AnAction() {
         println("TODO")
     }
 
+    private var processed : Boolean = false
+
     override fun update(e: AnActionEvent) {
         // TODO dont know if it's a good position add it here or nos
         // TODO real log
         e.project?.let { EditorCaretListener.register(it) }
         println("TODO")
+
+        e.project?.let {
+            fileProcess(it)
+        }
+
     }
+
+    @Synchronized
+    fun fileProcess(project: Project) {
+        if (processed) {
+            return
+        }
+        BuildWindowManager.getInstance(project).fileProgress()
+        processed = true
+    }
+
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT

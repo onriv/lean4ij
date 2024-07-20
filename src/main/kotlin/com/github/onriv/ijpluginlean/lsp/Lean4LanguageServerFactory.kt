@@ -1,5 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp
 
+import com.github.onriv.ijpluginlean.actions.BuildWindowManager
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoal
 import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoalParams
@@ -128,7 +129,8 @@ class LeanLsp4jClient(project: Project) :
     fun leanFileProgress(params: LeanFileProgressProcessingInfo) {
         // TODO... should not run this with backprogram task indicator...
         //         if the lean file in .lake update, it's huge tasks
-        FileProgress.run(project, params)
+        // FileProgress.run(project, params)
+        BuildWindowManager.getInstance(project).fileProcess(params)
     }
 
 }

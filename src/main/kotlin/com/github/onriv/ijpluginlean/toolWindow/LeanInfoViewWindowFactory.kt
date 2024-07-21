@@ -102,7 +102,13 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 return
             }
             // from https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
-            val infoViewWindow = ToolWindowManager.getInstance(project).getToolWindow("LeanInfoViewWindow")!!.contentManager.contents[0].component as
+            // TODO it seems if the toolwindows not opened before, it contains no content
+            val contents = ToolWindowManager.getInstance(project).getToolWindow("LeanInfoViewWindow")!!.contentManager.contents
+            // TODO confirm this
+            if (contents.isEmpty()) {
+                return
+            }
+            val infoViewWindow = contents[0].component as
                     LeanInfoViewWindowFactory.LeanInfoViewWindow
             val interactiveGoals : InteractiveGoals = gson.fromJson(gson.toJson(interactiveGoalsAny), InteractiveGoals::class.java)
             val interactiveGoalsBuilder = StringBuilder("▼ ${file.name}:${caret.logicalPosition.line+1}:${caret.logicalPosition.column}\n")

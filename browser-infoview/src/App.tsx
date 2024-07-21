@@ -61,9 +61,12 @@ export class DummyEditorApi implements EditorApi {
         }
         const result = await res.json();
         if (Object.keys(result).length == 0) {
-            return {
-                length: 0
+            if (params.method == "Lean.Widget.getInteractiveGoals") {
+                return {
+                    goals: []
+                }
             }
+            return []
         }
         return result;
     }

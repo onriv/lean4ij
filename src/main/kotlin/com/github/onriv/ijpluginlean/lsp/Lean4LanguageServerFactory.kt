@@ -5,6 +5,9 @@ import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoal
 import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.Position
+import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
+import com.github.onriv.ijpluginlean.services.MyProjectService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.Lsp4jClient
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
@@ -23,6 +26,8 @@ import java.util.concurrent.CompletableFuture
 
 
 class Lean4LanguageServer(val project: Project) : ProcessStreamConnectionProvider() {
+    private val service = project.service<MyProjectService>()
+    private val infoViewService = project.service<ExternalInfoViewService>()
 
     init {
         commands = Arrays.asList(

@@ -3,31 +3,38 @@ package com.github.onriv.ijpluginlean.services
 // copy from https://github.com/ktorio/ktor-samples/blob/main/sse/src/main/kotlin/io/ktor/samples/sse/SseApplication.kt
 // import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
-import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoalsParams
 import com.github.onriv.ijpluginlean.lsp.data.Position
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.ToNumberPolicy
 import com.google.gson.reflect.TypeToken
-import com.intellij.build.install
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.redhat.devtools.lsp4ij.LanguageServerWrapper
+import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleListener
+import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleManager
+import com.sun.jna.platform.win32.COM.TypeInfo
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.routing.Routing.Plugin
-import io.ktor.server.routing.Routing.Plugin.install
-import io.ktor.util.cio.*
+import io.ktor.util.reflect.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.jsonrpc.MessageConsumer
+import org.eclipse.lsp4j.jsonrpc.messages.Message
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
 import kotlin.time.Duration.Companion.seconds
+
 
 data class Range(val start: Position, val end: Position)
 // for infoview, vscode's data structure
@@ -46,7 +53,39 @@ class ExternalInfoViewService(project: Project) {
          * and define the main application module.
          * TODO  weird, some use 8080?
          */
-        // embeddedServer(Netty, port = 9093, module = externalInfoViewModuleFactory(project, this)).start(wait = false)
+        embeddedServer(Netty, port = 9093, module = externalInfoViewModuleFactory(project, this)).start(wait = false)
+    }
+
+    init {
+        // TODO kotlin's way!
+        object : Thread() {
+            override fun run() {
+                var instance = LanguageServerLifecycleManager.getInstance(project)
+                // kind of copying LanguageServerExplorerLifecycleListener
+                // from lsp4ij
+                instance.addLanguageServerLifecycleListener(object : LanguageServerLifecycleListener {
+                    override fun handleStatusChanged(p0: LanguageServerWrapper?) {
+                    }
+
+                    override fun handleLSPMessage(p0: Message?, p1: MessageConsumer?, p2: LanguageServerWrapper?) {
+                        p0.let {
+                            (it as? ResponseMessage)?.let {
+                                (it.result as? InitializeResult)?.let {
+                                    serviceInitialized = Gson().toJson(it)
+                                }
+                            }
+                        }
+                    }
+
+                    override fun handleError(p0: LanguageServerWrapper?, p1: Throwable?) {
+                    }
+
+                    override fun dispose() {
+                    }
+
+                })
+            }
+        }.start()
     }
 
     var serviceInitialized: String? = null
@@ -105,6 +144,11 @@ suspend fun ApplicationCall.respondSse(eventFlow: Flow<String>) {
 }
 
 fun externalInfoViewModuleFactory(project: Project, service : ExternalInfoViewService): Application.() -> Unit {
+
+    val gson = GsonBuilder()
+        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+        .create()
+
     /**
      * We produce a [SharedFlow] from a function
      * that sends an [SseEvent] instance each second.
@@ -124,6 +168,12 @@ fun externalInfoViewModuleFactory(project: Project, service : ExternalInfoViewSe
      */
     return {
         routing {
+
+        get("/api") {
+            call.respondText(
+                "working"
+            )
+        }
         /**
          * Route to be executed when the client perform a GET `/sse` request.
          * It will respond using the [respondSse] extension method defined in this same file
@@ -168,10 +218,15 @@ fun externalInfoViewModuleFactory(project: Project, service : ExternalInfoViewSe
         }
         post("/api/sendClientRequest") {
             val text = call.receiveText()
-            val resp = LeanLspServerManager.getInstance(project = project).lspServer.sendRequestSync{ (it as LeanLanguageServer).rpcCall(Gson().fromJson(text, InteractiveGoalsParams::class.java))}
-            call.respondText(
-                Gson().toJson(resp), ContentType.Application.Json
-            )
+            // TODO async way? kotlin way?
+            val resp = LeanLspServerManager.getInstance(project = project).languageServer.rpcCall(gson.fromJson(text, Any::class.java)).get()
+            if (resp == null) {
+                call.respondText("{}")
+            } else {
+                call.respondText {
+                    Gson().toJson(resp)
+                }
+            }
 
         }
         /**

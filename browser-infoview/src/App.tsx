@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import './infoview.css'
 import { loadRenderInfoview } from '@leanprover/infoview/loader'
 import { renderInfoview } from '@leanprover/infoview'
 import { InfoviewApi, EditorApi } from '@leanprover/infoview-api'
@@ -59,6 +60,11 @@ export class DummyEditorApi implements EditorApi {
             throw new Error('Network response was not ok');
         }
         const result = await res.json();
+        if (Object.keys(result).length == 0) {
+            return {
+                length: 0
+            }
+        }
         return result;
     }
 
@@ -187,13 +193,13 @@ function App() {
             }
             infoViewApi.changedCursorLocation(result)
             // Handle the response here
-        }, 40); // Sends the API request every 2 seconds
+        }, 1000); // Sends the API request every 2 seconds
     }, []);
     //sconst myEventSource = new ServerEventSource('/api/events', 'events');
 
 
 
-    return <div ref={div}></div>;
+    return <div ref={div} id="infoview"></div>;
 }
 
 export default App

@@ -122,7 +122,7 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
         return resp.goal;
     }
 
-    fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any {
+    fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any? {
         val sessionId = getSession(file.toString(), retry > 1)
         val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
         val logicalPosition = caret.logicalPosition
@@ -143,7 +143,7 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
             if (resp == null && retry < 2) {
                 return getInteractiveGoals(file, caret, retry + 1)
             }
-            return resp!!
+            return resp
         } catch (e: ExecutionException) {
             if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
                 return getInteractiveGoals(file, caret, retry + 1)

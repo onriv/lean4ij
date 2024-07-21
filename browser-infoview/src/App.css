@@ -40,3 +40,26 @@
 .read-the-docs {
   color: #888;
 }
+
+#root, #infoview {
+  text-align: left;
+  margin: 0;
+  padding: 0;
+  position: fixed;
+  top: 0;
+}
+
+/* This is copied from client/src/css/App.css
+ * TODO JuliaMono requires a license file, add it
+ */
+@font-face {
+  font-family: 'JuliaMono';
+  src: local('JuliaMono'), url('/fonts/JuliaMono-Regular.ttf') format('truetype');
+}
+
+body {
+  --vscode-editor-font-family: "JuliaMono";
+  --vscode-editorHoverWidget-background: rgb(255, 255, 255)
+}
+
+/*.tooltip { background-color: var(--vscode-editorHoverWidget-background) !important; }*/

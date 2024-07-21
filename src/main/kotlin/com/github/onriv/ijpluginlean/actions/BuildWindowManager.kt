@@ -106,7 +106,7 @@ class BuildWindowManager(val project: Project) {
             fileProgre.finish()
             processingFiles.remove(info.textDocument.uri)
         } else {
-            fileProgre.progress("Running")
+            fileProgre.progress(info.textDocument.uri)
         }
 
     }

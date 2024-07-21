@@ -117,20 +117,20 @@ class EditorCaretListener(val project: Project) : CaretListener {
             if (!shouldUpdateGoal(file, caret)) {
                 return@runBackgroundableTask
             }
-            println(LeanLspServerManager.getInstance(project))
-            // try {
-            //     val plainGoal = LeanLspServerManager.getInstance(project).plainGoal(file, caret)
-            //     val plainTermGoal = LeanLspServerManager.getInstance(project).plainTermGoal(file, caret)
-            //     // LeanInfoViewWindowFactory.updateGoal(project, file, caret, plainGoal, plainTermGoal)
-            //     //  Error response from server: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Outdated RPC sessios
-            //     val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
-            //     LeanInfoViewWindowFactory.updateInteractiveGoal(project, file, caret, interactiveGoal)
-            //     println(interactiveGoal)
-            // } catch (e: Exception) {
-            //     // TODO handle it
-            //     e.printStackTrace()
-            // }
+            try {
+                val plainGoal = LeanLspServerManager.getInstance(project).plainGoal(file, caret)
+                val plainTermGoal = LeanLspServerManager.getInstance(project).plainTermGoal(file, caret)
+                // TODO in fact, plain goal not works any more in current infoview window
+                // LeanInfoViewWindowFactory.updateGoal(project, file, caret, plainGoal, plainTermGoal)
+                //  Error response from server: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Outdated RPC sessios
+                val interactiveGoal = LeanLspServerManager.getInstance(project).getInteractiveGoals(file, event.caret!!)
+                LeanInfoViewWindowFactory.updateInteractiveGoal(project, file, caret, interactiveGoal)
+            } catch (e: Exception) {
+                // TODO handle it
+                e.printStackTrace()
+            }
 
+            // TODO external infoview
             // try {
             //     // TODO DIY
             //     val logicalPosition = event.caret!!.logicalPosition

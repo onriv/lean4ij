@@ -129,7 +129,7 @@ class LeanLsp4jClient(project: Project) :
     fun leanFileProgress(params: LeanFileProgressProcessingInfo) {
         // TODO... should not run this with backprogram task indicator...
         //         if the lean file in .lake update, it's huge tasks
-        // FileProgress.run(project, params)
+        FileProgress.run(project, params)
         BuildWindowManager.getInstance(project).fileProcess(params)
     }
 

@@ -8,16 +8,21 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
 import com.redhat.devtools.lsp4ij.LanguageServiceAccessor
 import org.eclipse.lsp4j.ServerCapabilities
+import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 
 
 class LeanLspServerManager (val project: Project, val languageServer: LeanLanguageServer) {
@@ -59,8 +64,10 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
             // TODO check it in linux/macos
             // lean lsp server is using lowercase disk name
             // TODO this is so ugly, make it better
-            // TODO in fact
-            return "file:///"+url.substring(7,8).lowercase() +url.substring(8).replaceFirst(":", "%3A")
+            // TODO in fact jetebrain's lsp impl has this
+            // return "file:///"+url.substring(7,8).lowercase() +url.substring(8).replaceFirst(":", "%3A")
+            // lsp4ij's way
+            return "file:///"+url.substring(7,8) +url.substring(8)
         }
 
         private fun detectOperatingSystem(): String {
@@ -80,106 +87,108 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
 
     private val sessions = ConcurrentHashMap<String, String>()
 
-    // fun plainGoal(file: VirtualFile, caret: Caret) : List<String> {
-    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-    //     // val position = Position(line=line!!, character = column!!)
-    //     val logicalPosition = caret.logicalPosition
-    //     val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-    //     val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).plainGoal(
-    //         PlainGoalParams( textDocument = textDocument, position = position )
-    //     )}
-    //     // TODO handle this null more seriously  and show it in the ui
-    //     if (resp == null) {
-    //         return ArrayList()
-    //     }
-    //     return resp.goals;
-    // }
+    // TODO maybe async way
+    fun plainGoal(file: VirtualFile, caret: Caret) : List<String> {
+        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+        // val position = Position(line=line!!, character = column!!)
+        val logicalPosition = caret.logicalPosition
+        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+        val resp = languageServer.plainGoal(
+            PlainGoalParams( textDocument = textDocument, position = position )
+        ).get()
+        // TODO handle this null more seriously  and show it in the ui
+        if (resp == null) {
+            return ArrayList()
+        }
+        return resp.goals;
+    }
 
-    // fun plainTermGoal(file: VirtualFile, caret: Caret) : String {
-    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-    //     // val position = Position(line=line!!, character = column!!)
-    //     val logicalPosition = caret.logicalPosition
-    //     val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-    //     val resp = lspServer.sendRequestSync {(it as LeanLanguageServer).plainTermGoal(
-    //         PlainTermGoalParams( textDocument = textDocument, position = position )
-    //     )}
-    //     // TODO handle this null more seriously  and show it in the ui
-    //     if (resp == null) {
-    //         return ""
-    //     }
-    //     return resp.goal;
-    // }
+    fun plainTermGoal(file: VirtualFile, caret: Caret) : String {
+        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+        // val position = Position(line=line!!, character = column!!)
+        val logicalPosition = caret.logicalPosition
+        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+        val resp = languageServer.plainTermGoal(
+            PlainTermGoalParams( textDocument = textDocument, position = position )
+        ).get()
+        // TODO handle this null more seriously  and show it in the ui
+        if (resp == null) {
+            return ""
+        }
+        return resp.goal;
+    }
 
-    // fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any {
-    //     val sessionId = getSession(file.toString(), retry > 1)
-    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-    //     val logicalPosition = caret.logicalPosition
-    //     val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-    //     val rpcParams = InteractiveGoalsParams(
-    //         sessionId = sessionId,
-    //         method = "Lean.Widget.getInteractiveGoals",
-    //         params = PlainGoalParams(
-    //             textDocument = textDocument,
-    //             position = position
-    //         ),
-    //         textDocument = textDocument,
-    //         position = position
-    //     )
-    //     try {
-    //         val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
-    //         if (resp == null && retry < 2) {
-    //             return getInteractiveGoals(file, caret, retry + 1)
-    //         }
-    //         return resp!!
-    //     } catch (e: ResponseErrorException) {
-    //         if (e.message!!.contains("Outdated RPC session") && retry < 2) {
-    //             return getInteractiveGoals(file, caret, retry + 1)
-    //         }
-    //         throw e;
-    //     }
-    // }
+    fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any {
+        val sessionId = getSession(file.toString(), retry > 1)
+        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+        val logicalPosition = caret.logicalPosition
+        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+        val rpcParams = InteractiveGoalsParams(
+            sessionId = sessionId,
+            method = "Lean.Widget.getInteractiveGoals",
+            params = PlainGoalParams(
+                textDocument = textDocument,
+                position = position
+            ),
+            textDocument = textDocument,
+            position = position
+        )
+        try {
+            // TODO async!
+            val resp = languageServer.rpcCall(rpcParams).get()
+            if (resp == null && retry < 2) {
+                return getInteractiveGoals(file, caret, retry + 1)
+            }
+            return resp!!
+        } catch (e: ExecutionException) {
+            if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
+                return getInteractiveGoals(file, caret, retry + 1)
+            }
+            throw e;
+        }
+    }
 
-    // fun infoToInteractive(file: VirtualFile, caret: Caret, params: ContextInfo, retry: Int = 0): Any {
-    //     // TODO DRY
-    //     val sessionId = getSession(file.toString(), retry > 1)
-    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-    //     val logicalPosition = caret.logicalPosition
-    //     val position = Position(line = logicalPosition.line, character = logicalPosition.column)
-    //     val rpcParams = InteractiveInfoParams(
-    //         sessionId = sessionId,
-    //         method = "Lean.Widget.InteractiveDiagnostics.infoToInteractive",
-    //         params = params,
-    //         textDocument = textDocument,
-    //         position = position
-    //     )
-    //     try {
-    //         val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcCall(rpcParams) }
-    //         if (resp == null && retry < 2) {
-    //             return infoToInteractive(file, caret, params, retry + 1)
-    //         }
-    //         return resp!!
-    //     } catch (e: ResponseErrorException) {
-    //         if (e.message!!.contains("Outdated RPC session") && retry < 2) {
-    //             return infoToInteractive(file, caret, params,retry + 1)
-    //         }
-    //         throw e;
-    //     }
-    // }
+    fun infoToInteractive(file: VirtualFile, caret: Caret, params: ContextInfo, retry: Int = 0): Any {
+        // TODO DRY
+        val sessionId = getSession(file.toString(), retry > 1)
+        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+        val logicalPosition = caret.logicalPosition
+        val position = Position(line = logicalPosition.line, character = logicalPosition.column)
+        val rpcParams = InteractiveInfoParams(
+            sessionId = sessionId,
+            method = "Lean.Widget.InteractiveDiagnostics.infoToInteractive",
+            params = params,
+            textDocument = textDocument,
+            position = position
+        )
+        try {
+            val resp = languageServer.rpcCall(rpcParams).get()
+            if (resp == null && retry < 2) {
+                return infoToInteractive(file, caret, params, retry + 1)
+            }
+            return resp!!
+        } catch (e: ExecutionException) {
+            if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
+                return infoToInteractive(file, caret, params,retry + 1)
+            }
+            throw e;
+        }
+    }
 
-    // fun getSession(uri: String, force: Boolean = false): String {
-    //     if (force) {
-    //         sessions.remove(tryFixWinUrl(uri))
-    //     }
-    //     return sessions.computeIfAbsent(tryFixWinUrl(uri)) {connectRpc(it)}
-    // }
+    fun getSession(uri: String, force: Boolean = false): String {
+        if (force) {
+            sessions.remove(tryFixWinUrl(uri))
+        }
+        return sessions.computeIfAbsent(tryFixWinUrl(uri)) {connectRpc(it)}
+    }
 
-    // private fun connectRpc(file : String) : String {
-    //     val resp = lspServer.sendRequestSync { (it as LeanLanguageServer).rpcConnect(RpcConnectParams(
-    //         file
-    //     )) }
-    //     // TODO handle exception here
-    //     return resp!!.sessionId
-    // }
+    private fun connectRpc(file : String) : String {
+        val resp = languageServer.rpcConnect(RpcConnectParams(
+            file
+        )).get()
+        // TODO handle exception here
+        return resp!!.sessionId
+    }
 
     private val systemId = ProjectSystemId("LEAN4")
     private val syncView = project.service<SyncViewManager>()

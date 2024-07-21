@@ -268,10 +268,10 @@ class InteractiveGoals(
     /**
      * This is from https://github.com/Julian/lean.nvim/blob/03f7437/lua/lean/infoview/components.lua
      */
-    fun toInfoViewString() : String {
-        val sb = StringBuilder()
+    fun toInfoViewString(sb: StringBuilder) : String {
         if (goals.isEmpty()) {
-            return "goals accomplished 🎉\n"
+            sb.append("goals accomplished 🎉\n")
+            return sb.toString()
         }
         sb.append("${goals.size} goals\n")
         for (goal in goals) {

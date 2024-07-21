@@ -42,7 +42,7 @@ class MyCustomAction : AnAction() {
         }
         val caret: Caret = editor.caretModel.primaryCaret
         val offset = caret.offset
-        println("Cursor moved to offset: $offset")
+        // println("Cursor moved to offset: $offset")
     }
 }
 
@@ -50,7 +50,7 @@ class OpenLeanInfoView : AnAction() {
     private val sessions = ConcurrentHashMap<String, String>()
 
     override fun actionPerformed(e: AnActionEvent) {
-        println("TODO")
+        // println("TODO")
     }
 
     private var processed : Boolean = false
@@ -59,7 +59,7 @@ class OpenLeanInfoView : AnAction() {
         // TODO dont know if it's a good position add it here or nos
         // TODO real log
         e.project?.let { EditorCaretListener.register(it) }
-        println("TODO")
+        // println("TODO")
 
         e.project?.let {
             fileProcess(it)

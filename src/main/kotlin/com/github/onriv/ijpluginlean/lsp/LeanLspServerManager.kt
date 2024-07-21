@@ -85,6 +85,10 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
         }
     }
 
+    init {
+        rpcKeepAlive()
+    }
+
     private val sessions = ConcurrentHashMap<String, String>()
 
     // TODO maybe async way
@@ -162,12 +166,20 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
             position = position
         )
         try {
+            /**
+             * rg.eclipse.lsp4j.jsonrpc.ResponseErrorException: Cannot decode params in RPC call 'Lean.Widget.InteractiveDiagnostics.infoToInteractive({"p":"6"})'
+             * RPC reference '6' is not valid
+             * java.util.concurrent.ExecutionException: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Cannot decode params in RPC call 'Lean.Widget.InteractiveDiagnostics.infoToInteractive({"p":"6"})'
+             */
             val resp = languageServer.rpcCall(rpcParams).get()
             if (resp == null && retry < 2) {
                 return infoToInteractive(file, caret, params, retry + 1)
             }
             return resp!!
         } catch (e: ExecutionException) {
+            if (e.cause is ResponseErrorException && retry < 2) {
+                return infoToInteractive(file, caret, params,retry + 1)
+            }
             if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
                 return infoToInteractive(file, caret, params,retry + 1)
             }
@@ -188,6 +200,22 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
         )).get()
         // TODO handle exception here
         return resp!!.sessionId
+    }
+
+    /**
+     * TODO do it in kotlin's coroutine!
+     */
+    fun rpcKeepAlive() {
+        object : Thread() {
+            override fun run() {
+                while (true) {
+                    for (entry in sessions.entries) {
+                        languageServer.rpcKeepAlive(RpcKeepAliveParams(entry.key, entry.value))
+                    }
+                    sleep(9*1000)
+                }
+            }
+        }.start()
     }
 
     private val systemId = ProjectSystemId("LEAN4")

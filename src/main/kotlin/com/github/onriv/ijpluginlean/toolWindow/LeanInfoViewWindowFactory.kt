@@ -41,6 +41,7 @@ import com.intellij.ui.EditorSettingsProvider
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
@@ -96,11 +97,15 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         }
 
         fun updateInteractiveGoal(project: Project, file: VirtualFile?, caret: Caret, interactiveGoalsAny: Any) {
+            if (file == null) {
+                return
+            }
             // from https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
             val infoViewWindow = ToolWindowManager.getInstance(project).getToolWindow("LeanInfoViewWindow")!!.contentManager.contents[0].component as
                     LeanInfoViewWindowFactory.LeanInfoViewWindow
             val interactiveGoals : InteractiveGoals = gson.fromJson(gson.toJson(interactiveGoalsAny), InteractiveGoals::class.java)
-            val interactiveGoalsText = interactiveGoals.toInfoViewString()
+            val interactiveGoalsBuilder = StringBuilder("▼ ${file.name}:${caret.logicalPosition.line+1}:${caret.logicalPosition.column}\n")
+            val interactiveGoalsText = interactiveGoals.toInfoViewString(interactiveGoalsBuilder)
 
             ApplicationManager.getApplication().invokeLater {
                 val infoViewWindowEditorEx: EditorEx = infoViewWindow.createEditor()
@@ -140,7 +145,8 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                                     return Color.decode("#add6ff")
                                 }
                             },
-                            CodeWithInfosDocumentationHyperLink(infoViewWindow, file!!, caret, codeWithInfosTag)
+                            CodeWithInfosDocumentationHyperLink(infoViewWindow, file!!, caret, codeWithInfosTag,
+                                RelativePoint(e.mouseEvent) )
                         )
                     }
                 })
@@ -4028,25 +4034,6 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             """, InteractiveGoals::class.java)
         }
 
-    }
-
-    /**
-     * copy from com.intellij.codeInsight.documentation.DocumentationEditorPane#getPreferredContentWidth ...
-     */
-    private fun getPreferredContentWidth(textLength: Int): Int {
-        // Heuristics to calculate popup width based on the amount of the content.
-        // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
-        // 200 chars and less is 300px, 1000 chars and more is 500px.
-        // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
-        val contentLengthPreferredSize = if (textLength < 200) {
-            docPopupPreferredMinWidth
-        } else if (textLength > 200 && textLength < 1000) {
-            docPopupPreferredMinWidth +
-                    (textLength - 200) * (docPopupPreferredMaxWidth - docPopupPreferredMinWidth) / (1000 - 200)
-        } else {
-            docPopupPreferredMaxWidth
-        }
-        return scale(contentLengthPreferredSize)
     }
 
 }

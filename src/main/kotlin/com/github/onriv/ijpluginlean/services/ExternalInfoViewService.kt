@@ -4,6 +4,7 @@ package com.github.onriv.ijpluginlean.services
 // import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 import com.github.onriv.ijpluginlean.lsp.data.Position
+import com.github.onriv.ijpluginlean.lsp.data.gson
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -25,9 +26,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.reflect.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer
@@ -92,19 +91,23 @@ class ExternalInfoViewService(project: Project) {
     var cursorLocation : CursorLocation? = null
     var changedCursorLocation : Boolean = false
 
-    private val channel = MutableSharedFlow<String>()
+    private val channel = MutableSharedFlow<SseEvent>()
 
     // Repository
-    fun observe(): Flow<String> {
+    fun observe(): Flow<SseEvent> {
         return channel.asSharedFlow()
     }
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     // Sending an event
-    suspend fun send(event: String) {
-        channel.emit(event) // This gets sent to the ViewModel/Presenter
+    fun send(event: SseEvent) {
+        scope.launch {
+            channel.emit(event) // This gets sent to the ViewModel/Presenter
+        }
     }
 
     fun changedCursorLocation(cursorLocation: CursorLocation) {
+        send(SseEvent(gson.toJson(cursorLocation)))
         this.cursorLocation = cursorLocation
         changedCursorLocation = true
     }
@@ -123,20 +126,24 @@ data class SseEvent(val data: String, val event: String? = null, val id: String?
  *
  * You can read more about it here: https://www.html5rocks.com/en/tutorials/eventsource/basics/
  */
-suspend fun ApplicationCall.respondSse(eventFlow: Flow<String>) {
+suspend fun ApplicationCall.respondSse(eventFlow: Flow<SseEvent>) {
     response.cacheControl(CacheControl.NoCache(null))
+    response.header(
+        // for local dev for vite seems to have problem for proxy sse
+        // https://github.com/vitejs/vite/issues/12157
+        HttpHeaders.AccessControlAllowOrigin, "*"
+    )
     respondBytesWriter(contentType = ContentType.Text.EventStream) {
         eventFlow.collect { event ->
-//            if (event.id != null) {
-//                writeStringUtf8("id: ${event.id}\n")
-//            }
-//            if (event.event != null) {
-//                writeStringUtf8("event: ${event.event}\n")
-//            }
-//            for (dataLine in event.data.lines()) {
-//                writeStringUtf8("data: $dataLine\n")
-//            }
-            writeStringUtf8(event)
+            if (event.id != null) {
+                writeStringUtf8("id: ${event.id}\n")
+            }
+            if (event.event != null) {
+                writeStringUtf8("event: ${event.event}\n")
+            }
+            for (dataLine in event.data.lines()) {
+                writeStringUtf8("data: $dataLine\n")
+            }
             writeStringUtf8("\n")
             flush()
         }
@@ -156,11 +163,13 @@ fun externalInfoViewModuleFactory(project: Project, service : ExternalInfoViewSe
     val sseFlow = flow {
         var n = 0
         while (true) {
-            emit("demo$n")
+            emit(SseEvent("demo$n"))
             delay(1.seconds)
             n++
         }
     }.shareIn(GlobalScope, SharingStarted.Eagerly)
+
+
 
     /**
      * We use the [Routing] plugin to declare [Route] that will be
@@ -193,6 +202,16 @@ fun externalInfoViewModuleFactory(project: Project, service : ExternalInfoViewSe
             call.respondText(
                 service.serviceInitialized!!, ContentType.Application.Json
             )
+        }
+
+
+        /**
+         * Route to be executed when the client perform a GET `/api/sse/changedCursorLocation` request.
+         * It will respond using the [respondSse] extension method defined in this same file
+         * that uses the [SharedFlow] to collect sse events.
+         */
+        get("/api/sse/changedCursorLocation") {
+            call.respondSse(service.observe())
         }
 
         get("/api/changedCursorLocation") {

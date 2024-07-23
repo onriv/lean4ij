@@ -115,6 +115,36 @@ class EditorCaretListener(val project: Project) : CaretListener {
         // TODO check kotlin's coroutine document
         //      it's no way start coroutine from normal thread except runBlocking
         //      see: https://stackoverflow.com/questions/76187252/
+        //      TODO but!, it seems the following way does work:
+        // class CoroutineService : Service() {
+        //     private val scope = CoroutineScope(Dispatchers.IO)
+        //
+        //     private val flow = MutableSharedFlow<String>(extraBufferCapacity = 64)
+        //
+        //     override fun onCreate() {
+        //         super.onCreate()
+        //         // collect data emitted by the Flow
+        //         flow.onEach {
+        //             // Handle data
+        //         }.launchIn(scope)
+        //     }
+        //
+        //     override fun onStartCommand(@Nullable intent: Intent?, flags: Int, startId: Int): Int {
+        //         scope.launch {
+        //             // retrieve data from Intent and send it to Flow
+        //             val messageFromIntent = intent?.let { it.extras?.getString("KEY_MESSAGE")} ?: ""
+        //             flow.emit(messageFromIntent)
+        //         }
+        //         return START_STICKY
+        //     }
+        //
+        //     override fun onBind(intent: Intent?): IBinder?  = null
+        //
+        //     override fun onDestroy() {
+        //         scope.cancel() // cancel CoroutineScope and all launched coroutines
+        //     }
+        // }
+        // check https://stackoverflow.com/questions/68279594/how-to-use-mutablesharedflow-in-android-service
         runBackgroundableTask("Updating goal", project) {
             val caret = event.caret!!
             if (!shouldUpdateGoal(file, caret)) {

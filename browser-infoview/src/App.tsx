@@ -8,6 +8,12 @@ import { renderInfoview } from '@leanprover/infoview'
 import { InfoviewApi, EditorApi } from '@leanprover/infoview-api'
 import {Rpc} from "./rpc.ts";
 
+/**
+ * TODO where did I got this?
+ * also from https://github.com/ktorio/ktor-samples/blob/main/sse/src/main/kotlin/io/ktor/samples/sse/SseApplication.kt
+ * see ExternalInfoViewService
+ * no, it seems not
+ */
 class ServerEventSource {
     private source: EventSource;
     private eventsUl: HTMLUListElement;
@@ -184,21 +190,43 @@ function App() {
             // Handle the response here
         }, 2000); // Sends the API request every 2 seconds
 
+        const source = new EventSource('http://localhost:9093/api/sse/changedCursorLocation');
+        function logEvent(text) {
+            console.log(text)
+        }
+        source.addEventListener('message', function(e) {
+            logEvent('message:' + e.data);
+            infoViewApi.changedCursorLocation(JSON.parse(e.data))
+        }, false);
+
+        source.addEventListener('open', function(e) {
+            logEvent('open');
+        }, false);
+
+        source.addEventListener('error', function(e) {
+            if (e.readyState == EventSource.CLOSED) {
+                logEvent('closed');
+            } else {
+                logEvent('error');
+                console.log(e);
+            }
+            const res = e.srcElement
+        }, false);
+
         // I dont understand sse, hence this very poor impl...
-        const intervalId1 = setInterval(async () => {
-            const res = await fetch('/api/changedCursorLocation');
-            if (!res.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const result = await res.json();
-            if (result.uri == undefined) {
-                return
-            }
-            infoViewApi.changedCursorLocation(result)
-            // Handle the response here
-        }, 1000); // Sends the API request every 2 seconds
+        // const intervalId1 = setInterval(async () => {
+        //     const res = await fetch('/api/changedCursorLocation');
+        //     if (!res.ok) {
+        //         throw new Error('Network response was not ok');
+        //     }
+        //     const result = await res.json();
+        //     if (result.uri == undefined) {
+        //         return
+        //     }
+        //     infoViewApi.changedCursorLocation(result)
+        //     // Handle the response here
+        // }, 1000); // Sends the API request every 2 seconds
     }, []);
-    //sconst myEventSource = new ServerEventSource('/api/events', 'events');
 
 
 

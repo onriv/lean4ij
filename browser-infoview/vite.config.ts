@@ -11,6 +11,8 @@ export default defineConfig({
         target: 'http://localhost:9093',
         changeOrigin: true,
         secure: false,
+        // check https://github.com/vitejs/vite/issues/12157
+        // timeout: 0, // here
       },
     },
   },

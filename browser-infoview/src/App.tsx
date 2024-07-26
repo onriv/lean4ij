@@ -72,6 +72,13 @@ export class DummyEditorApi implements EditorApi {
                     goals: []
                 }
             }
+            if (params.method == "Lean.Widget.getInteractiveTermGoal") {
+                // return {
+                //     goals: [],
+                //     hyps: []
+                // }
+                return undefined
+            }
             return []
         }
         return result;

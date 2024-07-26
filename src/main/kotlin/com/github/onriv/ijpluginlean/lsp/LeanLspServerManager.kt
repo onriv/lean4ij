@@ -1,6 +1,7 @@
 package com.github.onriv.ijpluginlean.lsp
 
 import com.github.onriv.ijpluginlean.lsp.data.*
+import com.google.gson.Gson
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.impl.*
@@ -182,6 +183,27 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
             }
             if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
                 return infoToInteractive(file, caret, params,retry + 1)
+            }
+            throw e;
+        }
+    }
+
+    fun rpcCallRaw(any : Any, retry : Int = 0) : Any? {
+        // TODO DRY
+        // TODO better way, more type info
+        // TODO in fact lsp4j 0.23 can take duplicate lsp request method, but I dont know why lsp4ij tae 0.21.1
+        val any1 = any as java.util.Map<Any, Any>
+        val file = (any["textDocument"] as java.util.Map<Any, Any>)["uri"]
+        val sessionId = getSession(file.toString(), retry > 1)
+        any1.put("sessionId", sessionId)
+        try {
+            return languageServer.rpcCall(any1).get()
+        } catch (e: ExecutionException) {
+            if (e.cause is ResponseErrorException && retry < 2) {
+                return rpcCallRaw(any,retry + 1)
+            }
+            if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
+                return rpcCallRaw(any,retry + 1)
             }
             throw e;
         }

@@ -238,7 +238,7 @@ fun externalInfoViewModuleFactory(project: Project, service : ExternalInfoViewSe
         post("/api/sendClientRequest") {
             val text = call.receiveText()
             // TODO async way? kotlin way?
-            val resp = LeanLspServerManager.getInstance(project = project).languageServer.rpcCall(gson.fromJson(text, Any::class.java)).get()
+            val resp = LeanLspServerManager.getInstance(project = project).rpcCallRaw(gson.fromJson(text, Any::class.java))
             if (resp == null) {
                 call.respondText("{}")
             } else {

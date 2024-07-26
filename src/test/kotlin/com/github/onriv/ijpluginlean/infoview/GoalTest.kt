@@ -69,7 +69,7 @@ class GoalTest : BasePlatformTestCase() {
                 }
             }).create()
         var goals : InteractiveGoals = gson.fromJson(s, InteractiveGoals::class.java)
-        println(goals.toInfoViewString())
+        println(goals.toInfoViewString(StringBuilder()))
 
 
     }

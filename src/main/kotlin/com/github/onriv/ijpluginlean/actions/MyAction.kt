@@ -1,6 +1,6 @@
 package com.github.onriv.ijpluginlean.actions
 
-import com.github.onriv.ijpluginlean.listeners.EditorCaretListener
+// import com.github.onriv.ijpluginlean.listeners.EditorCaretListener
 // import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 // import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 // import com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider
@@ -8,10 +8,14 @@ import com.github.onriv.ijpluginlean.listeners.EditorCaretListener
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.Position
 import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
+import com.github.onriv.ijpluginlean.project.LspService
+import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -58,11 +62,12 @@ class OpenLeanInfoView : AnAction() {
     override fun update(e: AnActionEvent) {
         // TODO dont know if it's a good position add it here or nos
         // TODO real log
-        e.project?.let { EditorCaretListener.register(it) }
+        // e.project?.let { EditorCaretListener.register(it) }
         // println("TODO")
 
         e.project?.let {
             fileProcess(it)
+            println(it.service<ExternalInfoViewService>())
         }
 
     }

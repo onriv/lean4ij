@@ -3,14 +3,15 @@ package com.github.onriv.ijpluginlean.toolWindow
 // https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html#ui-dsl-basics
 import com.github.onriv.ijpluginlean.lsp.data.CodeWithInfosTag
 import com.github.onriv.ijpluginlean.lsp.data.InteractiveGoals
-import com.github.onriv.ijpluginlean.lsp.data.gson
-import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
+import com.google.gson.Gson
+// import com.github.onriv.ijpluginlean.lsp.data.gson
 // import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
-import com.github.onriv.ijpluginlean.services.MyProjectService
-import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMaxWidth
-import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMinWidth
-import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
+// // import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
+// import com.github.onriv.ijpluginlean.services.MyProjectService
+// import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMaxWidth
+// import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.docPopupPreferredMinWidth
+// import com.intellij.execution.filters.HyperlinkInfo
+// import com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -110,7 +111,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             }
             val infoViewWindow = contents[0].component as
                     LeanInfoViewWindowFactory.LeanInfoViewWindow
-            val interactiveGoals : InteractiveGoals = gson.fromJson(gson.toJson(interactiveGoalsAny), InteractiveGoals::class.java)
+            val interactiveGoals : InteractiveGoals = Gson().fromJson(Gson().toJson(interactiveGoalsAny), InteractiveGoals::class.java)
             val interactiveGoalsBuilder = StringBuilder("▼ ${file.name}:${caret.logicalPosition.line+1}:${caret.logicalPosition.column}\n")
             val interactiveGoalsText = interactiveGoals.toInfoViewString(interactiveGoalsBuilder)
 
@@ -119,44 +120,44 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 infoViewWindowEditorEx.document.setText(interactiveGoalsText)
                 val support = EditorHyperlinkSupport.get(infoViewWindowEditorEx)
                 infoViewWindow.setContent(infoViewWindowEditorEx.component)
-                infoViewWindowEditorEx.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-                    var hyperLink: RangeHighlighter? = null
-                    override fun mouseMoved(e: EditorMouseEvent) {
-                        if (hyperLink != null) {
-                            support.removeHyperlink(hyperLink!!)
-                        }
-                        if (!e.isOverText) {
-                            return
-                        }
-                        val c = interactiveGoals.getCodeText(e.offset) ?: return
-                        var codeWithInfosTag : CodeWithInfosTag? = null
-                        if (c is CodeWithInfosTag) {
-                            codeWithInfosTag = c
-                        } else if (c.parent != null && c.parent!! is CodeWithInfosTag) {
-                            codeWithInfosTag = c.parent!! as CodeWithInfosTag
-                        } else if (c.parent != null && c.parent!!.parent != null && c.parent!!.parent!! is CodeWithInfosTag) {
-                            codeWithInfosTag = c.parent!!.parent!! as CodeWithInfosTag
-                        }
-                        if (codeWithInfosTag == null) {
-                            return
-                        }
-
-                        if (c.parent == null || c.parent!!.parent == null) {
-                            return
-                        }
-                        hyperLink = support.createHyperlink(
-                            c.parent!!.startOffset,
-                            c.parent!!.endOffset,
-                            object : TextAttributes() {
-                                override fun getBackgroundColor(): Color {
-                                    return Color.decode("#add6ff")
-                                }
-                            },
-                            CodeWithInfosDocumentationHyperLink(infoViewWindow, file!!, caret, codeWithInfosTag,
-                                RelativePoint(e.mouseEvent) )
-                        )
-                    }
-                })
+                // infoViewWindowEditorEx.addEditorMouseMotionListener(object : EditorMouseMotionListener {
+                //     var hyperLink: RangeHighlighter? = null
+                //     override fun mouseMoved(e: EditorMouseEvent) {
+                //         if (hyperLink != null) {
+                //             support.removeHyperlink(hyperLink!!)
+                //         }
+                //         if (!e.isOverText) {
+                //             return
+                //         }
+                //         val c = interactiveGoals.getCodeText(e.offset) ?: return
+                //         var codeWithInfosTag : CodeWithInfosTag? = null
+                //         if (c is CodeWithInfosTag) {
+                //             codeWithInfosTag = c
+                //         } else if (c.parent != null && c.parent!! is CodeWithInfosTag) {
+                //             codeWithInfosTag = c.parent!! as CodeWithInfosTag
+                //         } else if (c.parent != null && c.parent!!.parent != null && c.parent!!.parent!! is CodeWithInfosTag) {
+                //             codeWithInfosTag = c.parent!!.parent!! as CodeWithInfosTag
+                //         }
+                //         if (codeWithInfosTag == null) {
+                //             return
+                //         }
+                //
+                //         if (c.parent == null || c.parent!!.parent == null) {
+                //             return
+                //         }
+                //         hyperLink = support.createHyperlink(
+                //             c.parent!!.startOffset,
+                //             c.parent!!.endOffset,
+                //             object : TextAttributes() {
+                //                 override fun getBackgroundColor(): Color {
+                //                     return Color.decode("#add6ff")
+                //                 }
+                //             },
+                //             CodeWithInfosDocumentationHyperLink(infoViewWindow, file!!, caret, codeWithInfosTag,
+                //                 RelativePoint(e.mouseEvent) )
+                //         )
+                //     }
+                // })
             }
         }
 

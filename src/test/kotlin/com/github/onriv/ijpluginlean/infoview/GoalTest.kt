@@ -5,12 +5,14 @@ import com.google.common.io.Resources
 import com.google.gson.*
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.junit.Test
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 
 @TestDataPath("\$CONTENT_ROOT/src/test/testData")
-class GoalTest : BasePlatformTestCase() {
+class GoalTest {
 
+    @Test
     fun testParseGoal() {
         val s = Resources.toString(Resources.getResource("test_goal.json"), StandardCharsets.UTF_8)
         val t : Any = Gson().fromJson(s, Any::class.java)

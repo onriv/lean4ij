@@ -4,7 +4,7 @@ package com.github.onriv.ijpluginlean.services
 // import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 import com.github.onriv.ijpluginlean.lsp.data.Position
-import com.github.onriv.ijpluginlean.lsp.data.gson
+// import com.github.onriv.ijpluginlean.lsp.data.gson
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -107,7 +107,7 @@ class ExternalInfoViewService(project: Project) {
     }
 
     fun changedCursorLocation(cursorLocation: CursorLocation) {
-        send(SseEvent(gson.toJson(cursorLocation)))
+        // send(SseEvent(gson.toJson(cursorLocation)))
         this.cursorLocation = cursorLocation
         changedCursorLocation = true
     }
@@ -238,14 +238,14 @@ fun externalInfoViewModuleFactory(project: Project, service : ExternalInfoViewSe
         post("/api/sendClientRequest") {
             val text = call.receiveText()
             // TODO async way? kotlin way?
-            val resp = LeanLspServerManager.getInstance(project = project).rpcCallRaw(gson.fromJson(text, Any::class.java))
-            if (resp == null) {
-                call.respondText("{}")
-            } else {
-                call.respondText {
-                    Gson().toJson(resp)
-                }
-            }
+            // val resp = LeanLspServerManager.getInstance(project = project).rpcCallRaw(gson.fromJson(text, Any::class.java))
+            // if (resp == null) {
+            //     call.respondText("{}")
+            // } else {
+            //     call.respondText {
+            //         Gson().toJson(resp)
+            //     }
+            // }
 
         }
         /**

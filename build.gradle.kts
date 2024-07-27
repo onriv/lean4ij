@@ -34,8 +34,18 @@ repositories {
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
     // from https://github.com/ktorio/ktor-samples/blob/main/sse/build.gradle.kts
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-netty-jvm")
+    // check https://mbonnin.medium.com/the-different-kotlin-stdlibs-explained-83d7c6bf293
+    // and https://intellij-support.jetbrains.com/hc/en-us/community/posts/360009759780-Error-while-launching-a-coroutine
+    // for the exclusion
+    // for intellij idea plugin it should not include coroutines
+    implementation("io.ktor:ktor-server-core-jvm") {
+        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
+        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
+    }
+    implementation("io.ktor:ktor-server-netty-jvm") {
+        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
+        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
+    }
 //    implementation("io.ktor:ktor-serialization-gson")
 //    implementation("io.ktor:ktor-server-content-negotiation")
 //    implementation(libs.exampleLibrary)

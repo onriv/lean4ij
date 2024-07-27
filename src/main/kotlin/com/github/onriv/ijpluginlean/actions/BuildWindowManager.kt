@@ -1,6 +1,6 @@
 package com.github.onriv.ijpluginlean.actions
 
-import com.github.onriv.ijpluginlean.lsp.LeanFileProgressProcessingInfo
+import com.github.onriv.ijpluginlean.lsp.data.FileProgressProcessingInfo
 import com.github.onriv.ijpluginlean.util.Lean4Util.runCommand
 import com.google.common.base.Stopwatch
 import com.intellij.build.*
@@ -95,7 +95,7 @@ class BuildWindowManager(val project: Project) {
             // .finish()
     }
 
-    fun fileProcess(info: LeanFileProgressProcessingInfo)  {
+    fun fileProcess(info: FileProgressProcessingInfo)  {
         if (progres == null) {
             return
         }

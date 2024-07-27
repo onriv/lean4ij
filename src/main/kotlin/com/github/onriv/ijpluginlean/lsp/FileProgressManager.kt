@@ -1,32 +1,24 @@
 package com.github.onriv.ijpluginlean.lsp
 
-import com.intellij.openapi.progress.runBackgroundableTask
+import com.github.onriv.ijpluginlean.lsp.data.FileProgressProcessingInfo
+import com.github.onriv.ijpluginlean.project.LspService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import kotlinx.coroutines.flow.MutableSharedFlow
-import java.util.concurrent.ArrayBlockingQueue
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.withProgressText
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 class FileProgress(val project: Project, val file: String) {
 
     companion object {
-        val progresses: ConcurrentHashMap<String, FileProgress> = ConcurrentHashMap()
+        private val progresses: ConcurrentHashMap<String, FileProgress> = ConcurrentHashMap()
 
-        fun run(project: Project, info: LeanFileProgressProcessingInfo) {
-            // val project = ProjectManager.getInstance().openProjects.find {
-            //     // TODO here ignore the lowercase/uppercase...
-            //     //      maily it's only an issue for Windows's disk name like file:///C:/ and file:///c:/
-            //     info.textDocument.uri.lowercase().startsWith(
-            //         // TODO as above, better way to handle all this path...
-            //         LeanLspServerManager.tryFixWinUrl("file://"+it.basePath!!).replace("%3A", ":").lowercase())}
-            // if(project == null) {
-            //     // TODO weird, sometimes it's null
-            //     return
-            // }
-            // don't need to do this... kind of hard to design, remove it now
-            // LeanLspServerManager.getInstance(project!!).startImport()
+        fun run(project: Project, info: FileProgressProcessingInfo) {
             val fp = progresses.computeIfAbsent(info.textDocument.uri) {
-                FileProgress(project!!, info.textDocument.uri)
+                FileProgress(project, info.textDocument.uri)
             }
             fp.update(info)
         }
@@ -34,57 +26,49 @@ class FileProgress(val project: Project, val file: String) {
         fun getFileProgress(file: String) = progresses[file]
     }
 
-    init {
-    }
+    private val processingInfoChannel = Channel<FileProgressProcessingInfo>()
 
-    // TODO do it kotlin way
-    private val channel = ArrayBlockingQueue<LeanFileProgressProcessingInfo>(1000)
-    // private val channel = ArrayBlockingQueue<Any>(10000)
+    private val scope = project.service<LspService>().scope
 
     private var processing : Boolean = false
 
     /**
-     * TODO do it kotlin way
      * This and the following startFileProgressTask seems ugly
      */
     @Synchronized
-    fun update(info: LeanFileProgressProcessingInfo) {
+    fun update(info: FileProgressProcessingInfo) {
         if (!processing) {
-            // TODO not sure if this is necessary
-            // if  (info.processing.isEmpty()) {
-            //     return
-            // }
-            startFileProgressTask()
+            if  (info.processing.isEmpty()) {
+                return
+            }
+            scope.launch {
+                withBackgroundProgress(project, LspConstants.FILE_PROGRESS, false) {
+                    withProgressText(file) {
+                        reportProgress {reporter ->
+                            var workSize = 0
+                            reporter.sizedStep(workSize) {  }
+                            while (workSize != 100) {
+                                val info = processingInfoChannel.receive()
+                                workSize = if (info.processing.isEmpty()) {
+                                    100
+                                } else {
+                                    info.processing[0].range.start.line*100/info.processing[0].range.end.line
+                                }
+                                reporter.sizedStep(workSize) {  }
+                            }
+                        }
+                    }
+                    processing = false
+                }
+            }
             processing = true
         }
-        channel.add(info)
+        scope.launch {
+            processingInfoChannel.send(info)
+        }
     }
 
     fun isProcessing() = processing
 
-    private fun startFileProgressTask() {
-        runBackgroundableTask("\$lean/fileProgress", project) {
-            while (true) {
-                val info = channel.take()
-                // TODO move this to util, and file
-                it.text = info.textDocument.uri.replace(LeanLspServerManager.tryFixWinUrl("file://"+project.basePath!!+"/"),"")
-                it.checkCanceled()
-                it.fraction = 0.0
-                try {
-                    if (info.processing.isEmpty()) {
-                        it.checkCanceled()
-                        it.fraction = 1.0
-                        break
-                    }
-                    it.checkCanceled();
-                    // TODO is this always just one element in info.processing?
-                    it.fraction = info.processing[0].range.start.line.toDouble()/ info.processing[0].range.end.line.toDouble()
-                } catch(e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            processing = false
-        }
-    }
 
 }

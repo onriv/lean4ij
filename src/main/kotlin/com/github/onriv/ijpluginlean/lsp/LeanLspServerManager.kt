@@ -1,7 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp
 
 import com.github.onriv.ijpluginlean.lsp.data.*
-import com.google.gson.Gson
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.impl.*
@@ -15,18 +14,14 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerManager
 import com.redhat.devtools.lsp4ij.LanguageServiceAccessor
-import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
-import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 
 
-class LeanLspServerManager (val project: Project, val languageServer: LeanLanguageServer) {
+class LeanLspServerManager (val project: Project, val languageServer: InternalLeanLanguageServer) {
 
     companion object {
         private val projects = ConcurrentHashMap<Project, LeanLspServerManager>()
@@ -34,7 +29,7 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
             return projects.computeIfAbsent(project) { k ->
                 val servers = LanguageServiceAccessor.getInstance(project)
                     .getActiveLanguageServers{true}
-                val server1 = servers.get(0) as LeanLanguageServer
+                val server1 = servers.get(0) as InternalLeanLanguageServer
                 LeanLspServerManager(project, server1)
             }
         }
@@ -123,91 +118,91 @@ class LeanLspServerManager (val project: Project, val languageServer: LeanLangua
         return resp.goal;
     }
 
-    fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any? {
-        val sessionId = getSession(file.toString(), retry > 1)
-        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-        val logicalPosition = caret.logicalPosition
-        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-        val rpcParams = InteractiveGoalsParams(
-            sessionId = sessionId,
-            method = "Lean.Widget.getInteractiveGoals",
-            params = PlainGoalParams(
-                textDocument = textDocument,
-                position = position
-            ),
-            textDocument = textDocument,
-            position = position
-        )
-        try {
-            // TODO async!
-            val resp = languageServer.rpcCall(rpcParams).get()
-            if (resp == null && retry < 2) {
-                return getInteractiveGoals(file, caret, retry + 1)
-            }
-            return resp
-        } catch (e: ExecutionException) {
-            if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
-                return getInteractiveGoals(file, caret, retry + 1)
-            }
-            throw e;
-        }
-    }
+    // fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any? {
+    //     val sessionId = getSession(file.toString(), retry > 1)
+    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+    //     val logicalPosition = caret.logicalPosition
+    //     val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+    //     val rpcParams = InteractiveGoalsParams(
+    //         sessionId = sessionId,
+    //         method = "Lean.Widget.getInteractiveGoals",
+    //         params = PlainGoalParams(
+    //             textDocument = textDocument,
+    //             position = position
+    //         ),
+    //         textDocument = textDocument,
+    //         position = position
+    //     )
+    //     try {
+    //         // TODO async!
+    //         val resp = languageServer.rpcCall(rpcParams).get()
+    //         if (resp == null && retry < 2) {
+    //             return getInteractiveGoals(file, caret, retry + 1)
+    //         }
+    //         return resp
+    //     } catch (e: ExecutionException) {
+    //         if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
+    //             return getInteractiveGoals(file, caret, retry + 1)
+    //         }
+    //         throw e;
+    //     }
+    // }
 
-    fun infoToInteractive(file: VirtualFile, caret: Caret, params: ContextInfo, retry: Int = 0): Any {
-        // TODO DRY
-        val sessionId = getSession(file.toString(), retry > 1)
-        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-        val logicalPosition = caret.logicalPosition
-        val position = Position(line = logicalPosition.line, character = logicalPosition.column)
-        val rpcParams = InteractiveInfoParams(
-            sessionId = sessionId,
-            method = "Lean.Widget.InteractiveDiagnostics.infoToInteractive",
-            params = params,
-            textDocument = textDocument,
-            position = position
-        )
-        try {
-            /**
-             * rg.eclipse.lsp4j.jsonrpc.ResponseErrorException: Cannot decode params in RPC call 'Lean.Widget.InteractiveDiagnostics.infoToInteractive({"p":"6"})'
-             * RPC reference '6' is not valid
-             * java.util.concurrent.ExecutionException: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Cannot decode params in RPC call 'Lean.Widget.InteractiveDiagnostics.infoToInteractive({"p":"6"})'
-             */
-            val resp = languageServer.rpcCall(rpcParams).get()
-            if (resp == null && retry < 2) {
-                return infoToInteractive(file, caret, params, retry + 1)
-            }
-            return resp!!
-        } catch (e: ExecutionException) {
-            if (e.cause is ResponseErrorException && retry < 2) {
-                return infoToInteractive(file, caret, params,retry + 1)
-            }
-            if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
-                return infoToInteractive(file, caret, params,retry + 1)
-            }
-            throw e;
-        }
-    }
+    // fun infoToInteractive(file: VirtualFile, caret: Caret, params: ContextInfo, retry: Int = 0): Any {
+    //     // TODO DRY
+    //     val sessionId = getSession(file.toString(), retry > 1)
+    //     val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+    //     val logicalPosition = caret.logicalPosition
+    //     val position = Position(line = logicalPosition.line, character = logicalPosition.column)
+    //     val rpcParams = InteractiveInfoParams(
+    //         sessionId = sessionId,
+    //         method = "Lean.Widget.InteractiveDiagnostics.infoToInteractive",
+    //         params = params,
+    //         textDocument = textDocument,
+    //         position = position
+    //     )
+    //     try {
+    //         /**
+    //          * rg.eclipse.lsp4j.jsonrpc.ResponseErrorException: Cannot decode params in RPC call 'Lean.Widget.InteractiveDiagnostics.infoToInteractive({"p":"6"})'
+    //          * RPC reference '6' is not valid
+    //          * java.util.concurrent.ExecutionException: org.eclipse.lsp4j.jsonrpc.ResponseErrorException: Cannot decode params in RPC call 'Lean.Widget.InteractiveDiagnostics.infoToInteractive({"p":"6"})'
+    //          */
+    //         val resp = languageServer.rpcCall(rpcParams).get()
+    //         if (resp == null && retry < 2) {
+    //             return infoToInteractive(file, caret, params, retry + 1)
+    //         }
+    //         return resp!!
+    //     } catch (e: ExecutionException) {
+    //         if (e.cause is ResponseErrorException && retry < 2) {
+    //             return infoToInteractive(file, caret, params,retry + 1)
+    //         }
+    //         if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
+    //             return infoToInteractive(file, caret, params,retry + 1)
+    //         }
+    //         throw e;
+    //     }
+    // }
 
-    fun rpcCallRaw(any : Any, retry : Int = 0) : Any? {
-        // TODO DRY
-        // TODO better way, more type info
-        // TODO in fact lsp4j 0.23 can take duplicate lsp request method, but I dont know why lsp4ij tae 0.21.1
-        val any1 = any as java.util.Map<Any, Any>
-        val file = (any["textDocument"] as java.util.Map<Any, Any>)["uri"]
-        val sessionId = getSession(file.toString(), retry > 1)
-        any1.put("sessionId", sessionId)
-        try {
-            return languageServer.rpcCall(any1).get()
-        } catch (e: ExecutionException) {
-            if (e.cause is ResponseErrorException && retry < 2) {
-                return rpcCallRaw(any,retry + 1)
-            }
-            if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
-                return rpcCallRaw(any,retry + 1)
-            }
-            throw e;
-        }
-    }
+    // fun rpcCallRaw(any : Any, retry : Int = 0) : Any? {
+    //     // TODO DRY
+    //     // TODO better way, more type info
+    //     // TODO in fact lsp4j 0.23 can take duplicate lsp request method, but I dont know why lsp4ij tae 0.21.1
+    //     val any1 = any as java.util.Map<Any, Any>
+    //     val file = (any["textDocument"] as java.util.Map<Any, Any>)["uri"]
+    //     val sessionId = getSession(file.toString(), retry > 1)
+    //     any1.put("sessionId", sessionId)
+    //     try {
+    //         return languageServer.rpcCall(any1).get()
+    //     } catch (e: ExecutionException) {
+    //         if (e.cause is ResponseErrorException && retry < 2) {
+    //             return rpcCallRaw(any,retry + 1)
+    //         }
+    //         if (e.cause!!.message!!.contains("Outdated RPC session") && retry < 2) {
+    //             return rpcCallRaw(any,retry + 1)
+    //         }
+    //         throw e;
+    //     }
+    // }
 
     fun getSession(uri: String, force: Boolean = false): String {
         if (force) {

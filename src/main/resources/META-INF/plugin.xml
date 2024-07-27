@@ -46,9 +46,9 @@
 <!--        <fileEditorManagerListener implementation="com.github.onriv.ijpluginlean.listeners.LeanFileEditorManagerListener" />-->
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
-        <server id="Lean4LanguageServerId"
-                name="Lean4 Language Server"
-                factoryClass="com.github.onriv.ijpluginlean.lsp.Lean4LanguageServerFactory">
+        <server id="LeanLanguageServerId"
+                name="Lean Language Server"
+                factoryClass="com.github.onriv.ijpluginlean.lsp.LeanLanguageServerFactory">
             <description><![CDATA[
         Some description written in HTML to display it in the LSP consoles view and Language Servers settings. TODO
         ]]>
@@ -56,8 +56,8 @@
         </server>
 
         <fileNamePatternMapping patterns="*.lean4;*.lean"
-                                serverId="Lean4LanguageServerId"
-                                languageId="lean4"/>
+                                serverId="LeanLanguageServerId"
+                                languageId="lean"/>
     </extensions>
 
     <actions>

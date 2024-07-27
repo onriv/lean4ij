@@ -27,11 +27,11 @@
     --vscode-inputValidation-infoBackground: #d6ecf2;
     --vscode-inputValidation-infoBorder: #007acc;
     --vscode-inputValidation-warningBackground: #f6f5d2;
-    --vscode-inputValidation-warningBorder:
+    --vscode-inputValidation-warningBorder:#f2dede;
     --vscode-inputValidation-errorBackground: #f2dede;
     --vscode-inputValidation-errorBorder: #be1100;
     --vscode-dropdown-background: #ffffff;
-    --vscode-dropdown-foreground:
+    --vscode-dropdown-foreground: #cecece;
     --vscode-dropdown-border: #cecece;
     --vscode-checkbox-background: #ffffff;
     --vscode-checkbox-border: #cecece;
@@ -81,7 +81,7 @@
     --vscode-diffEditor-insertedTextBackground: rgba(155, 185, 85, 0.2);
     --vscode-diffEditor-removedTextBackground: rgba(255, 0, 0, 0.2);
     --vscode-diffEditor-diagonalFill: rgba(34, 34, 34, 0.2);
-    --vscode-list-focusBackground: (NO LONGER AVAILABLE)
+    --vscode-list-focusBackground: #0074e8;
 --vscode-list-activeSelectionBackground: #0074e8;
     --vscode-list-activeSelectionForeground: #ffffff;
     --vscode-list-inactiveSelectionBackground: #e4e6f1;
@@ -298,11 +298,11 @@
     --vscode-settings-headerForeground: #444444;
     --vscode-settings-modifiedItemIndicator: #66afe0;
     --vscode-settings-dropdownBackground: #ffffff;
-    --vscode-settings-dropdownForeground:
+    --vscode-settings-dropdownForeground:#cecece;
     --vscode-settings-dropdownBorder: #cecece;
     --vscode-settings-dropdownListBorder: #c8c8c8;
     --vscode-settings-checkboxBackground: #ffffff;
-    --vscode-settings-checkboxForeground:
+    --vscode-settings-checkboxForeground:#cecece;
     --vscode-settings-checkboxBorder: #cecece;
     --vscode-settings-textInputBackground: #ffffff;
     --vscode-settings-textInputForeground: #616161;

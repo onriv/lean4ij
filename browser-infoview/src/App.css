@@ -57,11 +57,11 @@
   src: local('JuliaMono'), url('/fonts/JuliaMono-Regular.ttf') format('truetype');
 }
 
-body {
-  --vscode-editor-font-family: "JuliaMono";
-  --vscode-editorHoverWidget-background: rgb(255, 255, 255);
-  /*this is the background color for diff*/
-  --vscode-diffEditor-insertedTextBackground: rgb(213, 232, 166)
-}
+/*body {*/
+/*  --vscode-editor-font-family: "JuliaMono";*/
+/*  --vscode-editorHoverWidget-background: rgb(255, 255, 255);*/
+/*  !*this is the background color for diff*!*/
+/*  --vscode-diffEditor-insertedTextBackground: rgb(213, 232, 166)*/
+/*}*/
 
 /*.tooltip { background-color: var(--vscode-editorHoverWidget-background) !important; }*/

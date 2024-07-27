@@ -27,10 +27,20 @@ html,body {
 }
 
 /* These are syntax highlights for the string goal view. */
+/* TODO weird it should use the following four def
+        It turns out that there is no vscode-light class in the target, weird too
+*/
 .goal-goals { color: #569cd6; }
 .goal-vdash { color: #569cd6; }
 .goal-case { color: #a1df90; }
 .goal-hyp { color: #ffcc00; }
+
+.goal-goals { color: #367cb6; }
+.goal-vdash { color: #367cb6; }
+.goal-case { color: #1f7a1f; }
+.goal-hyp { color: #cc7a00; }
+
+
 .goal-inaccessible {
     color: var(--vscode-editor-foreground);
     opacity: 0.7;

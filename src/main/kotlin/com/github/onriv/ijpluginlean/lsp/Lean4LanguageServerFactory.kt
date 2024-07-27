@@ -7,6 +7,7 @@ import com.github.onriv.ijpluginlean.lsp.data.PlainTermGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.Position
 import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
 import com.github.onriv.ijpluginlean.services.MyProjectService
+import com.google.gson.JsonElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.Lsp4jClient

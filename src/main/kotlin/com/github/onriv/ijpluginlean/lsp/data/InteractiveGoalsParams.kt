@@ -1,6 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp.data
 
-import com.github.onriv.ijpluginlean.lsp.LspConstants
+import com.github.onriv.ijpluginlean.util.Constants
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
 /**
@@ -12,4 +12,4 @@ class InteractiveGoalsParams(
     params: PlainGoalParams,
     textDocument: TextDocumentIdentifier,
     position: Position
-) : RpcCallParams<PlainGoalParams>(sessionId, LspConstants.RPC_METHOD_GET_INTERACTIVE_GOALS, params, textDocument, position)
+) : RpcCallParams<PlainGoalParams>(sessionId, Constants.RPC_METHOD_GET_INTERACTIVE_GOALS, params, textDocument, position)

@@ -3,7 +3,10 @@ package com.github.onriv.ijpluginlean.lsp
 import com.github.onriv.ijpluginlean.lsp.data.*
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
-import com.intellij.build.events.impl.*
+import com.intellij.build.events.impl.FinishBuildEventImpl
+import com.intellij.build.events.impl.OutputBuildEventImpl
+import com.intellij.build.events.impl.StartBuildEventImpl
+import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -16,9 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.LanguageServiceAccessor
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutionException
 
 
 class LeanLspServerManager (val project: Project, val languageServer: InternalLeanLanguageServer) {

@@ -1,6 +1,6 @@
 // package com.github.onriv.ijpluginlean.listeners
 //
-// import com.github.onriv.ijpluginlean.lsp.FileProgress
+// import com.github.onriv.ijpluginlean.project.FileProgress
 // import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 // import com.github.onriv.ijpluginlean.lsp.data.Position
 // import com.github.onriv.ijpluginlean.services.CursorLocation

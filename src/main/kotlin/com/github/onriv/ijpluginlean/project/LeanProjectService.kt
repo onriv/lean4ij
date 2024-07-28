@@ -1,39 +1,49 @@
 package com.github.onriv.ijpluginlean.project
 
+import com.github.onriv.ijpluginlean.infoview.external.ExternalInfoViewService
 import com.github.onriv.ijpluginlean.lsp.InternalLeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
-import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
+import com.github.onriv.ijpluginlean.lsp.data.RpcConnectParams
+import com.github.onriv.ijpluginlean.util.LspUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
-import com.redhat.devtools.lsp4ij.LanguageServerWrapper
-import com.redhat.devtools.lsp4ij.LanguageServiceAccessor
-import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleListener
-import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleManager
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import org.eclipse.lsp4j.InitializeResult
-import org.eclipse.lsp4j.jsonrpc.MessageConsumer
-import org.eclipse.lsp4j.jsonrpc.messages.Message
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
 import org.eclipse.lsp4j.services.LanguageServer
 
 @Service(Service.Level.PROJECT)
-class LspService(project: Project,  val scope: CoroutineScope)  {
+class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
 
-    companion object {
-        fun instance(project: Project): LspService = project.service()
-    }
-
-    private var languageServer: LeanLanguageServer? = null
-    private var initializeResult : InitializeResult? = null
+    private var languageServer = CompletableDeferred<LeanLanguageServer>()
+    private val initializeResult = CompletableDeferred<InitializeResult>()
+    private val externalInfoViewService : ExternalInfoViewService = project.service()
 
     fun setInitializedServer(languageServer: LanguageServer) {
-        this.languageServer = LeanLanguageServer(languageServer as InternalLeanLanguageServer)
+        this.languageServer.complete(LeanLanguageServer(languageServer as InternalLeanLanguageServer))
     }
 
     fun setInitializedResult(initializeResult: InitializeResult) {
-        this.initializeResult = initializeResult
+        this.initializeResult.complete(initializeResult)
     }
+
+    suspend fun awaitInitializedResult() : InitializeResult = initializeResult.await()
+
+    fun getRelativePath(file: String): String {
+        val unquotedFile = LspUtil.unquote(file)
+        var prefix = project.basePath ?: return unquotedFile
+        if (!prefix.endsWith("/")) {
+            prefix += "/"
+        }
+        if (unquotedFile.startsWith(prefix)) {
+            return unquotedFile.substring(prefix.length)
+        }
+        return unquotedFile
+    }
+
+    suspend fun getSession(uri: String) = languageServer.await().rpcConnect(RpcConnectParams(uri))
 
 
     // init {

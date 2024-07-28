@@ -42,8 +42,8 @@
         <lang.documentationProvider language="LeanInfoview"
             implementationClass="com.github.onriv.ijpluginlean.infoview.InfoViewDocumentationProvider"/>
 
-        <!-- TODO this seems not working, and hence it's commented out -->
-<!--        <fileEditorManagerListener implementation="com.github.onriv.ijpluginlean.listeners.LeanFileEditorManagerListener" />-->
+        <postStartupActivity implementation="com.github.onriv.ijpluginlean.project.LeanProjectActivity"/>
+
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="LeanLanguageServerId"
@@ -74,4 +74,10 @@
     <applicationListeners>
         <listener class="com.github.onriv.ijpluginlean.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
+
+    <projectListeners>
+        <listener class="com.github.onriv.ijpluginlean.project.listeners.LeanFileEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </projectListeners>
+
+
 </idea-plugin>

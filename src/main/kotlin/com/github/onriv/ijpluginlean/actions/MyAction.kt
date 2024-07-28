@@ -5,32 +5,15 @@ package com.github.onriv.ijpluginlean.actions
 // import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 // import com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider
 // import com.github.onriv.ijpluginlean.lsp.RpcConnectParams
-import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
-import com.github.onriv.ijpluginlean.lsp.data.Position
-import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
-import com.github.onriv.ijpluginlean.project.LspService
-import com.github.onriv.ijpluginlean.services.ExternalInfoViewService
+import com.github.onriv.ijpluginlean.infoview.external.ExternalInfoViewService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServerManager
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.runBlocking
-import org.eclipse.lsp4j.DocumentSymbolParams
-import org.eclipse.lsp4j.SemanticTokensParams
-import org.eclipse.lsp4j.TextDocumentIdentifier
 import java.util.concurrent.ConcurrentHashMap
 
 class MyCustomAction : AnAction() {
@@ -67,7 +50,6 @@ class OpenLeanInfoView : AnAction() {
 
         e.project?.let {
             fileProcess(it)
-            println(it.service<ExternalInfoViewService>())
         }
 
     }

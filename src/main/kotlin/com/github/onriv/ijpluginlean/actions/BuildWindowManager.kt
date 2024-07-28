@@ -1,7 +1,7 @@
 package com.github.onriv.ijpluginlean.actions
 
 import com.github.onriv.ijpluginlean.lsp.data.FileProgressProcessingInfo
-import com.github.onriv.ijpluginlean.util.Lean4Util.runCommand
+import com.github.onriv.ijpluginlean.util.LeanUtil.runCommand
 import com.google.common.base.Stopwatch
 import com.intellij.build.*
 import com.intellij.build.events.MessageEvent.Kind.*

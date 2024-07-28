@@ -1,3 +1,6 @@
+/**
+ * TODO refactor this
+ */
 import React, { useState, useEffect, useRef } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
@@ -188,24 +191,29 @@ function App() {
         //
         // infoViewApi.serverRestarted()
         // I dont understand sse, hence this very poor impl...
-        const intervalId = setInterval(async () => {
-            const res = await fetch('/api/serverInitialized');
-            if (!res.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const result = await res.json();
-            infoViewApi.serverRestarted(result)
-            clearInterval(intervalId)
-            // Handle the response here
-        }, 2000); // Sends the API request every 2 seconds
+        // const intervalId = setInterval(async () => {
+        //     const res = await fetch('/api/serverInitialized');
+        //     if (!res.ok) {
+        //         throw new Error('Network response was not ok');
+        //     }
+        //     const result = await res.json();
+        //     infoViewApi.serverRestarted(result)
+        //     clearInterval(intervalId)
+        //     // Handle the response here
+        // }, 2000); // Sends the API request every 2 seconds
 
-        const source = new EventSource('http://localhost:9093/api/sse/changedCursorLocation');
+        const source = new EventSource('http://localhost:9093/api/sse');
         function logEvent(text) {
             console.log(text)
         }
         source.addEventListener('message', function(e) {
             logEvent('message:' + e.data);
-            infoViewApi.changedCursorLocation(JSON.parse(e.data))
+            const data = JSON.parse(e.data)
+            if (data.method == "serverInitialized") {
+                infoViewApi.serverRestarted(data.data)
+                return
+            }
+            infoViewApi.changedCursorLocation(data.data)
         }, false);
 
         source.addEventListener('open', function(e) {

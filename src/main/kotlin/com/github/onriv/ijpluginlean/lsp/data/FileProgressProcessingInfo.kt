@@ -19,6 +19,7 @@ data class FileProgressProcessingInfo(val textDocument: TextDocumentIdentifier, 
             return 100
         }
         // TODO is processing always with only one element?
+        // TODO here there is case it exceed 100
         return processing[0].range.start.line*100/processing[0].range.end.line
     }
 }

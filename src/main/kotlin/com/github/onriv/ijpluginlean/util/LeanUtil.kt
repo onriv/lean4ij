@@ -4,7 +4,8 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-object Lean4Util {
+object LeanUtil {
+    // TODO should not in here
     fun runCommand(command: String, workingDir: File): String? {
         try {
             val parts = command.split("\\s".toRegex())
@@ -22,6 +23,7 @@ object Lean4Util {
         }
     }
 
+    // TODO should no in here
     fun runCommand(command: String): String? {
         try {
             val process = Runtime.getRuntime().exec(command)
@@ -31,6 +33,10 @@ object Lean4Util {
             e.printStackTrace()
             return null
         }
+    }
+
+    fun isLeanFile(url: String) : Boolean {
+        return url.endsWith("lean") || url.endsWith("lean4")
     }
 
 }

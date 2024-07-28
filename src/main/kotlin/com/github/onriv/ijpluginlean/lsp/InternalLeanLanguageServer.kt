@@ -1,6 +1,7 @@
 package com.github.onriv.ijpluginlean.lsp
 
 import com.github.onriv.ijpluginlean.lsp.data.*
+import com.github.onriv.ijpluginlean.util.Constants
 import com.google.gson.JsonElement
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
@@ -13,10 +14,10 @@ import java.util.concurrent.CompletableFuture
  */
 interface InternalLeanLanguageServer : LanguageServer, TextDocumentService {
 
-    @JsonRequest(LspConstants.LEAN_PLAIN_GOAL)
+    @JsonRequest(Constants.LEAN_PLAIN_GOAL)
     fun plainGoal(params: PlainGoalParams): CompletableFuture<PlainGoal>
 
-    @JsonRequest(LspConstants.LEAN_PLAIN_TERM_GOAL)
+    @JsonRequest(Constants.LEAN_PLAIN_TERM_GOAL)
     fun plainTermGoal(params: PlainTermGoalParams): CompletableFuture<PlainTermGoal>
 
     /**
@@ -31,7 +32,7 @@ interface InternalLeanLanguageServer : LanguageServer, TextDocumentService {
      *
      * ref: [src/Lean/Data/Lsp/Extra.lean#L109](https://github.com/leanprover/lean4/blob/23e49eb519a45496a9740aeb311bf633a459a61e/src/Lean/Data/Lsp/Extra.lean#L109)
      */
-    @JsonRequest(LspConstants.LEAN_RPC_CONNECT)
+    @JsonRequest(Constants.LEAN_RPC_CONNECT)
     fun rpcConnect(params: RpcConnectParams): CompletableFuture<RpcConnected>
 
     /**
@@ -40,10 +41,10 @@ interface InternalLeanLanguageServer : LanguageServer, TextDocumentService {
      * for different method
      * see: [src/Lean/Server/Rpc/RequestHandling.lean#L36](https://github.com/leanprover/lean4/blob/23e49eb519a45496a9740aeb311bf633a459a61e/src/Lean/Server/Rpc/RequestHandling.lean#L36)
      */
-    @JsonRequest(LspConstants.LEAN_RPC_CALL)
+    @JsonRequest(Constants.LEAN_RPC_CALL)
     fun rpcCall(params: RpcCallParams<*>): CompletableFuture<JsonElement?>
 
-    @JsonNotification(LspConstants.LEAN_RPC_KEEP_ALIVE)
+    @JsonNotification(Constants.LEAN_RPC_KEEP_ALIVE)
     fun rpcKeepAlive(params: RpcKeepAliveParams)
 
 }

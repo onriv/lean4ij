@@ -1,6 +1,6 @@
 package com.github.onriv.ijpluginlean.lsp.data
 
-import com.github.onriv.ijpluginlean.lsp.LspConstants
+import com.github.onriv.ijpluginlean.util.Constants
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
 /**
@@ -12,4 +12,4 @@ class InteractiveInfoParams(
     params: ContextInfo,
     textDocument: TextDocumentIdentifier,
     position: Position
-) : RpcCallParams<ContextInfo>(sessionId, LspConstants.RPC_METHOD_INFO_TO_INTERACTIVE, params, textDocument, position)
+) : RpcCallParams<ContextInfo>(sessionId, Constants.RPC_METHOD_INFO_TO_INTERACTIVE, params, textDocument, position)

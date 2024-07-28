@@ -1,24 +1,24 @@
-package com.github.onriv.ijpluginlean.lsp
+package com.github.onriv.ijpluginlean.project
 
+import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.lsp.data.FileProgressProcessingInfo
-import com.github.onriv.ijpluginlean.project.LspService
-import com.github.onriv.ijpluginlean.services.SseEvent
+import com.github.onriv.ijpluginlean.util.step
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
-import io.ktor.server.application.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-suspend fun ProgressReporter.step(size: Int) {
-    sizedStep(size) {}
-}
-
+/**
+ * handling notification from `$/lean/fileProgress`
+ * see: [LeanFile]
+ * TODO maybe it's more better way, and it seems not should be put here
+ *      maybe move to [LeanFile] class?
+ */
 class FileProgress(val project: Project, val file: String) {
 
     companion object {
@@ -36,7 +36,8 @@ class FileProgress(val project: Project, val file: String) {
 
     private val processingInfoChannel = Channel<FileProgressProcessingInfo>()
 
-    private val scope = project.service<LspService>().scope
+    private val leanProjectService : LeanProjectService = project.service()
+    private val scope = leanProjectService.scope
 
     private var processing : Boolean = false
 
@@ -67,8 +68,8 @@ class FileProgress(val project: Project, val file: String) {
     }
 
     private suspend fun withBackgroundFileProgress(action: suspend (reporter: ProgressReporter) -> Unit) {
-        withBackgroundProgress(project, LspConstants.FILE_PROGRESS) {
-            withProgressText(file) {
+        withBackgroundProgress(project, Constants.FILE_PROGRESS) {
+            withProgressText(leanProjectService.getRelativePath(file)) {
                 reportProgress {reporter ->
                     action(reporter)
                 }
@@ -76,8 +77,5 @@ class FileProgress(val project: Project, val file: String) {
         }
     }
 
-
     fun isProcessing() = processing
-
-
 }

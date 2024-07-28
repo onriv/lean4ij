@@ -2,14 +2,22 @@ package com.github.onriv.ijpluginlean.lsp
 
 import com.github.onriv.ijpluginlean.lsp.data.FileProgressProcessingInfo
 import com.github.onriv.ijpluginlean.project.LspService
+import com.github.onriv.ijpluginlean.services.SseEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
+import io.ktor.server.application.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
+
+suspend fun ProgressReporter.step(size: Int) {
+    sizedStep(size) {}
+}
 
 class FileProgress(val project: Project, val file: String) {
 
@@ -32,41 +40,42 @@ class FileProgress(val project: Project, val file: String) {
 
     private var processing : Boolean = false
 
-    /**
-     * This and the following startFileProgressTask seems ugly
-     */
-    @Synchronized
-    fun update(info: FileProgressProcessingInfo) {
-        if (!processing) {
-            if  (info.processing.isEmpty()) {
-                return
-            }
-            scope.launch {
-                withBackgroundProgress(project, LspConstants.FILE_PROGRESS, false) {
-                    withProgressText(file) {
-                        reportProgress {reporter ->
-                            var workSize = 0
-                            reporter.sizedStep(workSize) {  }
-                            while (workSize != 100) {
-                                val info = processingInfoChannel.receive()
-                                workSize = if (info.processing.isEmpty()) {
-                                    100
-                                } else {
-                                    info.processing[0].range.start.line*100/info.processing[0].range.end.line
-                                }
-                                reporter.sizedStep(workSize) {  }
-                            }
-                        }
-                    }
-                    processing = false
+    init {
+        scope.launch {
+            while (true) {
+                var info = processingInfoChannel.receive()
+                if (info.isFinished()) {
+                    continue
                 }
+                processing = true
+                withBackgroundFileProgress {reporter ->
+                    do {
+                        val workSize = info.workSize()
+                        reporter.step(workSize)
+                        info = processingInfoChannel.receive()
+                    } while (info.isProcessing())
+                }
+                processing = false
             }
-            processing = true
         }
+    }
+
+    fun update(info: FileProgressProcessingInfo) {
         scope.launch {
             processingInfoChannel.send(info)
         }
     }
+
+    private suspend fun withBackgroundFileProgress(action: suspend (reporter: ProgressReporter) -> Unit) {
+        withBackgroundProgress(project, LspConstants.FILE_PROGRESS) {
+            withProgressText(file) {
+                reportProgress {reporter ->
+                    action(reporter)
+                }
+            }
+        }
+    }
+
 
     fun isProcessing() = processing
 

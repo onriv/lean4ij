@@ -154,7 +154,7 @@ export class DummyEditorApi implements EditorApi {
             throw new Error('Network response was not ok');
         }
         const result = await res.json();
-        return result.session;
+        return result.sessionId;
     }
 
     async closeRpcSession(sessionId: string): Promise<void> {

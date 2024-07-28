@@ -4,6 +4,7 @@ import com.github.onriv.ijpluginlean.infoview.external.ExternalInfoViewService
 import com.github.onriv.ijpluginlean.lsp.InternalLeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.data.RpcConnectParams
+import com.github.onriv.ijpluginlean.lsp.data.RpcConnected
 import com.github.onriv.ijpluginlean.util.LspUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -43,7 +44,10 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         return unquotedFile
     }
 
-    suspend fun getSession(uri: String) = languageServer.await().rpcConnect(RpcConnectParams(uri))
+    /**
+     * TODO move to [LeanFile] for session lifecycle handling
+     */
+    suspend fun getSession(uri: String) : RpcConnected = languageServer.await().rpcConnect(RpcConnectParams(uri))
 
 
     // init {

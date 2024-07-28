@@ -111,6 +111,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             }
             val infoViewWindow = contents[0].component as
                     LeanInfoViewWindowFactory.LeanInfoViewWindow
+            // TODO use GsonUtil
             val interactiveGoals : InteractiveGoals = Gson().fromJson(Gson().toJson(interactiveGoalsAny), InteractiveGoals::class.java)
             val interactiveGoalsBuilder = StringBuilder("▼ ${file.name}:${caret.logicalPosition.line+1}:${caret.logicalPosition.column}\n")
             val interactiveGoalsText = interactiveGoals.toInfoViewString(interactiveGoalsBuilder)

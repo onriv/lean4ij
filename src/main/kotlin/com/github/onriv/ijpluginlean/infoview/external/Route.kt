@@ -5,6 +5,7 @@ import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
 import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.lsp.data.RpcConnectParams
+import com.github.onriv.ijpluginlean.util.GsonUtil
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.intellij.openapi.project.Project
@@ -45,9 +46,9 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
     }
 
     post("/api/createRpcSession") {
-        val params = call.receive(RpcConnectParams::class)
+        val params : RpcConnectParams = call.receiveJson()
         val session = service.getSession(params.uri)
-        call.respond(session)
+        call.respondJson(session)
     }
 
     post("/api/sendClientRequest") {
@@ -63,4 +64,12 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
         // }
     }
 
+}
+
+private suspend inline fun <reified T> ApplicationCall.receiveJson(): T {
+    return GsonUtil.fromJson(receiveText())
+}
+
+private suspend fun ApplicationCall.respondJson(a: Any) {
+    respond(GsonUtil.toJson(a))
 }

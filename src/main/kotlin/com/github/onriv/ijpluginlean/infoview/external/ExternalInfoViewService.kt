@@ -3,6 +3,7 @@ package com.github.onriv.ijpluginlean.infoview.external
 import com.github.onriv.ijpluginlean.infoview.external.data.CursorLocation
 import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
+import com.github.onriv.ijpluginlean.lsp.data.RpcConnected
 import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.project.LeanProjectService
 import com.intellij.openapi.components.Service
@@ -74,7 +75,7 @@ class ExternalInfoViewService(val project: Project) {
         send(SseEvent(InfoviewEvent(Constants.EXTERNAL_INFOVIEW_CHANGED_CURSOR_LOCATION, cursorLocation)))
     }
 
-    suspend fun getSession(uri: String) = leanProjectService.getSession(uri)
+    suspend fun getSession(uri: String) : RpcConnected = leanProjectService.getSession(uri)
 }
 
 

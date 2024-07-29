@@ -9,10 +9,9 @@ import org.eclipse.lsp4j.TextDocumentIdentifier
  *
  * Although the lean source say it's Uint64 but here it's String...
  */
-open class RpcCallParams<ParamsType >(
+open class RpcCallParams(
     val sessionId : String,
     val method: String,
-    val params: ParamsType,
     textDocument: TextDocumentIdentifier,
     position: Position
 ) : TextDocumentPositionParams(textDocument, position)

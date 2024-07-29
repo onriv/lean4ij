@@ -1,5 +1,7 @@
 package com.github.onriv.ijpluginlean.project
 
+import com.github.onriv.ijpluginlean.infoview.external.ExternalInfoViewService
+import com.github.onriv.ijpluginlean.project.listeners.LeanFileCaretListener
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -15,6 +17,8 @@ class LeanProjectActivity : ProjectActivity {
 
     override suspend fun execute(project: Project) {
         project.service<LeanProjectService>()
+        project.service<LeanFileCaretListener>()
+        project.service<ExternalInfoViewService>()
     }
 
 }

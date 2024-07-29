@@ -2,12 +2,16 @@ package com.github.onriv.ijpluginlean.infoview.external
 
 import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
+import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
+import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
+import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
 import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.lsp.data.RpcConnectParams
-import com.github.onriv.ijpluginlean.util.GsonUtil
+import com.github.onriv.ijpluginlean.lsp.data.RpcConnected
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
+import com.google.gson.JsonElement
 import com.intellij.openapi.project.Project
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -48,28 +52,37 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
     post("/api/createRpcSession") {
         val params : RpcConnectParams = call.receiveJson()
         val session = service.getSession(params.uri)
-        call.respondJson(session)
+        call.respondJson(RpcConnected(session))
     }
 
     post("/api/sendClientRequest") {
-        val text = call.receiveText()
-        // TODO async way? kotlin way?
-        // val resp = LeanLspServerManager.getInstance(project = project).rpcCallRaw(gson.fromJson(text, Any::class.java))
-        // if (resp == null) {
-        //     call.respondText("{}")
-        // } else {
-        //     call.respondText {
-        //         Gson().toJson(resp)
-        //     }
-        // }
+        val params: PrcCallParamsRaw = call.receiveJson()
+        val ret = service.rpcCallRaw(params)
+        if (ret == null) {
+            // TODO better way to do this rather than using {}
+            call.respondText("{}")
+        } else {
+            call.respondJson(ret)
+        }
     }
 
 }
 
 private suspend inline fun <reified T> ApplicationCall.receiveJson(): T {
-    return GsonUtil.fromJson(receiveText())
+    return fromJson(receiveText())
 }
 
 private suspend fun ApplicationCall.respondJson(a: Any) {
-    respond(GsonUtil.toJson(a))
+    respond(toJson(a))
+}
+inline fun <reified T> fromJson(json: String) : T {
+    return LeanLanguageServer.gson.fromJson(json, T::class.java)
+}
+
+fun toJsonElement(json: String): JsonElement {
+    return LeanLanguageServer.gson.fromJson(json, JsonElement::class.java)
+}
+
+fun toJson(any: Any): String {
+    return LeanLanguageServer.gson.toJson(any)
 }

@@ -3,9 +3,12 @@ package com.github.onriv.ijpluginlean.infoview.external
 import com.github.onriv.ijpluginlean.infoview.external.data.CursorLocation
 import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
+import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
+import com.github.onriv.ijpluginlean.lsp.data.Range
 import com.github.onriv.ijpluginlean.lsp.data.RpcConnected
 import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.project.LeanProjectService
+import com.google.gson.JsonElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -30,10 +33,16 @@ class ExternalInfoViewService(val project: Project) {
     /**
      * using property rather than field for avoiding cyclic service injection
      */
-    private val leanProjectService : LeanProjectService get() = project.service()
+    private val leanProjectService : LeanProjectService = project.service()
 
     init {
         startServer()
+        leanProjectService.scope.launch {
+            leanProjectService.caretEvent.collect {
+                val cursorLocation  = CursorLocation(it.textDocument.uri, Range(it.position, it.position))
+                events.emit(SseEvent(InfoviewEvent(Constants.EXTERNAL_INFOVIEW_CHANGED_CURSOR_LOCATION, cursorLocation)))
+            }
+        }
     }
 
     /**
@@ -75,7 +84,11 @@ class ExternalInfoViewService(val project: Project) {
         send(SseEvent(InfoviewEvent(Constants.EXTERNAL_INFOVIEW_CHANGED_CURSOR_LOCATION, cursorLocation)))
     }
 
-    suspend fun getSession(uri: String) : RpcConnected = leanProjectService.getSession(uri)
+    suspend fun getSession(uri: String) : String = leanProjectService.getSession(uri)
+
+    suspend fun rpcCallRaw(params: PrcCallParamsRaw): JsonElement? {
+        return leanProjectService.rpcCallRaw(params)
+    }
 }
 
 

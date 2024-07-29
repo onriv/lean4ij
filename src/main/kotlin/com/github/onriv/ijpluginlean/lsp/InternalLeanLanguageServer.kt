@@ -42,7 +42,7 @@ interface InternalLeanLanguageServer : LanguageServer, TextDocumentService {
      * see: [src/Lean/Server/Rpc/RequestHandling.lean#L36](https://github.com/leanprover/lean4/blob/23e49eb519a45496a9740aeb311bf633a459a61e/src/Lean/Server/Rpc/RequestHandling.lean#L36)
      */
     @JsonRequest(Constants.LEAN_RPC_CALL)
-    fun rpcCall(params: RpcCallParams<*>): CompletableFuture<JsonElement?>
+    fun rpcCall(params: RpcCallParams): CompletableFuture<JsonElement?>
 
     @JsonNotification(Constants.LEAN_RPC_KEEP_ALIVE)
     fun rpcKeepAlive(params: RpcKeepAliveParams)

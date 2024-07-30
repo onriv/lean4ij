@@ -5,11 +5,9 @@ package com.github.onriv.ijpluginlean.actions
 // import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 // import com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider
 // import com.github.onriv.ijpluginlean.lsp.RpcConnectParams
-import com.github.onriv.ijpluginlean.infoview.external.ExternalInfoViewService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -59,7 +57,7 @@ class OpenLeanInfoView : AnAction() {
         if (processed) {
             return
         }
-        BuildWindowManager.getInstance(project).fileProgress()
+        // BuildWindowMService.getInstance(project).fileProgress()
         processed = true
     }
 

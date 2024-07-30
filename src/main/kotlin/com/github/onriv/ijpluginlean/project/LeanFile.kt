@@ -5,6 +5,9 @@ import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.util.LspUtil
 import com.github.onriv.ijpluginlean.util.step
 import com.google.gson.JsonElement
+import com.intellij.build.FilePosition
+import com.intellij.build.events.MessageEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -16,12 +19,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.apache.commons.lang3.time.StopWatch
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import java.io.File
 
 class LeanFile(private val leanProjectService: LeanProjectService, private val file: String) {
 
     private val processingInfoChannel = Channel<FileProgressProcessingInfo>()
     private val project = leanProjectService.project
+    private val buildWindowService : BuildWindowService = project.service()
     private val scope = leanProjectService.scope
     private val scopeIO = CoroutineScope(Dispatchers.IO)
 
@@ -32,13 +38,17 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 if (info.isFinished()) {
                     continue
                 }
+                val start = System.currentTimeMillis()
                 withBackgroundFileProgress {reporter ->
+                    var currentStep = 0
                     do {
-                        val workSize = info.workSize()
-                        reporter.step(workSize)
+                        val newStep = info.workSize()
+                        reporter.step(newStep - currentStep)
+                        currentStep = newStep
                         info = processingInfoChannel.receive()
                     } while (info.isProcessing())
                 }
+                val end = System.currentTimeMillis()
             }
         }
     }

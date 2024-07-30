@@ -1,6 +1,5 @@
 package com.github.onriv.ijpluginlean.lsp
 
-import com.github.onriv.ijpluginlean.actions.BuildWindowManager
 import com.github.onriv.ijpluginlean.lsp.data.FileProgressProcessingInfo
 import com.github.onriv.ijpluginlean.project.LeanProjectService
 import com.github.onriv.ijpluginlean.util.Constants
@@ -22,9 +21,9 @@ class LeanLsp4jClient(project: Project) : LanguageClientImpl(project) {
      */
     @JsonNotification(Constants.FILE_PROGRESS)
     fun leanFileProgress(params: FileProgressProcessingInfo) {
-        leanProjectService.file(params.textDocument.uri)?.updateFileProcessingInfo(params)
+        leanProjectService.file(params.textDocument.uri).updateFileProcessingInfo(params)
         // TODO refactor this
-        BuildWindowManager.getInstance(project).fileProcess(params)
+        // BuildWindowMService.getInstance(project).fileProcess(params)
     }
 
 }

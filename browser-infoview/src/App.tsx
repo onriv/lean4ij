@@ -202,7 +202,7 @@ function App() {
         //     // Handle the response here
         // }, 2000); // Sends the API request every 2 seconds
 
-        const source = new EventSource('http://localhost:9093/api/sse');
+        const source = new EventSource('http://localhost:19094/api/sse');
         function logEvent(text) {
             console.log(text)
         }

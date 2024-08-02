@@ -54,7 +54,7 @@ class ExternalInfoViewService(val project: Project) {
         val module: Application.() -> Unit = {
             routing(externalInfoViewRoute(project, this@ExternalInfoViewService))
         }
-        val embeddedServer = embeddedServer(Netty, port = 9093, module = module)
+        val embeddedServer = embeddedServer(Netty, port = 19094, module = module)
         embeddedServer.start(wait = false)
     }
 

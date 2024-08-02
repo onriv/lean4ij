@@ -38,17 +38,20 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 if (info.isFinished()) {
                     continue
                 }
-                val start = System.currentTimeMillis()
+                buildWindowService.startBuild(file)
                 withBackgroundFileProgress {reporter ->
                     var currentStep = 0
                     do {
                         val newStep = info.workSize()
-                        reporter.step(newStep - currentStep)
-                        currentStep = newStep
+                        // TODO they are chance that it's negative for file progress again
+                        if (newStep >= currentStep) {
+                            reporter.step(newStep - currentStep)
+                            currentStep = newStep
+                        }
                         info = processingInfoChannel.receive()
                     } while (info.isProcessing())
                 }
-                val end = System.currentTimeMillis()
+                buildWindowService.endBuild(file)
             }
         }
     }

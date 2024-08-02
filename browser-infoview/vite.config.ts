@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5830,
     proxy: {
       '/api': {
-        target: 'http://localhost:9093',
+        target: 'http://localhost:19094',
         changeOrigin: true,
         secure: false,
         // check https://github.com/vitejs/vite/issues/12157

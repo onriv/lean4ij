@@ -1,6 +1,7 @@
 package com.github.onriv.ijpluginlean.project
 
 import com.github.onriv.ijpluginlean.util.Constants
+import com.github.onriv.ijpluginlean.util.LspUtil
 import com.intellij.build.AbstractViewManager
 import com.intellij.build.BuildDescriptor
 import com.intellij.build.DefaultBuildDescriptor
@@ -92,7 +93,7 @@ class BuildWindowService(val project: Project) {
 
     fun startBuild(file: String) {
         leanProject.scope.launch {
-            flow.emit(file)
+            flow.emit(leanProject.getRelativePath(LspUtil.unquote(file)))
         }
     }
 

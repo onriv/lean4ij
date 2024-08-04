@@ -36,50 +36,6 @@ class LeanLspServerManager (val project: Project, val languageServer: InternalLe
         }
 
 
-        /**
-         * See the document of [com.intellij.platform.lsp.api.LspServerDescriptor#getFileUri]
-         * for the fix here:
-         * The LSP spec [requires](https://microsoft.github.io/language-server-protocol/specification/#uri)
-         * that all servers work fine with URIs in both formats: `file:///C:/foo` and `file:///c%3A/foo`.
-         *
-         * VS Code always sends a lowercased Windows drive letter, and always escapes colon
-         * (see this [issue](https://github.com/microsoft/vscode-languageserver-node/issues/1280)
-         * and the related [pull request](https://github.com/microsoft/language-server-protocol/pull/1786)).
-         *
-         * Some LSP servers support only the VS Code-friendly URI format (`file:///c%3A/foo`), so it's safer to use it by default.
-         *
-         * TODO check idempotent
-         */
-        fun tryFixWinUrl(url: String) : String {
-            if (url.startsWith("file:///")) {
-                return url
-            }
-            if (!isWindows()) {
-                return url
-            }
-            // this is for windows ...
-            // TODO check it in linux/macos
-            // lean lsp server is using lowercase disk name
-            // TODO this is so ugly, make it better
-            // TODO in fact jetebrain's lsp impl has this
-            // return "file:///"+url.substring(7,8).lowercase() +url.substring(8).replaceFirst(":", "%3A")
-            // lsp4ij's way
-            return "file:///"+url.substring(7,8) +url.substring(8)
-        }
-
-        private fun detectOperatingSystem(): String {
-            val osName = System.getProperty("os.name").lowercase()
-
-            return when {
-                "windows" in osName -> "Windows"
-                listOf("mac", "nix", "sunos", "solaris", "bsd").any { it in osName } -> "*nix"
-                else -> "Other"
-            }
-        }
-
-        private fun isWindows() : Boolean {
-            return detectOperatingSystem() == "Windows";
-        }
     }
 
     init {
@@ -89,35 +45,21 @@ class LeanLspServerManager (val project: Project, val languageServer: InternalLe
     private val sessions = ConcurrentHashMap<String, String>()
 
     // TODO maybe async way
-    fun plainGoal(file: VirtualFile, caret: Caret) : List<String> {
-        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-        // val position = Position(line=line!!, character = column!!)
-        val logicalPosition = caret.logicalPosition
-        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-        val resp = languageServer.plainGoal(
-            PlainGoalParams( textDocument = textDocument, position = position )
-        ).get()
-        // TODO handle this null more seriously  and show it in the ui
-        if (resp == null) {
-            return ArrayList()
-        }
-        return resp.goals;
-    }
-
-    fun plainTermGoal(file: VirtualFile, caret: Caret) : String {
-        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
-        // val position = Position(line=line!!, character = column!!)
-        val logicalPosition = caret.logicalPosition
-        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
-        val resp = languageServer.plainTermGoal(
-            PlainTermGoalParams( textDocument = textDocument, position = position )
-        ).get()
-        // TODO handle this null more seriously  and show it in the ui
-        if (resp == null) {
-            return ""
-        }
-        return resp.goal;
-    }
+//    fun plainGoal(file: VirtualFile, caret: Caret) : List<String> {
+//        val textDocument = TextDocumentIdentifier(tryFixWinUrl(file.url))
+//        // val position = Position(line=line!!, character = column!!)
+//        val logicalPosition = caret.logicalPosition
+//        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+//        val resp = languageServer.plainGoal(
+//            PlainGoalParams( textDocument = textDocument, position = position )
+//        ).get()
+//        // TODO handle this null more seriously  and show it in the ui
+//        if (resp == null) {
+//            return ArrayList()
+//        }
+//        return resp.goals;
+//    }
+//
 
     // fun getInteractiveGoals(file: VirtualFile, caret: Caret, retry: Int = 0): Any? {
     //     val sessionId = getSession(file.toString(), retry > 1)
@@ -205,12 +147,12 @@ class LeanLspServerManager (val project: Project, val languageServer: InternalLe
     //     }
     // }
 
-    fun getSession(uri: String, force: Boolean = false): String {
-        if (force) {
-            sessions.remove(tryFixWinUrl(uri))
-        }
-        return sessions.computeIfAbsent(tryFixWinUrl(uri)) {connectRpc(it)}
-    }
+//    fun getSession(uri: String, force: Boolean = false): String {
+//        if (force) {
+//            sessions.remove(tryFixWinUrl(uri))
+//        }
+//        return sessions.computeIfAbsent(tryFixWinUrl(uri)) { connectRpc(it) }
+//    }
 
     private fun connectRpc(file : String) : String {
         val resp = languageServer.rpcConnect(RpcConnectParams(

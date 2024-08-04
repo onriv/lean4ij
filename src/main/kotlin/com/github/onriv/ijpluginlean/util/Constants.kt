@@ -5,6 +5,7 @@ object Constants {
      * This is duplicated in plugin.xml
      */
     const val LEAN_LANGUAGE_SERVER_ID = "LeanLanguageServerId"
+    const val LEAN_LANGUAGE_ID = "lean"
 
     const val LEAN_PLAIN_GOAL = "\$/lean/plainGoal"
     const val LEAN_PLAIN_TERM_GOAL = "\$/lean/plainTermGoal"

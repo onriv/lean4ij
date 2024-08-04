@@ -69,6 +69,12 @@
         <action id="OpenLeanInfoView" class="com.github.onriv.ijpluginlean.actions.OpenLeanInfoView" text="Lean open info view" description="Lean open info view">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+        <action id="RestartLeanLsp" class="com.github.onriv.ijpluginlean.actions.RestartLeanLsp" text="Restart Lean Lsp Server" description="Restart Lean Lsp Server">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+        <action id="RestartCurrentLeanFile" class="com.github.onriv.ijpluginlean.actions.RestartCurrentFile" text="Restart Current Lean File" description="Restart Current Lean File">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
     </actions>
 
     <applicationListeners>

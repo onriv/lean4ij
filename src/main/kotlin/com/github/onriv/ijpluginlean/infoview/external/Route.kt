@@ -3,7 +3,6 @@ package com.github.onriv.ijpluginlean.infoview.external
 import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
 import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
-import com.github.onriv.ijpluginlean.lsp.LeanLspServerManager
 import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
 import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
 import com.github.onriv.ijpluginlean.util.Constants

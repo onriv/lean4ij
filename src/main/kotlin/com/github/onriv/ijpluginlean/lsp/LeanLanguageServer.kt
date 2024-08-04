@@ -7,6 +7,8 @@ import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import kotlinx.coroutines.future.await
+import org.eclipse.lsp4j.DidCloseTextDocumentParams
+import org.eclipse.lsp4j.DidOpenTextDocumentParams
 import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 
@@ -66,6 +68,14 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
 
     fun rpcKeepAlive(params: RpcKeepAliveParams) {
         return languageServer.rpcKeepAlive(params)
+    }
+
+    fun didClose(params: DidCloseTextDocumentParams) {
+        return languageServer.didClose(params)
+    }
+
+    fun didOpen(params: DidOpenTextDocumentParams) {
+        return languageServer.didOpen(params)
     }
 
     companion object {

@@ -4,18 +4,17 @@ import com.github.onriv.ijpluginlean.lsp.InternalLeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
 import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
-import com.github.onriv.ijpluginlean.lsp.data.RpcConnectParams
-import com.github.onriv.ijpluginlean.lsp.data.RpcConnected
+import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.util.LspUtil
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.redhat.devtools.lsp4ij.LanguageServerManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.InitializeResult
@@ -38,7 +37,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     }
 
     fun file(file: String) : LeanFile {
-        return leanFiles.computeIfAbsent(file) {LeanFile(this, file)}
+        return leanFiles.computeIfAbsent(file) { LeanFile(this, file) }
     }
 
     fun setInitializedServer(languageServer: LanguageServer) {
@@ -78,6 +77,10 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         return file(params.textDocument.uri).rpcCallRaw(params)
     }
 
+    fun restartLsp() {
+        LanguageServerManager.getInstance(project).stop(Constants.LEAN_LANGUAGE_ID)
+        LanguageServerManager.getInstance(project).start(Constants.LEAN_LANGUAGE_ID)
+    }
 
     // init {
         //

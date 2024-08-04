@@ -75,6 +75,9 @@
         <action id="RestartCurrentLeanFile" class="com.github.onriv.ijpluginlean.actions.RestartCurrentFile" text="Restart Current Lean File" description="Restart Current Lean File">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+        <action id="DumpCoroutine" class="com.github.onriv.ijpluginlean.actions.CoroutineDebug" text="Dump Coroutine" description="Dump Coroutine">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
     </actions>
 
     <applicationListeners>

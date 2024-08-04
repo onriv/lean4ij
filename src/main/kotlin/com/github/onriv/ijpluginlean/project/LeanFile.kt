@@ -14,17 +14,18 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.jetbrains.rd.util.AtomicInteger
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.DidOpenTextDocumentParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.TextDocumentItem
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
+import java.lang.Runnable
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
 
 class LeanFile(private val leanProjectService: LeanProjectService, private val file: String) {
 
@@ -37,9 +38,18 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private val buildWindowService : BuildWindowService = project.service()
     private val scope = leanProjectService.scope
     private val scopeIO = CoroutineScope(Dispatchers.IO)
+    private val customScope = CoroutineScope(Executors.newFixedThreadPool(10, object : ThreadFactory {
+        private val counter = AtomicInteger(0)
+        override fun newThread(r: Runnable): Thread {
+            val thread = Thread()
+            thread.name = "Lean Plugin Thread ${counter.getAndIncrement()}"
+            return thread
+        }
+    }).asCoroutineDispatcher())
 
     init {
-        scope.launch {
+        customScope.launch {
+            // TODO is it here also blocking a thread?
             while (true) {
                 var info = processingInfoChannel.receive()
                 var processingLineMarker = mutableListOf<RangeHighlighter>()

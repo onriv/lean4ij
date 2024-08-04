@@ -5,9 +5,8 @@ import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
 import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
 import com.github.onriv.ijpluginlean.lsp.data.Range
-import com.github.onriv.ijpluginlean.lsp.data.RpcConnected
-import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.project.LeanProjectService
+import com.github.onriv.ijpluginlean.util.Constants
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -56,6 +55,7 @@ class ExternalInfoViewService(val project: Project) {
         }
         val embeddedServer = embeddedServer(Netty, port = 19094, module = module)
         embeddedServer.start(wait = false)
+        println("test")
     }
 
     private val events = MutableSharedFlow<SseEvent>()

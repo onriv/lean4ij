@@ -4,8 +4,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.debug.DebugProbes
 import java.util.concurrent.ConcurrentHashMap
 
+class CoroutineDebug : AnAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+        DebugProbes.dumpCoroutines(System.out)
+    }
+}
 
 class OpenLeanInfoView : AnAction() {
     private val sessions = ConcurrentHashMap<String, String>()

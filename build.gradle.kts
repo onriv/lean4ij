@@ -38,11 +38,19 @@ dependencies {
     // and https://intellij-support.jetbrains.com/hc/en-us/community/posts/360009759780-Error-while-launching-a-coroutine
     // for the exclusion
     // for intellij idea plugin it should not include coroutines
+    // TODO this must be -jvm for exclude works...
     implementation("io.ktor:ktor-server-core-jvm") {
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
     }
     implementation("io.ktor:ktor-server-netty-jvm") {
+        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
+        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
+    }
+    // for the version, see:
+    // https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#coroutinesLibraries
+    // this is only for debug
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.7.3") {
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
     }

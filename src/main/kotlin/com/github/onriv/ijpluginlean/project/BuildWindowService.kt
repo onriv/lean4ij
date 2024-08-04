@@ -50,6 +50,7 @@ class BuildWindowService(val project: Project) {
             val mutex = Mutex()
 
             // TODO is the mutex here really necessary?
+            // TODO here it seems blocking a thread
             flow.collect { s ->
                 mutex.withLock {
                     // TODO rather than using string, use class for this

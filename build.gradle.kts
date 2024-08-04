@@ -185,3 +185,8 @@ fun fetchLatestLsp4ijNightlyVersion(): String {
     val minVersion = "0.0.1-20231213-012910"
     return if (minVersion < onlineVersion) onlineVersion else minVersion
 }
+
+val processResources by tasks.existing(ProcessResources::class)
+processResources {
+    from("$rootDir/browser-infoview/dist")
+}

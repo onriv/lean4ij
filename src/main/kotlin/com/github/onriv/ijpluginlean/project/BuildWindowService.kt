@@ -10,6 +10,7 @@ import com.intellij.build.progress.BuildProgressDescriptor
 import com.intellij.build.progress.BuildRootProgressImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -66,6 +67,10 @@ class BuildWindowService(val project: Project) {
                         builds.put(s, progress!!.startChildProgress(s))
                     } else if (s.startsWith("-")) {
                         val s1 = s.substring(1)
+                        val build = builds[s1]
+                        if (build == null) {
+                            thisLogger().error("no build for $s1")
+                        }
                         builds[s1]!!.finish()
                         builds.remove(s1)
                         // launch {
@@ -99,7 +104,8 @@ class BuildWindowService(val project: Project) {
 
     fun endBuild(file: String) {
         leanProject.scope.launch {
-            flow.emit("-$file")
+            val relativePath = leanProject.getRelativePath(LspUtil.unquote(file))
+            flow.emit("-$relativePath")
         }
     }
 

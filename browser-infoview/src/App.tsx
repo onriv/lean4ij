@@ -46,7 +46,7 @@ class ServerEventSource {
         this.logEvent('open');
     }
 
-    private handleError(e: Event) {
+    private handleError(e: any/*Event*/) {
         if (e.readyState === EventSource.CLOSED) {
             this.logEvent('closed');
         } else {
@@ -120,17 +120,17 @@ export class DummyEditorApi implements EditorApi {
         // Implement your logic here for copying text to the clipboard.
     }
 
-    async insertText(text: string, kind: TextInsertKind, pos?: TextDocumentPositionParams): Promise<void> {
+    async insertText(text: string, kind: any/*TextInsertKind*/, pos?: any/*TextDocumentPositionParams*/): Promise<void> {
         console.log(`Inserting text: ${text} (kind: ${kind}) at position: ${JSON.stringify(pos)}`);
         // Implement your logic here for inserting text into a document.
     }
 
-    async applyEdit(te: WorkspaceEdit): Promise<void> {
+    async applyEdit(te: any/*WorkspaceEdit*/): Promise<void> {
         console.log(`Applying WorkspaceEdit: ${JSON.stringify(te)}`);
         // Implement your logic here for applying a WorkspaceEdit to the workspace.
     }
 
-    async showDocument(show: ShowDocumentParams): Promise<void> {
+    async showDocument(show: /*ShowDocumentParams*/any): Promise<void> {
         console.log(`Showing document: ${JSON.stringify(show)}`);
         // Implement your logic here for showing a document in the editor.
     }
@@ -140,7 +140,7 @@ export class DummyEditorApi implements EditorApi {
         // Implement your logic here for restarting a file.
     }
 
-    async createRpcSession(uri: DocumentUri): Promise<string> {
+    async createRpcSession(uri: /*DocumentUri*/any): Promise<string> {
         console.log(`Creating RPC session for URI: ${uri}`);
         const res = await fetch('/api/createRpcSession', {
                 method: "POST",
@@ -202,7 +202,7 @@ function App() {
         //     // Handle the response here
         // }, 2000); // Sends the API request every 2 seconds
 
-        const source = new EventSource('http://localhost:19094/api/sse');
+        const source = new EventSource('/api/sse');
         function logEvent(text) {
             console.log(text)
         }
@@ -210,10 +210,10 @@ function App() {
             logEvent('message:' + e.data);
             const data = JSON.parse(e.data)
             if (data.method == "serverInitialized") {
-                infoViewApi.serverRestarted(data.data)
+                (infoViewApi as any).serverRestarted(data.data)
                 return
             }
-            infoViewApi.changedCursorLocation(data.data)
+            (infoViewApi as any).changedCursorLocation(data.data)
         }, false);
 
         source.addEventListener('open', function(e) {
@@ -221,7 +221,7 @@ function App() {
         }, false);
 
         source.addEventListener('error', function(e) {
-            if (e.readyState == EventSource.CLOSED) {
+            if ((e as any).readyState == EventSource.CLOSED) {
                 logEvent('closed');
             } else {
                 logEvent('error');

@@ -4,16 +4,13 @@ import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
 import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
-import com.github.onriv.ijpluginlean.lsp.data.RpcCallParams
-import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.lsp.data.RpcConnectParams
 import com.github.onriv.ijpluginlean.lsp.data.RpcConnected
-import com.google.common.collect.ImmutableMap
-import com.google.gson.Gson
+import com.github.onriv.ijpluginlean.util.Constants
 import com.google.gson.JsonElement
 import com.intellij.openapi.project.Project
-import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -26,6 +23,36 @@ import kotlinx.coroutines.flow.*
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) : Routing.() -> Unit = {
+
+    /**
+     * see: https://ktor.io/docs/server-serving-spa.html#serve-customize
+     * and https://ktor.io/docs/server-static-content.html
+     */
+    singlePageApplication {
+        useResources = true
+        ignoreFiles {
+            val pathSegments = it.split(".jar!")
+            // this is for handling path in jar file:
+            // it seems that plugins are packaged like plugins/.../jar!/index.hmlt
+            val path = pathSegments[pathSegments.size-1]
+            if (path.startsWith("/assets")) {
+                return@ignoreFiles false
+            }
+            if (path.startsWith("/fonts")) {
+                return@ignoreFiles false
+            }
+            if (path == "/index.html") {
+                return@ignoreFiles false
+            }
+            // TODO remove this
+            if (path == "/vite.svg") {
+                return@ignoreFiles false
+            }
+            true
+        }
+    }
+
+
     /**
      * an endpoint for testing if the server is up
      */

@@ -14,7 +14,7 @@ class FileProgressGutterIconRender : GutterIconRenderer() {
     }
 
     override fun getIcon(): Icon {
-        return AllIcons.Process.ProgressResume
+        return AllIcons.Actions.Refresh
     }
 
 }

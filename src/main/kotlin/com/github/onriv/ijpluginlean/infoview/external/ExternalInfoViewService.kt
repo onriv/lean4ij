@@ -3,11 +3,10 @@ package com.github.onriv.ijpluginlean.infoview.external
 import com.github.onriv.ijpluginlean.infoview.external.data.CursorLocation
 import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
-import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
+import com.github.onriv.ijpluginlean.lsp.data.RpcCallParamsRaw
 import com.github.onriv.ijpluginlean.lsp.data.Range
 import com.github.onriv.ijpluginlean.project.LeanProjectService
 import com.github.onriv.ijpluginlean.util.Constants
-import com.github.onriv.ijpluginlean.util.OsUtil
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -17,8 +16,10 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.ktor.util.collections.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -41,7 +42,11 @@ class ExternalInfoViewService(val project: Project) {
         leanProjectService.scope.launch {
             leanProjectService.caretEvent.collect {
                 val cursorLocation  = CursorLocation(it.textDocument.uri, Range(it.position, it.position))
-                events.emit(SseEvent(InfoviewEvent(Constants.EXTERNAL_INFOVIEW_CHANGED_CURSOR_LOCATION, cursorLocation)))
+                val event = SseEvent(InfoviewEvent(Constants.EXTERNAL_INFOVIEW_CHANGED_CURSOR_LOCATION, cursorLocation))
+                for (session in sessions) {
+                    session.send(event)
+                }
+                events.emit(event)
             }
         }
     }
@@ -56,8 +61,8 @@ class ExternalInfoViewService(val project: Project) {
             install(SSE)
             routing(externalInfoViewRoute(project, this@ExternalInfoViewService))
         }
-        val port = OsUtil.findAvailableTcpPort()
-        // val port = 19090
+        // val port = OsUtil.findAvailableTcpPort()
+        val port = 19090
         val embeddedServer = embeddedServer(Netty, port = port, module = module)
 
         embeddedServer.start(wait = false)
@@ -65,6 +70,11 @@ class ExternalInfoViewService(val project: Project) {
     }
 
     private val events = MutableSharedFlow<SseEvent>()
+    /**
+     * This is temporally for sse bug
+     */
+    val sessions = ConcurrentSet<Channel<SseEvent>>()
+
 
     suspend fun awaitInitializedResult() : InitializeResult = leanProjectService.awaitInitializedResult()
 
@@ -92,7 +102,7 @@ class ExternalInfoViewService(val project: Project) {
 
     suspend fun getSession(uri: String) : String = leanProjectService.getSession(uri)
 
-    suspend fun rpcCallRaw(params: PrcCallParamsRaw): JsonElement? {
+    suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
         return leanProjectService.rpcCallRaw(params)
     }
 }

@@ -3,7 +3,7 @@ package com.github.onriv.ijpluginlean.project
 import com.github.onriv.ijpluginlean.lsp.InternalLeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
 import com.github.onriv.ijpluginlean.lsp.data.PlainGoalParams
-import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
+import com.github.onriv.ijpluginlean.lsp.data.RpcCallParamsRaw
 import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.util.LspUtil
 import com.google.gson.JsonElement
@@ -73,13 +73,13 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         }
     }
 
-    suspend fun rpcCallRaw(params: PrcCallParamsRaw): JsonElement? {
+    suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
         return file(params.textDocument.uri).rpcCallRaw(params)
     }
 
     fun restartLsp() {
-        LanguageServerManager.getInstance(project).stop(Constants.LEAN_LANGUAGE_ID)
-        LanguageServerManager.getInstance(project).start(Constants.LEAN_LANGUAGE_ID)
+        LanguageServerManager.getInstance(project).stop(Constants.LEAN_LANGUAGE_SERVER_ID)
+        LanguageServerManager.getInstance(project).start(Constants.LEAN_LANGUAGE_SERVER_ID)
     }
 
     // init {

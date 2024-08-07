@@ -14,7 +14,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
-import com.jetbrains.rd.util.AtomicInteger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
@@ -22,10 +21,7 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.TextDocumentItem
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
-import java.lang.Runnable
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadFactory
 
 class LeanFile(private val leanProjectService: LeanProjectService, private val file: String) {
 
@@ -74,6 +70,8 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                             processingLineMarker = tryAddLineMarker(info, processingLineMarker)
                         } while (info.isProcessing())
                     }
+                } catch (e: CancellationException) {
+
                 } catch (e: Exception) {
                     // TODO here should only handle for task cancelling
                     e.printStackTrace()
@@ -134,7 +132,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     suspend fun getSession(forceUpdate: Boolean = false) : String {
         if (session == null) {
             session = leanProjectService.languageServer.await().rpcConnect(RpcConnectParams(file)).sessionId
-            keepAlive()
+            // keepAlive()
         }
         return session!!
     }
@@ -149,16 +147,22 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 leanProjectService.languageServer.await().rpcKeepAlive(RpcKeepAliveParams(file, session!!))
             }
         }
+        // TODO this is in fact unreachable? since it's throwing an error
         TODO("Not yet implemented")
     }
 
-    suspend fun rpcCallRaw(params: PrcCallParamsRaw): JsonElement? {
+    suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
         // TODO retry
         try {
             return leanProjectService.languageServer.await().rpcCall(params)
         } catch (ex: ResponseErrorException) {
             val responseError = ex.responseError
             // TODO remove this magic number and find lean source code for it
+            if (responseError.code == -32900 && responseError.message == "Outdated RPC session") {
+                getSession(forceUpdate = true)
+                val paramsRetry = RpcCallParamsRaw(session!!, params.method, params.textDocument, params.position, params.params)
+                return rpcCallRaw(paramsRetry)
+            }
             if (responseError.code == -32603 && responseError.message == "elaboration interrupted") {
                 return null
             }
@@ -176,6 +180,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     suspend fun restart() {
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             if (editor.virtualFile.path == unquotedFile) {
+                session = null
                 val languageServer = leanProjectService.languageServer.await()
                 val didCloseParams = DidCloseTextDocumentParams(TextDocumentIdentifier(file))
                 languageServer.didClose(didCloseParams)

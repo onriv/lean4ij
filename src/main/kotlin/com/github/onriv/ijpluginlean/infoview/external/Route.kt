@@ -3,36 +3,26 @@ package com.github.onriv.ijpluginlean.infoview.external
 import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
 import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
-import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
+import com.github.onriv.ijpluginlean.lsp.data.RpcCallParamsRaw
 import com.github.onriv.ijpluginlean.lsp.data.RpcConnectParams
 import com.github.onriv.ijpluginlean.lsp.data.RpcConnected
-import com.github.onriv.ijpluginlean.project.LeanProjectService
 import com.github.onriv.ijpluginlean.util.Constants
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
 import com.google.gson.Gson
 import com.google.gson.JsonElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.squareup.wire.durationOfSeconds
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
-import io.ktor.util.Identity.encode
-import io.ktor.util.collections.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import java.lang.Runnable
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration
 
 /**
  * copy from https://github.com/ktorio/ktor-samples/blob/main/sse/src/main/kotlin/io/ktor/samples/sse/SseApplication.kt
@@ -122,44 +112,28 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
     /**
      * This is temporally for sse bug
      */
-    val sessions = ConcurrentSet<Channel<SseEvent>>()
-    project.service<LeanProjectService>().scope.launch {
-        service.events().collect {
-            for (session in sessions) {
-                session.send(it)
-            }
-        }
-    }
-
-    /**
-     * This is temporally for sse bug
-     */
     get("/api/poll") {
         val channel = Channel<SseEvent>()
-        sessions.add(channel)
+        service.sessions.add(channel)
         val event = channel.receive()
-        sessions.remove(channel)
+        service.sessions.remove(channel)
         call.respondJson(event)
     }
 
     post("/api/createRpcSession") {
-        withContext(Dispatchers.IO) {
-            val params : RpcConnectParams = call.receiveJson()
-            val session = service.getSession(params.uri)
-            call.respondJson(RpcConnected(session))
-        }
+        val params : RpcConnectParams = call.receiveJson()
+        val session = service.getSession(params.uri)
+        call.respondJson(RpcConnected(session))
     }
 
     post("/api/sendClientRequest") {
-        withContext(Dispatchers.IO) {
-            val params: PrcCallParamsRaw = call.receiveJson()
-            val ret = service.rpcCallRaw(params)
-            if (ret == null) {
-                // TODO better way to do this rather than using {}
-                call.respondText("{}")
-            } else {
-                call.respondJson(ret)
-            }
+        val params: RpcCallParamsRaw = call.receiveJson()
+        val ret = service.rpcCallRaw(params)
+        if (ret == null) {
+            // TODO better way to do this rather than using {}
+            call.respondText("{}")
+        } else {
+            call.respondJson(ret)
         }
     }
 

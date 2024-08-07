@@ -2,7 +2,7 @@ package com.github.onriv.ijpluginlean.lsp.data
 
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
-class PrcCallParamsRaw(
+class RpcCallParamsRaw(
     sessionId : String,
     method: String,
     textDocument: TextDocumentIdentifier,

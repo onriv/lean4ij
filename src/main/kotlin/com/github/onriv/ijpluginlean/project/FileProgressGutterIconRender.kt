@@ -14,7 +14,11 @@ class FileProgressGutterIconRender : GutterIconRenderer() {
     }
 
     override fun getIcon(): Icon {
-        return AllIcons.Actions.Refresh
+        // return AllIcons.Actions.Refresh
+        // intellij idea community plugin coverage has similar bar as vscode for
+        // file progressing, nevertheless currently still just use an icon for
+        // simpleness
+        return AllIcons.Gutter.Unique
     }
 
 }

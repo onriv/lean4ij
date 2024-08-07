@@ -1,15 +1,36 @@
 package com.github.onriv.ijpluginlean.actions
 
+import com.github.onriv.ijpluginlean.project.LeanProjectService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.debug.DebugProbes
+import java.io.File
+import java.io.PrintStream
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 
 class CoroutineDebug : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
-        DebugProbes.dumpCoroutines(System.out)
+        File("D:\\dumpCoroutines.txt").outputStream().use {
+            PrintStream(it).use {
+                DebugProbes.dumpCoroutines(it)
+            }
+        }
+        File("D:\\dumpCoroutinesInfo.txt").outputStream().use {
+            val s = DebugProbes.dumpCoroutinesInfo()
+            for(t in s) {
+                it.write(t.toString().toByteArray(StandardCharsets.UTF_8))
+            }
+        }
+        File("D:\\dumpCoroutinesInfoScopre.txt").outputStream().use {
+            PrintStream(it).use {
+                val leanProjectService : LeanProjectService = e.project!!.service()
+                DebugProbes.printScope(leanProjectService.scope, it)
+            }
+        }
     }
 }
 

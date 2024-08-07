@@ -202,33 +202,64 @@ function App() {
         //     // Handle the response here
         // }, 2000); // Sends the API request every 2 seconds
 
-        const source = new EventSource('/api/sse');
-        function logEvent(text) {
-            console.log(text)
+
+        // TODO this is temporally for sse bug
+        const serverRestarted = async () => {
+            const res = await fetch('/api/serverRestarted');
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const result = await res.json();
+            infoViewApi.serverRestarted(result)
         }
-        source.addEventListener('message', function(e) {
-            logEvent('message:' + e.data);
-            const data = JSON.parse(e.data)
-            if (data.method == "serverInitialized") {
-                (infoViewApi as any).serverRestarted(data.data)
-                return
+        const cursorEvent = async () => {
+            while (true) {
+                const res = await fetch('/api/poll');
+                if (!res.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const resp = await res.json()
+                const result = resp.data.data
+                if (result.uri == undefined) {
+                    throw new Error('Network response was not ok: no uri in result');
+                }
+                infoViewApi.changedCursorLocation(result)
+                // Handle the response here
             }
-            (infoViewApi as any).changedCursorLocation(data.data)
-        }, false);
+        }
+        serverRestarted().then(r => {
+            cursorEvent()
+        })
 
-        source.addEventListener('open', function(e) {
-            logEvent('open');
-        }, false);
 
-        source.addEventListener('error', function(e) {
-            if ((e as any).readyState == EventSource.CLOSED) {
-                logEvent('closed');
-            } else {
-                logEvent('error');
-                console.log(e);
-            }
-            const res = e.srcElement
-        }, false);
+        // TODO temporally sse has bug
+        // const source = new EventSource('/api/sse');
+        // function logEvent(text) {
+        //     console.log(text)
+        // }
+        // source.addEventListener('message', function(e) {
+        //     logEvent('message:' + e.data);
+        //     const data = JSON.parse(e.data)
+        //     if (data.method == "serverInitialized") {
+        //         (infoViewApi as any).serverRestarted(data.data)
+        //         return
+        //     }
+        //     (infoViewApi as any).changedCursorLocation(data.data)
+        // }, false);
+        //
+        // source.addEventListener('open', function(e) {
+        //     logEvent('open');
+        // }, false);
+        //
+        // source.addEventListener('error', function(e) {
+        //     if ((e as any).readyState == EventSource.CLOSED) {
+        //         logEvent('closed');
+        //     } else {
+        //         logEvent('error');
+        //         console.log(e);
+        //     }
+        //     const res = e.srcElement
+        // }, false);
 
         // I dont understand sse, hence this very poor impl...
         // const intervalId1 = setInterval(async () => {

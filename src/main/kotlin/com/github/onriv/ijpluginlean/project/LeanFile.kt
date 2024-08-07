@@ -38,17 +38,17 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private val buildWindowService : BuildWindowService = project.service()
     private val scope = leanProjectService.scope
     private val scopeIO = CoroutineScope(Dispatchers.IO)
-    private val customScope = CoroutineScope(Executors.newFixedThreadPool(10, object : ThreadFactory {
-        private val counter = AtomicInteger(0)
-        override fun newThread(r: Runnable): Thread {
-            val thread = Thread()
-            thread.name = "Lean Plugin Thread ${counter.getAndIncrement()}"
-            return thread
-        }
-    }).asCoroutineDispatcher())
+    // private val customScope = CoroutineScope(Executors.newFixedThreadPool(10, object : ThreadFactory {
+    //     private val counter = AtomicInteger(0)
+    //     override fun newThread(r: Runnable): Thread {
+    //         val thread = Thread()
+    //         thread.name = "Lean Plugin Thread ${counter.getAndIncrement()}"
+    //         return thread
+    //     }
+    // }).asCoroutineDispatcher())
 
     init {
-        customScope.launch {
+        scope.launch {
             // TODO is it here also blocking a thread?
             while (true) {
                 var info = processingInfoChannel.receive()

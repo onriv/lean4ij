@@ -7,6 +7,7 @@ import com.github.onriv.ijpluginlean.lsp.data.PrcCallParamsRaw
 import com.github.onriv.ijpluginlean.lsp.data.Range
 import com.github.onriv.ijpluginlean.project.LeanProjectService
 import com.github.onriv.ijpluginlean.util.Constants
+import com.github.onriv.ijpluginlean.util.OsUtil
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -15,6 +16,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
+import io.ktor.server.sse.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -51,11 +53,15 @@ class ExternalInfoViewService(val project: Project) {
      */
     private fun startServer() {
         val module: Application.() -> Unit = {
+            install(SSE)
             routing(externalInfoViewRoute(project, this@ExternalInfoViewService))
         }
-        val embeddedServer = embeddedServer(Netty, port = 19094, module = module)
+        val port = OsUtil.findAvailableTcpPort()
+        // val port = 19090
+        val embeddedServer = embeddedServer(Netty, port = port, module = module)
+
         embeddedServer.start(wait = false)
-        println("test")
+        println("infoview server start at http://127.0.0.1:$port")
     }
 
     private val events = MutableSharedFlow<SseEvent>()

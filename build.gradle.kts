@@ -15,7 +15,7 @@ fun environment(key: String) = providers.environmentVariable(key)
 plugins {
     id("java") // Java support
     // from https://github.com/ktorio/ktor-samples/blob/main/sse/build.gradle.kts
-    id("io.ktor.plugin") version "3.0.0-beta-1"
+    id("io.ktor.plugin") version "2.3.12"
     alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
@@ -39,6 +39,7 @@ dependencies {
     // for the exclusion
     // for intellij idea plugin it should not include coroutines
     // TODO this must be -jvm for exclude works...
+    //      is it because that only children but not all descendant
     implementation("io.ktor:ktor-server-core-jvm") {
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
@@ -47,10 +48,11 @@ dependencies {
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
     }
-    implementation("io.ktor:ktor-server-sse-jvm") {
+    implementation("io.ktor:ktor-server-websockets-jvm") {
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
     }
+    // implementation()
     // for the version, see:
     // https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#coroutinesLibraries
     // this is only for debug

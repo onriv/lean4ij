@@ -10,14 +10,17 @@ import com.github.onriv.ijpluginlean.util.Constants
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.intellij.openapi.project.Project
+import com.jetbrains.rd.framework.util.withContext
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sse.*
+import io.ktor.server.websocket.*
+import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import java.lang.Runnable
 import java.util.concurrent.Executors
@@ -29,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * define all routes for external infoview
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) : RootRoute.() -> Unit = {
+fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) : Route.() -> Unit = {
 
     /**
      * see: https://ktor.io/docs/server-serving-spa.html#serve-customize
@@ -93,12 +96,51 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
         }
     }).asCoroutineDispatcher())
 
-    sse("/api/sse") {
-        val initializeResult = service.awaitInitializedResult()
-        send(Gson().toJson(InfoviewEvent(Constants.EXTERNAL_INFOVIEW_SERVER_INITIALIZED, initializeResult)))
-        service.events().collect {
-            send(Gson().toJson(it.data))
+    webSocket("/ws") {
+        // send(Frame.Text("connected"))
+        val outgoingJob = launch {
+            val serverRestarted = service.awaitInitializedResult()
+            send(Frame.Text(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted))))
+            service.events().collect {
+                send(Frame.Text(Gson().toJson(it)))
+            }
         }
+        runCatching {
+            while (true) {
+                // TODO the original example in https://ktor.io/docs/server-websockets.html#handle-multiple-session
+                //      is using consumeEach, but I am not familiar with it
+                val frame = incoming.receive()
+                if (frame is Frame.Text) {
+                    val (requestId, method, data) = frame.readText().split(Regex(","), 3)
+                    if (method == "createRpcSession") {
+                        launch {
+                            val params: RpcConnectParams = fromJson(data)
+                            val session = service.getSession(params.uri)
+                            val resp =
+                                mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
+                            send(Gson().toJson(resp))
+                        }
+                    }
+                    if (method == "sendClientRequest") {
+                        launch {
+                            val params: RpcCallParamsRaw = fromJson(data)
+                            val ret = service.rpcCallRaw(params)
+                            val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
+                            send(Gson().toJson(resp))
+                        }
+                    }
+                }
+            }
+        }.onFailure { exception ->
+            // TODO handle it seriously
+            // TODO seems cannot throw?
+            exception.cause!!.cause!!.printStackTrace()
+            throw exception
+        }.also {
+            // TODO check what also means
+            outgoingJob.cancel()
+        }
+        outgoingJob.join()
     }
 
     /**
@@ -107,17 +149,6 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
     get("/api/serverRestarted") {
         val initializeResult = service.awaitInitializedResult()
         call.respondJson(initializeResult)
-    }
-
-    /**
-     * This is temporally for sse bug
-     */
-    get("/api/poll") {
-        val channel = Channel<SseEvent>()
-        service.sessions.add(channel)
-        val event = channel.receive()
-        service.sessions.remove(channel)
-        call.respondJson(event)
     }
 
     post("/api/createRpcSession") {

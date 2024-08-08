@@ -56,26 +56,60 @@ class ServerEventSource {
     }
 }
 
+class WebSocketClient {
+    private socket: WebSocket;
+    private responseMap: Map<number, (response: any) => void>;
+    private requestId: number;
+    infoViewApi: InfoviewApi;
+
+    constructor(url: string) {
+        this.socket = new WebSocket(url);
+        this.responseMap = new Map();
+        this.requestId = 0;
+
+        this.socket.addEventListener('message', (event) => {
+            const resp  = JSON.parse(event.data)
+            if (resp.method == 'serverRestarted') {
+                this.infoViewApi.serverRestarted(resp.data)
+                return
+            }
+            if (resp.method == 'changedCursorLocation') {
+                this.infoViewApi.changedCursorLocation(resp.data)
+                return
+            }
+            if (resp.method == 'rpcResponse') {
+                const callback = this.responseMap.get(resp.requestId);
+                if (callback) {
+                    this.responseMap.delete(resp.requestId);
+                    callback(resp.data);
+                }
+            }
+        });
+    }
+
+    sendMessage(method, message: any): Promise<any> {
+        return new Promise((resolve) => {
+            const id = this.requestId++;
+            this.responseMap.set(id, resolve);
+            // TODO all the frontend need better design
+            this.socket.send(`${id},${method},${message}`);
+        });
+    }
+}
+
 export class DummyEditorApi implements EditorApi {
+    private socket: WebSocketClient;
+
+    constructor(socket: WebSocketClient) {
+        this.socket = socket
+    }
+
     async sendClientRequest(uri: string, method: string, params: any): Promise<any> {
         console.log(`Sending client request: ${method} for URI: ${uri}`);
-        const res = await fetch('/api/sendClientRequest', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(params)
-            }
-        );
-        if (!res.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const result = await res.json();
-        if (Object.keys(result).length == 0) {
+        const resp = await this.socket.sendMessage('sendClientRequest', JSON.stringify(params))
+        if (resp == undefined) {
             if (params.method == "Lean.Widget.getInteractiveGoals") {
-                return {
-                    goals: []
-                }
+                return undefined
             }
             if (params.method == "Lean.Widget.getInteractiveTermGoal") {
                 // return {
@@ -86,7 +120,7 @@ export class DummyEditorApi implements EditorApi {
             }
             return []
         }
-        return result;
+        return resp
     }
 
     async sendClientNotification(uri: string, method: string, params: any): Promise<void> {
@@ -142,19 +176,23 @@ export class DummyEditorApi implements EditorApi {
 
     async createRpcSession(uri: /*DocumentUri*/any): Promise<string> {
         console.log(`Creating RPC session for URI: ${uri}`);
-        const res = await fetch('/api/createRpcSession', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({uri: uri})
-            }
-        );
-        if (!res.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const result = await res.json();
-        return result.sessionId;
+        const resp = await this.socket.sendMessage('createRpcSession', JSON.stringify({
+            uri: uri
+        }))
+        return resp
+        // const res = await fetch('/api/createRpcSession', {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/json"
+        //         },
+        //         body: JSON.stringify({uri: uri})
+        //     }
+        // );
+        // if (!res.ok) {
+        //     throw new Error('Network response was not ok');
+        // }
+        // const result = await res.json();
+        // return result.sessionId;
     }
 
     async closeRpcSession(sessionId: string): Promise<void> {
@@ -185,8 +223,6 @@ function App() {
         // console.log(imports)
         // loadRenderInfoview(imports, [new DummyEditorApi(), div], ()=>{})
         window.addEventListener('message', e => rpc.messageReceived(e.data))
-        const infoViewApi: InfoviewApi = renderInfoview(new DummyEditorApi(), div.current!)
-        rpc.register(infoViewApi)
         // window.postMessage({hello: "world"}, '*')
         //
         // infoViewApi.serverRestarted()
@@ -201,35 +237,70 @@ function App() {
         //     clearInterval(intervalId)
         //     // Handle the response here
         // }, 2000); // Sends the API request every 2 seconds
+        // Create a new WebSocket connection
 
+        const socketClient = new WebSocketClient('ws://' + location.host + '/ws')
+        const infoViewApi: InfoviewApi = renderInfoview(new DummyEditorApi(socketClient), div.current!)
+        socketClient.infoViewApi = infoViewApi
 
-        // TODO this is temporally for sse bug
-        const serverRestarted = async () => {
-            const res = await fetch('/api/serverRestarted');
-            if (!res.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const result = await res.json();
-            infoViewApi.serverRestarted(result)
-        }
-        const cursorEvent = async () => {
-            while (true) {
-                const res = await fetch('/api/poll');
-                if (!res.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const resp = await res.json()
-                const result = resp.data.data
-                if (result.uri == undefined) {
-                    throw new Error('Network response was not ok: no uri in result');
-                }
-                infoViewApi.changedCursorLocation(result)
-                // Handle the response here
-            }
-        }
-        serverRestarted().then(r => {
-            cursorEvent()
-        })
+        // Connection opened
+        // socket.addEventListener('open', (event) => {
+        //     console.log('Connected to the WebSocket server');
+        // });
+        //
+        // // Listen for messages
+        // socket.addEventListener('message', (event) => {
+        //     const resp  = JSON.parse(event.data)
+        //     if (resp.method == 'serverRestarted') {
+        //         infoViewApi.serverRestarted(resp.data)
+        //         return
+        //     }
+        //     if (resp.method == 'changedCursorLocation') {
+        //         infoViewApi.changedCursorLocation(resp.data)
+        //         return
+        //     }
+        //     console.log('Message from server:', event.data);
+        // });
+        //
+        // // Connection closed
+        // socket.addEventListener('close', (event) => {
+        //     console.log('Disconnected from the WebSocket server');
+        // });
+        //
+        // // Handle errors
+        // socket.addEventListener('error', (event) => {
+        //     console.error('WebSocket error:', event);
+        // });
+        rpc.register(infoViewApi)
+
+        //
+        // // TODO this is temporally for sse bug
+        // const serverRestarted = async () => {
+        //     const res = await fetch('/api/serverRestarted');
+        //     if (!res.ok) {
+        //         throw new Error('Network response was not ok');
+        //     }
+        //     const result = await res.json();
+        //     infoViewApi.serverRestarted(result)
+        // }
+        // const cursorEvent = async () => {
+        //     while (true) {
+        //         const res = await fetch('/api/poll');
+        //         if (!res.ok) {
+        //             throw new Error('Network response was not ok');
+        //         }
+        //         const resp = await res.json()
+        //         const result = resp.data.data
+        //         if (result.uri == undefined) {
+        //             throw new Error('Network response was not ok: no uri in result');
+        //         }
+        //         infoViewApi.changedCursorLocation(result)
+        //         // Handle the response here
+        //     }
+        // }
+        // serverRestarted().then(r => {
+        //     cursorEvent()
+        // })
 
 
         // TODO temporally sse has bug

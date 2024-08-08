@@ -130,7 +130,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
 
     private var session : String? = null
     suspend fun getSession(forceUpdate: Boolean = false) : String {
-        if (session == null) {
+        if (session == null || forceUpdate) {
             session = leanProjectService.languageServer.await().rpcConnect(RpcConnectParams(file)).sessionId
             // keepAlive()
         }

@@ -8,13 +8,19 @@ import com.github.onriv.ijpluginlean.util.step
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer
+import com.intellij.openapi.editor.markup.FillingLineMarkerRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
@@ -22,9 +28,55 @@ import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.atomic.AtomicReference
+
+object leanFileProgressFillingLineMarkerRender : FillingLineMarkerRenderer {
+    override fun getPosition(): LineMarkerRendererEx.Position {
+        // TODO right seems not working?
+        return LineMarkerRendererEx.Position.LEFT
+    }
+
+    /**
+     * TODO the reason for keys is that it's related to theme
+     *      use our own key here
+     */
+    // private val textAttributesKey = TextAttributesKey.createTextAttributesKey("LEAN_FILE_PROGRESS")
+    private val textAttributesKey = TextAttributesKey.createTextAttributesKey("LINE_PARTIAL_COVERAGE")
+
+    override fun getTextAttributesKey(): TextAttributesKey {
+        return textAttributesKey
+    }
+
+}
+
+
+/**
+ * TODO removed this?
+ */
+object leanFileProgressFinishedFillingLineMarkerRender : FillingLineMarkerRenderer {
+    override fun getPosition(): LineMarkerRendererEx.Position {
+        return LineMarkerRendererEx.Position.LEFT
+    }
+
+    /**
+     * TODO the reason for keys is that it's related to theme
+     *      use our own key here
+     */
+    private val textAttributesKey = TextAttributesKey.createTextAttributesKey("LEAN_FILE_PROGRESS_FINISHED")
+    // private val textAttributesKey = TextAttributesKey.createTextAttributesKey("LINE_PARTIAL_COVERAGE")
+
+    override fun getTextAttributesKey(): TextAttributesKey {
+        return textAttributesKey
+    }
+
+}
 
 class LeanFile(private val leanProjectService: LeanProjectService, private val file: String) {
+
+    companion object {
+        val progressingLineMarker = DefaultLineMarkerRenderer(
+            TextAttributesKey.createTextAttributesKey("LINE_PARTIAL_COVERAGE"), 8, 0, LineMarkerRendererEx.Position.LEFT
+        )
+    }
 
     /**
      * TODO this should be better named
@@ -82,6 +134,10 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
+    /**
+     * TODO rather than one line highlight. Highlight it on range
+     *      for avoiding flashing, or performance issue
+     */
     private fun tryAddLineMarker(
         info: FileProgressProcessingInfo,
         processingLineMarker: MutableList<RangeHighlighter>
@@ -89,14 +145,28 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         val ret = mutableListOf<RangeHighlighter>()
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             if (editor.virtualFile.path == unquotedFile) {
+                val document = editor.document
                 for (processingLinerMarker in processingLineMarker) {
                     editor.markupModel.removeHighlighter(processingLinerMarker)
                 }
                 for (processingInfo in info.processing) {
                     for (i in processingInfo.range.start.line..processingInfo.range.end.line) {
-                        val rangeHighlighter =
-                            editor.markupModel.addLineHighlighter(i, HighlighterLayer.LAST, null)
-                        rangeHighlighter.gutterIconRenderer = FileProgressGutterIconRender()
+                        // this is copied from com/intellij/openapi/editor/impl/MarkupModelImpl.java:69
+                        if (!DocumentUtil.isValidLine(i, document)) {
+                            continue
+                        }
+                        val rangeHighlighter = editor.markupModel.addLineHighlighter(i, HighlighterLayer.LAST, null)
+                        // rangeHighlighter.gutterIconRenderer = FileProgressGutterIconRender()
+                        rangeHighlighter.lineMarkerRenderer = leanFileProgressFillingLineMarkerRender
+                        ret.add(rangeHighlighter)
+                    }
+                }
+                if (ret.isEmpty()) {
+                    // add a default line marker for avoiding the editor flashing left/right ...
+                    // TODO there maybe some better way
+                    if (DocumentUtil.isValidLine(0, document)) {
+                        val rangeHighlighter = editor.markupModel.addLineHighlighter(0, HighlighterLayer.LAST, null)
+                        rangeHighlighter.lineMarkerRenderer = leanFileProgressFinishedFillingLineMarkerRender
                         ret.add(rangeHighlighter)
                     }
                 }

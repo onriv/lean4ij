@@ -39,6 +39,16 @@ using official impl: [LSP](https://plugins.jetbrains.com/docs/intellij/language-
 
 ## Installation
 
+## Issues
+
+Current there maybe wrongly highlight setup for example like:
+
+```
+notation "𝟚_(" C ")" => identity_map
+```
+
+a temporal fix for it is doing some random edit and revert it after the wrong string highlight
+
 - Using the IDE built-in plugin system:
   
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "ij-plugin-lean"</kbd> >

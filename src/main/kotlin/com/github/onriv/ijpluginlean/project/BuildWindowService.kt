@@ -72,7 +72,11 @@ class BuildWindowService(val project: Project) {
                         if (progress == null) {
                             progress = createProgress()
                         }
-                        builds[s.file] = progress!!.startChildProgress(s.file)
+                        // TODO there seems still some duplicated start events...
+                        // builds[s.file] = progress!!.startChildProgress(s.file)
+                        builds.computeIfAbsent(s.file) {
+                            progress!!.startChildProgress(s.file)
+                        }
                     }
                     (s as? BuildEnd)?.let {
                         val build = builds[s.file]

@@ -1,5 +1,6 @@
 package com.github.onriv.ijpluginlean.infoview.external
 
+import com.github.onriv.ijpluginlean.infoview.external.data.CursorLocation
 import com.github.onriv.ijpluginlean.infoview.external.data.InfoviewEvent
 import com.github.onriv.ijpluginlean.infoview.external.data.SseEvent
 import com.github.onriv.ijpluginlean.lsp.LeanLanguageServer
@@ -96,51 +97,64 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
         }
     }).asCoroutineDispatcher())
 
+    var previousCursorEvent : InfoviewEvent? = null
+
     webSocket("/ws") {
-        // send(Frame.Text("connected"))
-        val outgoingJob = launch {
-            val serverRestarted = service.awaitInitializedResult()
-            send(Frame.Text(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted))))
-            service.events().collect {
-                send(Frame.Text(Gson().toJson(it)))
+        try {
+            // send(Frame.Text("connected"))
+            val outgoingJob = launch {
+                val serverRestarted = service.awaitInitializedResult()
+                send(Frame.Text(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted))))
+                service.previousCursorLocation?.let {
+                    // This is for showing the goal without moving the cursor at the startup
+                    // TODO this should be handled earlier
+                    send(Frame.Text(Gson().toJson(InfoviewEvent("changedCursorLocation", it))))
+                }
+                service.events().collect {
+                    send(Frame.Text(Gson().toJson(it)))
+                }
             }
-        }
-        runCatching {
-            while (true) {
-                // TODO the original example in https://ktor.io/docs/server-websockets.html#handle-multiple-session
-                //      is using consumeEach, but I am not familiar with it
-                val frame = incoming.receive()
-                if (frame is Frame.Text) {
-                    val (requestId, method, data) = frame.readText().split(Regex(","), 3)
-                    if (method == "createRpcSession") {
-                        launch {
-                            val params: RpcConnectParams = fromJson(data)
-                            val session = service.getSession(params.uri)
-                            val resp =
-                                mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
-                            send(Gson().toJson(resp))
+            runCatching {
+                while (true) {
+                    // TODO the original example in https://ktor.io/docs/server-websockets.html#handle-multiple-session
+                    //      is using consumeEach, but I am not familiar with it
+                    val frame = incoming.receive()
+                    if (frame is Frame.Text) {
+                        val (requestId, method, data) = frame.readText().split(Regex(","), 3)
+                        if (method == "createRpcSession") {
+                            launch {
+                                val params: RpcConnectParams = fromJson(data)
+                                val session = service.getSession(params.uri)
+                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
+                                send(Gson().toJson(resp))
+                            }
                         }
-                    }
-                    if (method == "sendClientRequest") {
-                        launch {
-                            val params: RpcCallParamsRaw = fromJson(data)
-                            val ret = service.rpcCallRaw(params)
-                            val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
-                            send(Gson().toJson(resp))
+                        if (method == "sendClientRequest") {
+                            launch {
+                                val params: RpcCallParamsRaw = fromJson(data)
+                                val ret = service.rpcCallRaw(params)
+                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
+                                send(Gson().toJson(resp))
+                            }
                         }
                     }
                 }
+            }.onFailure { exception ->
+                // TODO handle it seriously
+                exception.printStackTrace()
+                exception.cause?.printStackTrace()
+                exception.cause?.cause?.printStackTrace()
+                // kotlinx.coroutines.channels.ClosedReceiveChannelException: Channel was closed
+            }.also {
+                // TODO check what also means
+                outgoingJob.cancel()
             }
-        }.onFailure { exception ->
-            // TODO handle it seriously
-            // TODO seems cannot throw?
-            exception.cause!!.cause!!.printStackTrace()
-            throw exception
-        }.also {
-            // TODO check what also means
-            outgoingJob.cancel()
+            outgoingJob.join()
+        } catch (ex: Exception) {
+            ex.cause?.cause?.printStackTrace()
+            ex.cause?.printStackTrace()
+            ex.printStackTrace()
         }
-        outgoingJob.join()
     }
 
     /**

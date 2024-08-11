@@ -44,6 +44,10 @@
 
         <postStartupActivity implementation="com.github.onriv.ijpluginlean.project.LeanProjectActivity"/>
 
+        <!-- ref: https://plugins.jetbrains.com/docs/intellij/notifications.html#balloons -->
+        <notificationGroup id="Custom Notification Group"
+                           displayType="BALLOON"
+                           key="notification.group.name"/>
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="LeanLanguageServerId"

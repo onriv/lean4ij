@@ -138,6 +138,7 @@ For that, we can use more specific classes. */
     border-style: solid;
     max-width: calc(70%);
     box-sizing: border-box;
+    max-height: fit-content !important;
 }
 
 @media (max-width: 500px) {

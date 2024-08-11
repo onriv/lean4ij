@@ -1,6 +1,7 @@
 package com.github.onriv.ijpluginlean.project
 
 import com.github.onriv.ijpluginlean.lsp.data.*
+import com.github.onriv.ijpluginlean.lsp.data.Position
 import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.util.LspUtil
 import com.github.onriv.ijpluginlean.util.step
@@ -16,12 +17,12 @@ import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import org.eclipse.lsp4j.DidCloseTextDocumentParams
-import org.eclipse.lsp4j.DidOpenTextDocumentParams
-import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.eclipse.lsp4j.TextDocumentItem
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.atomic.AtomicReference
 
 class LeanFile(private val leanProjectService: LeanProjectService, private val file: String) {
 
@@ -31,7 +32,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private val unquotedFile = LspUtil.unquote(file)
     private val processingInfoChannel = Channel<FileProgressProcessingInfo>()
     private val project = leanProjectService.project
-    private val buildWindowService : BuildWindowService = project.service()
+    private val buildWindowService: BuildWindowService = project.service()
     private val scope = leanProjectService.scope
     private val scopeIO = CoroutineScope(Dispatchers.IO)
     // private val customScope = CoroutineScope(Executors.newFixedThreadPool(10, object : ThreadFactory {
@@ -81,15 +82,18 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    private fun tryAddLineMarker(info: FileProgressProcessingInfo, processingLineMarker: MutableList<RangeHighlighter>) : MutableList<RangeHighlighter> {
+    private fun tryAddLineMarker(
+        info: FileProgressProcessingInfo,
+        processingLineMarker: MutableList<RangeHighlighter>
+    ): MutableList<RangeHighlighter> {
         val ret = mutableListOf<RangeHighlighter>()
-        FileEditorManager.getInstance(project).selectedTextEditor?.let {editor ->
+        FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             if (editor.virtualFile.path == unquotedFile) {
                 for (processingLinerMarker in processingLineMarker) {
                     editor.markupModel.removeHighlighter(processingLinerMarker)
                 }
                 for (processingInfo in info.processing) {
-                    for (i in processingInfo.range.start.line ..  processingInfo.range.end.line) {
+                    for (i in processingInfo.range.start.line..processingInfo.range.end.line) {
                         val rangeHighlighter =
                             editor.markupModel.addLineHighlighter(i, HighlighterLayer.LAST, null)
                         rangeHighlighter.gutterIconRenderer = FileProgressGutterIconRender()
@@ -104,7 +108,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private suspend fun withBackgroundFileProgress(action: suspend (reporter: ProgressReporter) -> Unit) {
         withBackgroundProgress(project, Constants.FILE_PROGRESS) {
             withProgressText(leanProjectService.getRelativePath(file)) {
-                reportProgress {reporter ->
+                reportProgress { reporter ->
                     action(reporter)
                 }
             }
@@ -117,7 +121,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      * but maybe later it can do its customized job
      */
     fun updateCaret(logicalPosition: LogicalPosition) {
-        val position = Position(line=logicalPosition.line, character = logicalPosition.column)
+        val position = Position(line = logicalPosition.line, character = logicalPosition.column)
         val params = PlainGoalParams(TextDocumentIdentifier(LspUtil.quote(file)), position)
         leanProjectService.updateCaret(params)
     }
@@ -129,13 +133,32 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     }
 
     private var session : String? = null
-    suspend fun getSession(forceUpdate: Boolean = false) : String {
-        if (session == null || forceUpdate) {
-            session = leanProjectService.languageServer.await().rpcConnect(RpcConnectParams(file)).sessionId
-            // keepAlive()
-        }
+    private val sessionMutex : Mutex = Mutex()
+    suspend fun getSession() : String {
+        updateSession(null)
         return session!!
     }
+
+    /**
+     * Here the argument [oldSession] must be passed for there maybe concurrent access for updating session, for example
+     * multiple rpc calls like "Lean.Widget.getInteractiveGoals" and "Lean.Widget.getInteractiveTermGoal" and
+     * "Lean.Widget.getWidgets" etc
+     * TODO check [Mutex]'s behavior, for example: in [here](https://discuss.kotlinlang.org/t/is-it-always-safe-to-just-convert-synchronized-to-mutex-withlock/26519)
+     * TODO check if it's better way than double locking check
+     */
+    private suspend fun updateSession(oldSession: String?) {
+        if (oldSession == session) {
+            sessionMutex.withLock {
+                if (oldSession == session) {
+                    session = leanProjectService.languageServer.await().rpcConnect(RpcConnectParams(file)).sessionId
+                    // keep alive making infoToInteractive behave better, for the reference must have the same session
+                    // as the goal result, so keep it alive here...
+                    keepAlive()
+                }
+            }
+        }
+    }
+
 
     /**
      * TODO maybe it should not always keep alive
@@ -143,12 +166,10 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private fun keepAlive() {
         scopeIO.launch {
             while (true) {
-                delay(9*1000)
+                delay(9 * 1000)
                 leanProjectService.languageServer.await().rpcKeepAlive(RpcKeepAliveParams(file, session!!))
             }
         }
-        // TODO this is in fact unreachable? since it's throwing an error
-        TODO("Not yet implemented")
     }
 
     suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
@@ -159,15 +180,48 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val responseError = ex.responseError
             // TODO remove this magic number and find lean source code for it
             if (responseError.code == -32900 && responseError.message == "Outdated RPC session") {
-                getSession(forceUpdate = true)
+                // Here there is a possibility that rpcCallRaw is called concurrently and all of them failed
+                // the lock in updateSession will avoid update session continuously
+                // also check the comment inside updateSession, in fact we keep it alive forever...
+                updateSession(params.sessionId)
                 val paramsRetry = RpcCallParamsRaw(session!!, params.method, params.textDocument, params.position, params.params)
                 return rpcCallRaw(paramsRetry)
             }
             if (responseError.code == -32603 && responseError.message == "elaboration interrupted") {
                 return null
             }
+            if (responseError.code == -32601 && responseError.message.contains("No RPC method")) {
+                return null
+            }
+            if (responseError.code == -32602 && responseError.message.contains("Cannot decode params in RPC call")) {
+                /**
+                 * TODO weird for this error
+                 *      handle it
+                 * {
+                 *   "code": -32602,
+                 *   "message": "Cannot decode params in RPC call \u0027Lean.Widget.InteractiveDiagnostics.infoToInteractive({\"p\":\"2\"})\u0027\nRPC reference \u00272\u0027 is not valid"
+                 * }
+                 */
+                return null
+            }
+            /**
+             * {
+             *   "code": -32801,
+             *   "message": "The file worker for file:///I:/repos/CategoriesandHilbertSpaces/CHS/C0_Getting_Started/Test_2.lean has been terminated. Either the header has changed, or the file was closed,  or the server is shutting down."
+             * }
+             */
+            /**
+             * 2024-08-11 14:17:38,335 [ 624441]   WARN - org.eclipse.lsp4j.jsonrpc.RemoteEndpoint - Unmatched response message: {
+             *   "jsonrpc": "2.0",
+             *   "id": "142",
+             *   "error": {
+             *     "code": -32601,
+             *     "message": "No RPC method \u0027Lean.Widget.getInteractiveDiagnostics\u0027 found"
+             *   }
+             * }
+             */
             throw ex
-        } catch(ex: Exception) {
+        } catch (ex: Exception) {
             // org.eclipse.lsp4j.jsonrpc.ResponseErrorException: elaboration interrupted
             // TODO outdated session seems not reported here
             throw ex
@@ -191,6 +245,12 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 val didOpenTextDocumentParams = DidOpenTextDocumentParams(textDocumentItem)
                 languageServer.didOpen(didOpenTextDocumentParams)
             }
+        }
+    }
+
+    fun publishDiagnostics(diagnostics: List<Diagnostic>) {
+        for (d in diagnostics) {
+            buildWindowService.addBuildEvent(file, d.message)
         }
     }
 

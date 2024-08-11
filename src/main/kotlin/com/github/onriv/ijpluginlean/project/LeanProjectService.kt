@@ -8,6 +8,7 @@ import com.github.onriv.ijpluginlean.util.Constants
 import com.github.onriv.ijpluginlean.util.LspUtil
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.LanguageServerManager
@@ -18,17 +19,28 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
 class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
 
-    val languageServer = CompletableDeferred<LeanLanguageServer>()
-    private val initializeResult = CompletableDeferred<InitializeResult>()
+    private var _languageServer = CompletableDeferred<LeanLanguageServer>()
+    val languageServer : CompletableDeferred<LeanLanguageServer> get() = _languageServer
+    private var _initializeResult = CompletableDeferred<InitializeResult>()
+    private val initializeResult : CompletableDeferred<InitializeResult> = _initializeResult
 
     private val _caretEvent = MutableSharedFlow<PlainGoalParams>()
     val caretEvent: Flow<PlainGoalParams> get() = _caretEvent.asSharedFlow()
+    private val _serverEvent = MutableSharedFlow<NotificationMessage>()
+    val serverEvent : Flow<NotificationMessage> get() = _serverEvent.asSharedFlow()
+
+    fun emitServerEvent(message: NotificationMessage) {
+        scope.launch {
+            _serverEvent.emit(message)
+        }
+    }
 
     private val leanFiles = ConcurrentHashMap<String, LeanFile>()
 
@@ -41,7 +53,12 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     }
 
     fun setInitializedServer(languageServer: LanguageServer) {
-        this.languageServer.complete(LeanLanguageServer(languageServer as InternalLeanLanguageServer))
+        val result = this.languageServer.complete(LeanLanguageServer(languageServer as InternalLeanLanguageServer))
+        if (!result) {
+            // TODO there is still multiple event
+            // throw IllegalStateException("languageServer already setup")
+            thisLogger().warn("languageServer already setup")
+        }
     }
 
     fun setInitializedResult(initializeResult: InitializeResult) {
@@ -78,43 +95,17 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     }
 
     fun restartLsp() {
+        // TODO should this be lock?
+        _initializeResult = CompletableDeferred()
+        _languageServer = CompletableDeferred()
         LanguageServerManager.getInstance(project).stop(Constants.LEAN_LANGUAGE_SERVER_ID)
         LanguageServerManager.getInstance(project).start(Constants.LEAN_LANGUAGE_SERVER_ID)
     }
 
-    // init {
-        //
-        //     var instance = LanguageServerLifecycleManager.getInstance(project)
-        //     // kind of copying LanguageServerExplorerLifecycleListener
-        //     // from lsp4ij
-        //     instance.addLanguageServerLifecycleListener(object : LanguageServerLifecycleListener {
-        //         override fun handleStatusChanged(p0: LanguageServerWrapper?) {
-        //         }
-        //
-        //         override fun handleLSPMessage(p0: Message?, p1: MessageConsumer?, p2: LanguageServerWrapper?) {
-        //             // p0.let {
-        //             //     (it as? ResponseMessage)?.let {
-        //             //         (it.result as? InitializeResult)?.let {
-        //             //             serviceInitialized = Gson().toJson(it)
-        //             //         }
-        //             //     }
-        //             // }
-        //         }
-        //
-        //         override fun handleError(p0: LanguageServerWrapper?, p1: Throwable?) {
-        //         }
-        //
-        //         override fun dispose() {
-        //         }
-        //
-        //         })
-        //     }
-        // }
-        //
-        //
-        // val servers = LanguageServiceAccessor.getInstance(project)
-        //     .getActiveLanguageServers{true}
-        // languageServer = LeanLanguageServer(servers[0] as InternalLeanLanguageServer)
-    // }
+    fun resetServer() {
+        // TODO should this be lock?
+        _initializeResult = CompletableDeferred()
+        _languageServer = CompletableDeferred()
+    }
 
 }

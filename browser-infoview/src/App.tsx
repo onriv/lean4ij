@@ -84,6 +84,9 @@ class WebSocketClient {
                     callback(resp.data);
                 }
             }
+            if (resp.method == 'serverNotification') {
+                this.infoViewApi.gotServerNotification(resp.data.method, resp.data.params)
+            }
         });
     }
 

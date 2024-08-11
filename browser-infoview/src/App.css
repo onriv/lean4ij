@@ -41,11 +41,14 @@
   color: #888;
 }
 
-#root, #infoview {
+#root {
   text-align: left;
   margin: 0;
   padding: 0;
-  position: fixed;
+  /*if position set to fix, it cannot scroll*/
+  /*This set to fixed for the text shown up in center without it...*/
+  /*now it's absolute*/
+  position: absolute;
   top: 0;
 }
 

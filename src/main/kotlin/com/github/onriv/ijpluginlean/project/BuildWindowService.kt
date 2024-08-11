@@ -8,6 +8,8 @@ import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.progress.BuildProgress
 import com.intellij.build.progress.BuildProgressDescriptor
 import com.intellij.build.progress.BuildRootProgressImpl
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -15,11 +17,16 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+
+open class BuildEvent(val file: String)
+class BuildStart(file: String): BuildEvent(file)
+class BuildEnd(file: String): BuildEvent(file)
+class BuildMessage(file: String, val message: String): BuildEvent(file)
+
 
 /**
  * A simple service for build tool window
@@ -37,7 +44,8 @@ class BuildWindowService(val project: Project) {
     private val leanProject : LeanProjectService = project.service()
     private val systemId = ProjectSystemId("LEAN4")
     private val syncId = ExternalSystemTaskId.create(systemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
-    private var flow = MutableSharedFlow<String>()
+    private var flow = MutableSharedFlow<BuildEvent>()
+    private val builds = HashMap<String, BuildProgress<*>>()
 
     init {
         leanProject.scope.launch {
@@ -46,7 +54,6 @@ class BuildWindowService(val project: Project) {
              * and https://github.com/JetBrains/intellij-community/blob/1d45fcdd827f7bc3fde15d7eda2b4399780fb632/platform/lang-impl/testSources/com/intellij/build/BuildViewTest.kt#L50
              */
             var progress : BuildProgress<BuildProgressDescriptor>? = null
-            val builds = HashMap<String, BuildProgress<*>>()
             val mutex = Mutex()
 
             // TODO is the mutex here really necessary?
@@ -61,23 +68,52 @@ class BuildWindowService(val project: Project) {
                     //         progress = null
                     //     }
                     // } else
-                    if (!s.startsWith("-")) {
+                    (s as? BuildStart)?.let {
                         if (progress == null) {
                             progress = createProgress()
                         }
-                        builds.put(s, progress!!.startChildProgress(s))
-                    } else if (s.startsWith("-")) {
-                        val s1 = s.substring(1)
-                        val build = builds[s1]
+                        builds[s.file] = progress!!.startChildProgress(s.file)
+                    }
+                    (s as? BuildEnd)?.let {
+                        val build = builds[s.file]
                         if (build == null) {
-                            thisLogger().error("no build for $s1")
+                            thisLogger().error("no build for ${s.file}")
                         }
-                        builds[s1]!!.finish()
-                        builds.remove(s1)
+                        // TODO there still seems build end without build start
+                        builds[s.file]?.let {
+                            it.finish()
+                            builds.remove(s.file)
+                        }
                         // launch {
                         //     delay(10 * 1000)
                         //     flow.emit("--")
                         // }
+                    }
+                    (s as? BuildMessage)?.let {
+                        // TODO this can even before build start
+                        if (progress == null) {
+                            progress = createProgress()
+                        }
+                        val fileProgress = builds.computeIfAbsent(s.file) {
+                            progress!!.startChildProgress(s.file)
+                        }
+                        fileProgress.output(s.message, false)
+                        if (s.message.contains("error: build failed")) {
+                            try {
+                                // for (entry in builds.entries) {
+                                //     entry.value.cancel()
+                                // }
+                                fileProgress.cancel()
+                                builds.remove(s.file)
+                                NotificationGroupManager.getInstance()
+                                    .getNotificationGroup("Custom Notification Group") // TODO notification group is not in bundle
+                                    .createNotification("Build failed, check build window for detail", NotificationType.ERROR)
+                                    .notify(project);
+                            } catch(ex : Exception) {
+                                throw ex
+                            }
+
+                        }
                     }
                 }
             }
@@ -99,14 +135,19 @@ class BuildWindowService(val project: Project) {
 
     fun startBuild(file: String) {
         leanProject.scope.launch {
-            flow.emit(leanProject.getRelativePath(LspUtil.unquote(file)))
+            flow.emit(BuildStart(leanProject.getRelativePath(LspUtil.unquote(file))))
         }
     }
 
     fun endBuild(file: String) {
         leanProject.scope.launch {
-            val relativePath = leanProject.getRelativePath(LspUtil.unquote(file))
-            flow.emit("-$relativePath")
+            flow.emit(BuildEnd(leanProject.getRelativePath(LspUtil.unquote(file))))
+        }
+    }
+
+    fun addBuildEvent(file: String, message: String) {
+        leanProject.scope.launch {
+            flow.emit(BuildMessage(leanProject.getRelativePath(LspUtil.unquote(file)), message))
         }
     }
 

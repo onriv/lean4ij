@@ -6,7 +6,9 @@ import com.github.onriv.ijpluginlean.util.Constants
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
+import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification
+
 
 /**
  * class for handling lsp notification

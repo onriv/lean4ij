@@ -14,7 +14,7 @@
           <option value="runIde" />
         </list>
       </option>
-      <option name="vmOptions" value="-Dkotlinx.coroutines.debug=on" />
+      <option name="vmOptions" value="-Dkotlinx.coroutines.debug=on -Duser.language=en -Duser.region=US" />
     </ExternalSystemSettings>
     <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>

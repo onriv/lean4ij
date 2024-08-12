@@ -88,6 +88,7 @@ class ExternalInfoViewService(val project: Project) {
         // val port = 19090
 
         // TODO only for debug, todo configuration it
+        // TODO exception here: getProperty is null if from real IDE
         val projectRoot = System.getProperty("idea.plugins.path").replace(arrayOf("build", "idea-sandbox", "plugins").joinToString(File.separator), "")
         val file = Paths.get(projectRoot, "browser-infoview", "vite.config.ts").toFile()
         if (file.exists()) {

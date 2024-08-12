@@ -4,6 +4,22 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 
+A plugin for using [Lean4](https://lean-lang.org/) in JetBrains Platform IDE.
+
+# Installation
+
+This plugin uses [Lsp4ij](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 lsp server. Please install this first.
+
+- (Unsupported yet) ~~Using the IDE built-in plugin system:~~
+
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "ij-plugin-lean"</kbd> >
+  <kbd>Install</kbd>
+
+- Manually:
+
+  Download the [latest release](https://github.com/onriv/ij-plugin-lean/releases/latest) and install it manually using
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+
 ## Template ToDo list
 - [x] Create a new [IntelliJ Platform Plugin Template][template] project.
 - [ ] Get familiar with the [template documentation][template].
@@ -26,39 +42,15 @@ To keep everything working, do not remove `<!-- ... -->` sections.
 
 ## Usage
 
-## Implementation
+TODO
 
-### LSP
-using official impl: [LSP](https://plugins.jetbrains.com/docs/intellij/language-server-protocol.html)
+## Development
 
-### Highlight
+Please check [DEVELOP.md](./DEVELOP.md).
 
-### Unicode input
+## Known Issues
 
-### InfoView
-
-## Installation
-
-## Issues
-
-Current there maybe wrongly highlight setup for example like:
-
-```
-notation "𝟚_(" C ")" => identity_map
-```
-
-a temporal fix for it is doing some random edit and revert it after the wrong string highlight
-
-- Using the IDE built-in plugin system:
-  
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "ij-plugin-lean"</kbd> >
-  <kbd>Install</kbd>
-  
-- Manually:
-
-  Download the [latest release](https://github.com/onriv/ij-plugin-lean/releases/latest) and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
-
+Since we are still on a very early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
 
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].

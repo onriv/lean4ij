@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const host = 'localhost:58566'
+const host = 'localhost:58400'
 
 // https://vitejs.dev/config/
 export default defineConfig({

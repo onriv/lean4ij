@@ -1,7 +1,7 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.onriv.lean4ij</id>
-    <name>Lean4 plugin for Intellij Platform</name>
+    <id>lean4ij</id>
+    <name>Lean4ij</name>
     <vendor>onriv</vendor>
 
     <depends>com.intellij.modules.platform</depends>
@@ -15,10 +15,10 @@
         <defaultLiveTemplates file="/liveTemplates/Lean4.xml"/>
         <liveTemplateContext
                 contextId="Lean4"
-                implementation="com.github.onriv.ijpluginlean.language.Lean4Context"/>
+                implementation="lean4ij.language.Lean4Context"/>
 <!--        // from https://github.com/JetBrains/godot-support/blob/master/rider/src/main/resources/META-INF/plugin.xml-->
 <!--        https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/src/main/resources/META-INF/plugin.xml#L26-->
-        <textmate.bundleProvider implementation="com.github.onriv.ijpluginlean.language.TextMateBundleProvider"/>
+        <textmate.bundleProvider implementation="lean4ij.language.TextMateBundleProvider"/>
 
 <!--        lsp4ij says:-->
 <!--        Indeed, when you manually define a File type for some file name patterns, you loose the TextMate syntax coloration.-->
@@ -26,23 +26,23 @@
 <!--        indeed, this cannot use-->
 <!--        <fileType-->
 <!--                name="Lean4 File"-->
-<!--                implementationClass="com.github.onriv.ijpluginlean.language.Lean4FileType"-->
+<!--                implementationClass="lean4ijuage.Lean4FileType"-->
 <!--                fieldName="INSTANCE"-->
 <!--                language="Lean4"-->
 <!--                extensions="lean"/>-->
 
-        <toolWindow factoryClass="com.github.onriv.ijpluginlean.toolWindow.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
+        <toolWindow factoryClass="lean4ij.toolWindow.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
 
         <!-- LSP -->
-<!--        <platform.lsp.serverSupportProvider implementation="com.github.onriv.ijpluginlean.lsp.LeanLspServerSupportProvider"/>-->
+<!--        <platform.lsp.serverSupportProvider implementation="lean4ijLeanLspServerSupportProvider"/>-->
 
 
         <!-- documentation for infoview -->
         <!-- TODO This seems not working on now -->
         <lang.documentationProvider language="LeanInfoview"
-            implementationClass="com.github.onriv.ijpluginlean.infoview.InfoViewDocumentationProvider"/>
+            implementationClass="lean4ij.infoview.InfoViewDocumentationProvider"/>
 
-        <postStartupActivity implementation="com.github.onriv.ijpluginlean.project.LeanProjectActivity"/>
+        <postStartupActivity implementation="lean4ij.project.LeanProjectActivity"/>
 
         <!-- ref: https://plugins.jetbrains.com/docs/intellij/notifications.html#balloons -->
         <notificationGroup id="Custom Notification Group"
@@ -52,7 +52,7 @@
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="LeanLanguageServerId"
                 name="Lean Language Server"
-                factoryClass="com.github.onriv.ijpluginlean.lsp.LeanLanguageServerFactory">
+                factoryClass="lean4ij.lsp.LeanLanguageServerFactory">
             <description><![CDATA[
         Some description written in HTML to display it in the LSP consoles view and Language Servers settings. TODO
         ]]>
@@ -66,30 +66,30 @@
 
     <actions>
         <!-- Add your actions here -->
-        <action id="MyCustomAction" class="com.github.onriv.ijpluginlean.actions.MyCustomAction" text="Say Hello" description="A custom action to say hello">
+        <action id="MyCustomAction" class="lean4ij.actions.MyCustomAction" text="Say Hello" description="A custom action to say hello">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
         <!-- Add your actions here -->
-        <action id="OpenLeanInfoView" class="com.github.onriv.ijpluginlean.actions.OpenLeanInfoView" text="Lean open info view" description="Lean open info view">
+        <action id="OpenLeanInfoView" class="lean4ij.actions.OpenLeanInfoView" text="Lean open info view" description="Lean open info view">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="RestartLeanLsp" class="com.github.onriv.ijpluginlean.actions.RestartLeanLsp" text="Restart Lean Lsp Server" description="Restart Lean Lsp Server">
+        <action id="RestartLeanLsp" class="lean4ij.actions.RestartLeanLsp" text="Restart Lean Lsp Server" description="Restart Lean Lsp Server">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="RestartCurrentLeanFile" class="com.github.onriv.ijpluginlean.actions.RestartCurrentFile" text="Restart Current Lean File" description="Restart Current Lean File">
+        <action id="RestartCurrentLeanFile" class="lean4ij.actions.RestartCurrentFile" text="Restart Current Lean File" description="Restart Current Lean File">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="DumpCoroutine" class="com.github.onriv.ijpluginlean.actions.CoroutineDebug" text="Dump Coroutine" description="Dump Coroutine">
+        <action id="DumpCoroutine" class="lean4ij.actions.CoroutineDebug" text="Dump Coroutine" description="Dump Coroutine">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
     </actions>
 
     <applicationListeners>
-        <listener class="com.github.onriv.ijpluginlean.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+        <listener class="lean4ij.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
 
     <projectListeners>
-        <listener class="com.github.onriv.ijpluginlean.project.listeners.LeanFileEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+        <listener class="lean4ij.project.listeners.LeanFileEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </projectListeners>
 
 

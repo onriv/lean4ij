@@ -1,6 +1,6 @@
 <!-- Keep a Changelog guide -> https://keepachangelog.com -->
 
-# ij-plugin-lean Changelog
+# lean4ij Changelog
 
 ## [Unreleased]
 ### Added

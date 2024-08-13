@@ -1,9 +1,10 @@
 # Lean4ij
 
-![Build](https://github.com/onriv/ij-plugin-lean/workflows/Build/badge.svg)
+![Build](https://github.com/onriv/lean4ij/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 
+<!-- Plugin description -->
 A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 
 # Installation
@@ -12,45 +13,29 @@ This plugin uses [Lsp4ij](https://github.com/redhat-developer/lsp4ij) for connec
 
 - (Unsupported yet) ~~Using the IDE built-in plugin system:~~
 
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "ij-plugin-lean"</kbd> >
-  <kbd>Install</kbd>
+  `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
+  `Install`
 
 - Manually:
 
-  Download the [latest release](https://github.com/onriv/ij-plugin-lean/releases/latest) and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
-
-## Template ToDo list
-- [x] Create a new [IntelliJ Platform Plugin Template][template] project.
-- [ ] Get familiar with the [template documentation][template].
-- [ ] Adjust the [pluginGroup](./gradle.properties), [plugin ID](./src/main/resources/META-INF/plugin.xml) and [sources package](./src/main/kotlin).
-- [ ] Adjust the plugin description in `README` (see [Tips][docs:plugin-description])
-- [ ] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
-- [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
-- [ ] Set the `PLUGIN_ID` in the above README badges.
-- [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
-- [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
-- [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
-
-<!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
-
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
-
-To keep everything working, do not remove `<!-- ... -->` sections. 
-<!-- Plugin description end -->
-
+  Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually using
+  `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...`
 ## Usage
 
-TODO
+After opening a lean4 project, the language server toolwindow would automatically start the language server.
 
+Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.
+
+Infoview is supported using [lean4-infoview](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it requires opening from a web browser
+
+<!-- Plugin description end -->
 ## Development
 
 Please check [DEVELOP.md](./DEVELOP.md).
 
 ## Known Issues
 
-Since we are still on a very early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
+The plugin is still on a very early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
 
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].

@@ -37,6 +37,18 @@ Please check [DEVELOP.md](./DEVELOP.md).
 
 The plugin is still on a very early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
 
+## License
+
+TODO
+
+## Acknowledgments
+
+The following projects give great help for developing the plugin:
+
+- [leanprover/vscode-lean4](https://github.com/leanprover/vscode-lean4/tree/master/vscode-lean4)
+- [Julian/lean.nvim](https://github.com/Julian/lean.nvim)
+- [leanprover-community/lean4-mode](https://github.com/leanprover-community/lean4-mode)
+- [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij)
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].
 

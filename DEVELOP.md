@@ -19,3 +19,14 @@ TODO
 ## InfoView
 
 TODO
+
+## Developing in Intellij Idea
+Proxy issue (this should only happen in some specific region)
+If the runPlugin task requires some proxy, do
+```
+ORG_GRADLE_PROJECT_systemProp.https.proxyHost=<ip>
+ORG_GRADLE_PROJECT_systemProp.https.proxyPort=<port>
+ORG_GRADLE_PROJECT_systemProp.https.nonProxyHosts=*.nonproxyrepos.com|localhost
+```
+in system environment. Replace the `<ip>` and `<port>` to real value.
+ref: https://docs.gradle.org/current/userguide/project_properties.html

@@ -5,9 +5,9 @@ import lean4ij.util.LspUtil
 import com.intellij.build.AbstractViewManager
 import com.intellij.build.BuildDescriptor
 import com.intellij.build.DefaultBuildDescriptor
+import com.intellij.build.SyncViewManager
 import com.intellij.build.progress.BuildProgress
 import com.intellij.build.progress.BuildProgressDescriptor
-import com.intellij.build.progress.BuildRootProgressImpl
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
@@ -34,12 +34,6 @@ class BuildMessage(file: String, val message: String): BuildEvent(file)
 @Service(Service.Level.PROJECT)
 @Suppress("UnstableApiUsage")
 class BuildWindowService(val project: Project) {
-
-    private val syncView = object : AbstractViewManager(project) {
-        public override fun getViewName(): String {
-            return Constants.FILE_PROGRESS
-        }
-    }
 
     private val leanProject : LeanProjectService = project.service()
     private val systemId = ProjectSystemId("LEAN4")
@@ -126,7 +120,7 @@ class BuildWindowService(val project: Project) {
 
     fun createProgress(): BuildProgress<BuildProgressDescriptor> {
         val descriptor = DefaultBuildDescriptor(syncId, Constants.FILE_PROGRESS, project.basePath!!, System.currentTimeMillis())
-        return  BuildRootProgressImpl(syncView)
+        return  SyncViewManager.createBuildProgress(project)
             .start(object : BuildProgressDescriptor {
                 override fun getTitle(): String {
                     return Constants.FILE_PROGRESS

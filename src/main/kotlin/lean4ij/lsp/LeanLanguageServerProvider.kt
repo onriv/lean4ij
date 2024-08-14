@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleManager
 import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
+import lean4ij.util.OsUtil
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -23,9 +24,32 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
     }
 
     private fun setServerCommand() {
-        val lake = "elan which lake".runCommand(File(project.basePath!!)).trim()
+        val elan = getElan()
+        val lake = "$elan which lake".runCommand(File(project.basePath!!)).trim()
         commands = listOf(lake, "serve", "--", project.basePath)
         workingDirectory = project.basePath
+    }
+
+    /**
+     * TODO here in macos, after installation the elan command cannot be found
+     *      it seems because the path environment is not passed, see
+     *      https://youtrack.jetbrains.com/issue/IDEA-347154/The-installed-plugin-doesnt-have-access-to-environment-variables
+     *      hence we implement this
+     */
+    private fun getElan(): String {
+        val home = System.getProperty("user.home")
+        val elanFile = if (OsUtil.isWindows()) {
+            Path.of(home, ".elan", "bin", "elan.exe").toFile()
+        } else {
+            Path.of(home, ".elan", "bin", "elan").toFile()
+        }
+        if (!elanFile.exists()) {
+            throw IllegalStateException("$elanFile does not exist!")
+        }
+        if (!elanFile.isFile) {
+            throw IllegalStateException("$elanFile is not file!")
+        }
+        return elanFile.absolutePath
     }
 
     private val tempLogDir = Files.createTempDirectory(Path.of(PathManager.getTempPath()), "lean-lsp").toString()

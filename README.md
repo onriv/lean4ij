@@ -20,6 +20,8 @@ This plugin uses [Lsp4ij](https://github.com/redhat-developer/lsp4ij) for connec
 
   Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually using
   `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...`
+
+The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
 ## Usage
 
 After opening a lean4 project, the language server toolwindow would automatically start the language server.
@@ -36,6 +38,12 @@ Please check [DEVELOP.md](./DEVELOP.md).
 ## Known Issues
 
 The plugin is still on a very early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
+
+and todos
+- [ ] file progressing seems block UI thread in some cases
+- [ ] skip index `.lake/build`
+- [ ] infoview toolwindow in jcef
+- [ ] infoview toolwindow in swing
 
 ## Acknowledgments
 

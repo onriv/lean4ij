@@ -37,10 +37,6 @@ Please check [DEVELOP.md](./DEVELOP.md).
 
 The plugin is still on a very early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
 
-## License
-
-TODO
-
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

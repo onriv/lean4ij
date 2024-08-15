@@ -63,13 +63,11 @@ dependencies {
     // for the version, see:
     // https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#coroutinesLibraries
     // this is only for debug
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.7.3") {
+    // uncomment the following for debug coroutines
+    /*implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.7.3") {
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
-    }
-//    implementation("io.ktor:ktor-serialization-gson")
-//    implementation("io.ktor:ktor-server-content-negotiation")
-//    implementation(libs.exampleLibrary)
+    }*/
 }
 
 // Set the JVM language level used to build the project.
@@ -182,13 +180,59 @@ tasks {
         channels = properties("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
     }
 
-    register<NpmTask>("buildBrowserInfoview") {
+    val tempPackage = "browser-infoview/node_modules/@leanprover/"
+    val targetPath = tempPackage + "infoview"
+    val tempPath = tempPackage + "infoview-temp"
+    val tempFixCopyToTemp = "tempFixCopyToTemp"
+    register<Copy>(tempFixCopyToTemp) {
         dependsOn(npmInstall)
-        args.set(listOf("run"))
+        from(targetPath) {
+            include("package.json")
+        }
+        into(tempPath)
+        filter { line ->
+            if (line.contains(""""files":""")) {
+                // TODO this will duplicated if rerun
+                //      TODO check why need this
+                """
+                    "main": "dist/index",
+                    "types": "dist/index",
+                    $line
+                """.trimIndent()
+            } else {
+                line.replace("./dist/index.development.js", "./dist/index.production.min.js")
+            }
+        }
+    }
+
+    val tempFixCopyBack = "tempFixCopyBack"
+    register<Copy>(tempFixCopyBack) {
+        dependsOn(tempFixCopyToTemp)
+        from(tempPath) {
+            include("package.json")
+        }
+        into(targetPath)
+    }
+
+    val tempFixDelete = "tempFixDelete"
+    register<Delete>(tempFixDelete) {
+        dependsOn(tempFixCopyBack)
+        delete(tempPath)
+    }
+
+    register<NpmTask>("npmPackageInstall") {
+        dependsOn(npmInstall)
+        args.set(listOf("install"))
+    }
+
+    register<NpmTask>("buildBrowserInfoview") {
+        dependsOn("npmPackageInstall")
+        dependsOn(tempFixDelete)
+        args.set(listOf("run", "build"))
     }
 
     buildPlugin {
-        dependsOn(("buildBrowserInfoview"))
+        dependsOn("buildBrowserInfoview")
     }
 }
 

@@ -8,7 +8,7 @@ import './App.css'
 import './vscode.css'
 import './infoview.css'
 import './Editor.css'
-import { loadRenderInfoview } from '@leanprover/infoview/loader'
+// import { loadRenderInfoview } from '@leanprover/infoview/loader'
 import { renderInfoview } from '@leanprover/infoview'
 import { InfoviewApi, EditorApi } from '@leanprover/infoview-api'
 import {Rpc} from "./rpc.ts";

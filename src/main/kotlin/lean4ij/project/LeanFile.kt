@@ -7,14 +7,13 @@ import lean4ij.util.LspUtil
 import lean4ij.util.step
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer
-import com.intellij.openapi.editor.markup.FillingLineMarkerRenderer
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.LineMarkerRendererEx
-import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
@@ -27,6 +26,7 @@ import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.nio.charset.StandardCharsets
+import kotlin.math.min
 
 object leanFileProgressFillingLineMarkerRender : FillingLineMarkerRenderer {
     override fun getPosition(): LineMarkerRendererEx.Position {
@@ -100,8 +100,8 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             // TODO is it here also blocking a thread?
             while (true) {
                 var info = processingInfoChannel.receive()
-                var processingLineMarker = mutableListOf<RangeHighlighter>()
-                processingLineMarker = tryAddLineMarker(info, processingLineMarker)
+                var highlighters = mutableListOf<RangeHighlighter>()
+                highlighters = tryAddLineMarker(info, highlighters)
                 if (info.isFinished()) {
                     continue
                 }
@@ -119,7 +119,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                                 currentStep = newStep
                             }
                             info = processingInfoChannel.receive()
-                            processingLineMarker = tryAddLineMarker(info, processingLineMarker)
+                            highlighters = tryAddLineMarker(info, highlighters)
                         } while (info.isProcessing())
                     }
                 } catch (e: CancellationException) {
@@ -133,45 +133,57 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
+    private var hightlights : MutableList<RangeHighlighter> = mutableListOf()
+    private val leanFileProgressEmptyTextAttributesKey = TextAttributesKey.createTextAttributesKey("LEAN_FILE_PROGRESS_EMPTY")
+
     /**
      * TODO rather than one line highlight. Highlight it on range
      *      for avoiding flashing, or performance issue
      */
-    private fun tryAddLineMarker(
-        info: FileProgressProcessingInfo,
-        processingLineMarker: MutableList<RangeHighlighter>
-    ): MutableList<RangeHighlighter> {
+    private fun tryAddLineMarker(info: FileProgressProcessingInfo, highlighters: MutableList<RangeHighlighter>): MutableList<RangeHighlighter> {
         val ret = mutableListOf<RangeHighlighter>()
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             if (editor.virtualFile.path == unquotedFile) {
                 val document = editor.document
-                for (processingLinerMarker in processingLineMarker) {
-                    editor.markupModel.removeHighlighter(processingLinerMarker)
+                val markupModel = editor.markupModel
+                for (highlighter in highlighters) {
+                    markupModel.removeHighlighter(highlighter)
                 }
                 for (processingInfo in info.processing) {
-                    for (i in processingInfo.range.start.line..processingInfo.range.end.line) {
-                        // this is copied from com/intellij/openapi/editor/impl/MarkupModelImpl.java:69
-                        if (!DocumentUtil.isValidLine(i, document)) {
-                            continue
-                        }
-                        val rangeHighlighter = editor.markupModel.addLineHighlighter(i, HighlighterLayer.LAST, null)
-                        // rangeHighlighter.gutterIconRenderer = FileProgressGutterIconRender()
-                        rangeHighlighter.lineMarkerRenderer = leanFileProgressFillingLineMarkerRender
-                        ret.add(rangeHighlighter)
-                    }
+                    val startLine = processingInfo.range.start.line
+                    val endLine = min(processingInfo.range.end.line, document.lineCount)
+                    val startLineOffset = StringUtil.lineColToOffset(document.charsSequence, startLine, 0)
+                    val endLineOffset = StringUtil.lineColToOffset(document.charsSequence, min(endLine, document.lineCount-1), 0)
+                    val rangeHighlighter = markupModel.addRangeHighlighter(
+                        leanFileProgressEmptyTextAttributesKey,
+                        startLineOffset, endLineOffset, HighlighterLayer.LAST, HighlighterTargetArea.LINES_IN_RANGE)
+                    rangeHighlighter.lineMarkerRenderer = leanFileProgressFillingLineMarkerRender
+                    ret.add(rangeHighlighter)
                 }
                 if (ret.isEmpty()) {
-                    // add a default line marker for avoiding the editor flashing left/right ...
-                    // TODO there maybe some better way
-                    if (DocumentUtil.isValidLine(0, document)) {
-                        val rangeHighlighter = editor.markupModel.addLineHighlighter(0, HighlighterLayer.LAST, null)
-                        rangeHighlighter.lineMarkerRenderer = leanFileProgressFinishedFillingLineMarkerRender
-                        ret.add(rangeHighlighter)
-                    }
+                    val rangeHighlighter = markupModel.addLineHighlighter(0, 1, null)
+                    rangeHighlighter.lineMarkerRenderer = leanFileProgressFinishedFillingLineMarkerRender
+                    ret.add(rangeHighlighter)
                 }
             }
         }
         return ret
+    }
+
+    private fun ensureHighlightSize(editor: Editor, document: Document) {
+        if (hightlights.size > document.lineCount) {
+            for (i in document.lineCount until  hightlights.size) {
+                // TODO is this necessary or if the line removed it's also automatically removed
+                editor.markupModel.removeHighlighter(hightlights[i])
+            }
+            hightlights = hightlights.subList(0, document.lineCount).toMutableList()
+        } else {
+            for (i in hightlights.size until document.lineCount) {
+                val highlighter =editor.markupModel.addLineHighlighter(i, HighlighterLayer.LAST, null)
+                highlighter.lineMarkerRenderer = leanFileProgressFinishedFillingLineMarkerRender
+                hightlights.add(highlighter)
+            }
+        }
     }
 
     private suspend fun withBackgroundFileProgress(action: suspend (reporter: ProgressReporter) -> Unit) {

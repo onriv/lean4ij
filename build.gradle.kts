@@ -236,6 +236,12 @@ tasks {
     }
 }
 
+tasks.test {
+    // ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/4407334950290-jarFiles-is-not-set-for-PluginDescriptor
+    // for resolving error "jarFiles is not set for PluginDescriptor"
+    systemProperty("idea.force.use.core.classloader", "true")
+}
+
 fun fetchLatestLsp4ijNightlyVersion(): String {
     val client = HttpClient.newBuilder().build();
     var onlineVersion = ""

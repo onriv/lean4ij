@@ -50,6 +50,7 @@ and todos
 The following projects give great help for developing the plugin:
 
 - [leanprover/vscode-lean4](https://github.com/leanprover/vscode-lean4/tree/master/vscode-lean4)
+- [leanprover-community/lean4web](https://github.com/leanprover-community/lean4web)
 - [Julian/lean.nvim](https://github.com/Julian/lean.nvim)
 - [leanprover-community/lean4-mode](https://github.com/leanprover-community/lean4-mode)
 - [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij)

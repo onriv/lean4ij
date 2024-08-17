@@ -21,25 +21,24 @@ class TextMateBundleProvider : TextMateBundleProvider {
     )
 
     override fun getBundles(): List<TextMateBundleProvider.PluginBundle> {
-        // try {
-            val tmpDir: Path = Files.createTempDirectory(Path.of(PathManager.getTempPath()), "textmate-lean4")
+        val tempPath = Path.of(PathManager.getTempPath())
+        // This is for test, for running it seems OK
+        tempPath.toFile().mkdirs()
+        val tmpDir: Path = Files.createTempDirectory(tempPath, "textmate-lean4")
 
-            files.forEach { fileToCopy ->
-                val resource: URL? = javaClass.classLoader.getResource("bundles/$fileToCopy")
+        files.forEach { fileToCopy ->
+            val resource: URL? = javaClass.classLoader.getResource("bundles/$fileToCopy")
 
-                resource?.openStream().use { resourceStream ->
-                    if (resourceStream != null) {
-                        val target: Path = tmpDir.resolve(fileToCopy)
-                        Files.createDirectories(target.parent)
-                        Files.copy(resourceStream, target)
-                    }
+            resource?.openStream().use { resourceStream ->
+                if (resourceStream != null) {
+                    val target: Path = tmpDir.resolve(fileToCopy)
+                    Files.createDirectories(target.parent)
+                    Files.copy(resourceStream, target)
                 }
             }
+        }
 
-            val bundle = TextMateBundleProvider.PluginBundle("Lean4", tmpDir)
-            return listOf(bundle)
-        // } catch (e: IOException) {
-        //    throw RuntimeException(e)
-        // }
+        val bundle = TextMateBundleProvider.PluginBundle("Lean4", tmpDir)
+        return listOf(bundle)
     }
 }

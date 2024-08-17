@@ -16,31 +16,23 @@
         <liveTemplateContext
                 contextId="Lean4"
                 implementation="lean4ij.language.Lean4Context"/>
-<!--        // from https://github.com/JetBrains/godot-support/blob/master/rider/src/main/resources/META-INF/plugin.xml-->
-<!--        https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/src/main/resources/META-INF/plugin.xml#L26-->
+        <!-- // from https://github.com/JetBrains/godot-support/blob/master/rider/src/main/resources/META-INF/plugin.xml-->
+        <!-- https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/src/main/resources/META-INF/plugin.xml#L26-->
         <textmate.bundleProvider implementation="lean4ij.language.TextMateBundleProvider"/>
 
-<!--        lsp4ij says:-->
-<!--        Indeed, when you manually define a File type for some file name patterns, you loose the TextMate syntax coloration.-->
-<!--        see: https://github.com/redhat-developer/lsp4ij/blob/main/docs/DeveloperGuide.md#declare-file-mappings-->
-<!--        indeed, this cannot use-->
-<!--        <fileType-->
-<!--                name="Lean4 File"-->
-<!--                implementationClass="lean4ijuage.Lean4FileType"-->
-<!--                fieldName="INSTANCE"-->
-<!--                language="Lean4"-->
-<!--                extensions="lean"/>-->
+        <!-- lsp4ij says:-->
+        <!-- Indeed, when you manually define a File type for some file name patterns, you loose the TextMate syntax coloration.-->
+        <!-- see: https://github.com/redhat-developer/lsp4ij/blob/main/docs/DeveloperGuide.md#declare-file-mappings-->
+        <!-- indeed, this cannot use-->
+        <!-- <fileType-->
+        <!--         name="Lean4 File"-->
+        <!--         implementationClass="lean4ijuage.Lean4FileType"-->
+        <!--         fieldName="INSTANCE"-->
+        <!--         language="Lean4"-->
+        <!--         extensions="lean"/>-->
 
         <toolWindow factoryClass="lean4ij.toolWindow.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
-
-        <!-- LSP -->
-<!--        <platform.lsp.serverSupportProvider implementation="lean4ijLeanLspServerSupportProvider"/>-->
-
-
-        <!-- documentation for infoview -->
-        <!-- TODO This seems not working on now -->
-        <lang.documentationProvider language="LeanInfoview"
-            implementationClass="lean4ij.infoview.InfoViewDocumentationProvider"/>
+        <toolWindow factoryClass="lean4ij.infoview.JcefInfoviewTooWindowFactory" id="LeanInfoviewJcef"/>
 
         <postStartupActivity implementation="lean4ij.project.LeanProjectActivity"/>
 

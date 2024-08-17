@@ -65,11 +65,6 @@
     </extensions>
 
     <actions>
-        <!-- Add your actions here -->
-        <action id="MyCustomAction" class="lean4ij.actions.MyCustomAction" text="Say Hello" description="A custom action to say hello">
-            <add-to-group group-id="MainMenu" anchor="last"/>
-        </action>
-        <!-- Add your actions here -->
         <action id="OpenLeanInfoView" class="lean4ij.actions.OpenLeanInfoView" text="Lean open info view" description="Lean open info view">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>

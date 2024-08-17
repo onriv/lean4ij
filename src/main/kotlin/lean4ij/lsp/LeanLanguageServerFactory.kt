@@ -1,16 +1,38 @@
 package lean4ij.lsp
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
+import com.redhat.devtools.lsp4ij.LanguageServerEnablementSupport
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import org.eclipse.lsp4j.services.LanguageServer
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The language server factory as lsp4ij describe
- * TODO: The official lsp client from Jetbrains requires changing the initialize argument. Check if it's necessary here
  */
-class LeanLanguageServerFactory : LanguageServerFactory {
+class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablementSupport {
+
+    companion object {
+        val isEnable : AtomicBoolean = AtomicBoolean(false)
+    }
+
+    /**
+     * only if Editor is focus, check  assign logic of isEnable
+     * TODO maybe require some refactor
+     * check also [lean4ij.project.LeanProjectActivity.setupEditorFocusChangeEventListener]
+     */
+    override fun isEnabled(project: Project): Boolean {
+        return isEnable.get()
+    }
+
+    override fun setEnabled(enabled: Boolean, project: Project) {
+        // Just ignore the input
+    }
 
     override fun createConnectionProvider(project: Project): StreamConnectionProvider {
         return LeanLanguageServerProvider(project)

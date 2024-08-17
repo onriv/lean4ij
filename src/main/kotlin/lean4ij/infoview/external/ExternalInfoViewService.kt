@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.GotItTextBuilder
 import io.ktor.server.application.*
@@ -81,6 +82,7 @@ class ExternalInfoViewService(val project: Project) {
      * TODO make this port configurable or randomly chosen
      */
     private fun startServer() {
+        thisLogger().info("starting external infoview service")
         val fakeFile = "externalInfoViewService"
         buildWindowService.startBuild(fakeFile)
         val module: Application.() -> Unit = {

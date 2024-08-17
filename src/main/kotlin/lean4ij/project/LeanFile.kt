@@ -133,7 +133,10 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    private var hightlights : MutableList<RangeHighlighter> = mutableListOf()
+    /**
+     * this is for avoiding flashing, a highlighter is always added in the first line
+     */
+    private var firstLineHighlighter :RangeHighlighter? = null
     private val leanFileProgressEmptyTextAttributesKey = TextAttributesKey.createTextAttributesKey("LEAN_FILE_PROGRESS_EMPTY")
 
     /**
@@ -146,11 +149,22 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             if (editor.virtualFile.path == unquotedFile) {
                 val document = editor.document
                 val markupModel = editor.markupModel
+                if (firstLineHighlighter == null) {
+                    firstLineHighlighter = markupModel.addLineHighlighter(0, 1, null)
+                }
+                firstLineHighlighter!!.lineMarkerRenderer = leanFileProgressFinishedFillingLineMarkerRender
                 for (highlighter in highlighters) {
                     markupModel.removeHighlighter(highlighter)
                 }
                 for (processingInfo in info.processing) {
-                    val startLine = processingInfo.range.start.line
+                    val startLine = processingInfo.range.start.line.let {
+                        if (it == 0) {
+                            firstLineHighlighter!!.lineMarkerRenderer = leanFileProgressFillingLineMarkerRender
+                            1
+                        } else {
+                            it
+                        }
+                    }
                     val endLine = min(processingInfo.range.end.line, document.lineCount)
                     val startLineOffset = StringUtil.lineColToOffset(document.charsSequence, startLine, 0)
                     val endLineOffset = StringUtil.lineColToOffset(document.charsSequence, min(endLine, document.lineCount-1), 0)
@@ -160,30 +174,9 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                     rangeHighlighter.lineMarkerRenderer = leanFileProgressFillingLineMarkerRender
                     ret.add(rangeHighlighter)
                 }
-                if (ret.isEmpty()) {
-                    val rangeHighlighter = markupModel.addLineHighlighter(0, 1, null)
-                    rangeHighlighter.lineMarkerRenderer = leanFileProgressFinishedFillingLineMarkerRender
-                    ret.add(rangeHighlighter)
-                }
             }
         }
         return ret
-    }
-
-    private fun ensureHighlightSize(editor: Editor, document: Document) {
-        if (hightlights.size > document.lineCount) {
-            for (i in document.lineCount until  hightlights.size) {
-                // TODO is this necessary or if the line removed it's also automatically removed
-                editor.markupModel.removeHighlighter(hightlights[i])
-            }
-            hightlights = hightlights.subList(0, document.lineCount).toMutableList()
-        } else {
-            for (i in hightlights.size until document.lineCount) {
-                val highlighter =editor.markupModel.addLineHighlighter(i, HighlighterLayer.LAST, null)
-                highlighter.lineMarkerRenderer = leanFileProgressFinishedFillingLineMarkerRender
-                hightlights.add(highlighter)
-            }
-        }
     }
 
     private suspend fun withBackgroundFileProgress(action: suspend (reporter: ProgressReporter) -> Unit) {

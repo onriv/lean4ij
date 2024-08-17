@@ -40,11 +40,21 @@ Please check [DEVELOP.md](./DEVELOP.md).
 The plugin is still on a very early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
 
 and todos
-- [ ] file progressing seems block UI thread in some cases
+- [x] file progressing seems block UI thread in some cases 
+  - solved by highlight on ranges rather than lines
 - [ ] skip index `.lake/build`
+  - [x] this can be manually done by right-clicking the folder and marking it as exclude
+  - [x] automatically exclude, check [this](https://youtrack.jetbrains.com/issue/IDEA-194725/Specify-IntelliJ-exclude-directories-in-build.gradle), or [this](https://youtrack.jetbrains.com/issue/IJPL-8363/Ability-to-have-default-Excluded-Folders-not-per-project), or [this](https://youtrack.jetbrains.com/issue/WEB-11419).
+    some plugins have customized logic for it like intellij-rust or intellij-arend
 - [ ] infoview toolwindow in jcef
 - [ ] infoview toolwindow in swing
-
+- [ ] project create/setup or configuration
+- [ ] distinguish source in .lake as library rather than source
+- [ ] avoid file progressing in search window (it should be caused by didOpen, etc.)
+- [ ] setting dialog
+- [ ] theme and color
+- [x] find in files will send a didOpen request and make fileProgress, it may hurt the performance.
+  currently a fix for this is disabling lsp while lost focus for the editor
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

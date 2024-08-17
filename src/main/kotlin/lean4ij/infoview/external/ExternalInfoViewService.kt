@@ -130,7 +130,8 @@ class ExternalInfoViewService(val project: Project) {
 
         buildWindowService.addBuildEvent(fakeFile, message)
         buildWindowService.endBuild(fakeFile)
-        project.service<JcefInfoviewService>().browser?.loadURL(url)
+        project.service<JcefInfoviewService>()
+            .loadUrl(url)
     }
 
     private val events = MutableSharedFlow<InfoviewEvent>()

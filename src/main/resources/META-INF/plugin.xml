@@ -69,6 +69,10 @@
         <action id="DumpCoroutine" class="lean4ij.actions.CoroutineDebug" text="Dump Coroutine" description="Dump Coroutine">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+        <action id="ReloadJcefInfoview" class="lean4ij.actions.ReloadJcefInfoview" text="Reload Jcef Infoview" description="Dump Coroutine">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+
     </actions>
 
     <applicationListeners>

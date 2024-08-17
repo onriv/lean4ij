@@ -17,6 +17,16 @@ import com.intellij.ui.jcef.JBCefBrowser
  */
 @Service(Service.Level.PROJECT)
 class JcefInfoviewService(private val project: Project) {
+    private var url : String? = null
+    fun loadUrl(url: String) {
+        this.url = url
+        browser?.loadURL(url)
+    }
+
+    fun reload() {
+        url?.let{browser?.loadURL(it)}
+    }
+
     val errMsg = "JCEF is unsupported. It maybe the IDE is started with an alternative JDK that does not include JCEF or Its version is not compatible with the running IDE."
     val browser : JBCefBrowser? = if (JBCefApp.isSupported()) {
         JBCefBrowser()

@@ -72,7 +72,7 @@ and todos
   - [ ] color
 - [ ] mathlib4 seems always failed starting the language server
   this is because elan download lake while starting lsp, not fixed yet
-- [ ] infoview toolwindow in jcef
+- [x] infoview toolwindow in jcef
 - [ ] project create/setup or configuration
 - [ ] distinguish source in .lake as library rather than source
 - [ ] avoid file progressing in search window (it should be caused by didOpen, etc.)

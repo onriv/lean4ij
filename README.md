@@ -63,7 +63,7 @@ and todos
   - [x] this can be manually done by right-clicking the folder and marking it as exclude
   - [x] automatically exclude, check [this](https://youtrack.jetbrains.com/issue/IDEA-194725/Specify-IntelliJ-exclude-directories-in-build.gradle), or [this](https://youtrack.jetbrains.com/issue/IJPL-8363/Ability-to-have-default-Excluded-Folders-not-per-project), or [this](https://youtrack.jetbrains.com/issue/WEB-11419).
     some plugins have customized logic for it like intellij-rust or intellij-arend
-- [ ] infoview toolwindow in jcef
+- [ ] infoview toolwindow in swing
   - [x] show goals
   - [x] show term goal
   - [ ] show message
@@ -71,7 +71,8 @@ and todos
   - [ ] pop up style, fonts, clickable links, etc
   - [ ] color
 - [ ] mathlib4 seems always failed starting the language server
-- [ ] infoview toolwindow in swing
+  this is because elan download lake while starting lsp, not fixed yet
+- [ ] infoview toolwindow in jcef
 - [ ] project create/setup or configuration
 - [ ] distinguish source in .lake as library rather than source
 - [ ] avoid file progressing in search window (it should be caused by didOpen, etc.)

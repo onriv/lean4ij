@@ -90,7 +90,11 @@ class CodeWithInfosDocumentationHyperLink(
     }
 
     fun createExprPanel(typeAndExpr: String): EditorEx {
-        val editor = toolWindow.editor
+        // This is EDT
+        if (toolWindow.editor == null) {
+            toolWindow.editor = toolWindow.createEditor()
+        }
+        val editor = toolWindow.editor!!
         editor.document.setText(typeAndExpr)
         // TODO DRY
         val toolWindowSize = toolWindow.toolWindow.component.size

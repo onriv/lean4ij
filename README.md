@@ -26,7 +26,7 @@ This plugin uses [Lsp4ij](https://github.com/redhat-developer/lsp4ij) for connec
 The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
 ## Usage
 
-Since currently color theme still not implemented, and the infoview-app is hard coded with a light theme as lean4web, it's recommended using a light theme temporally.
+Since currently color theme still not implemented, and the infoview-app is hard coded with a light theme as lean4web, it's recommended using a light theme temporally. And the font used in infoview-app is hardcoded to [Julia Mono](https://juliamono.netlify.app/) hence it's also recommended temporally to set the font as Julia Mono.
 
 For improving performance, the lean language protocol server will not start immediately after opening a lean project, it will start while the editor gains focus, for example switching to another app and then switching back.
 
@@ -34,7 +34,7 @@ Unicode is supported via live templates, for example typing `\b1<SPACE>` would r
 
 Infoview is supported using [lean4-infoview,](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it can be started from a browser or the internal [JCEF] infoview toolwindow.
 
-Messages and logs about the lean lsp server can be found 
+Messages and logs about the lean lsp server can be found in the language server tool window after setting the level to message or trace, check more information about this in [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij).
 ### Actions
 
 | action id              | action text               | meaning                     |
@@ -81,6 +81,7 @@ and todos
   currently a fix for this is disabling lsp while lost focus for the editor
 - [ ] elan/lake, project create, setup etc
 - [ ] run and build (debug cannot be supported, although arend has this)
+- [ ] some more logs with different levels
 
 ## Acknowledgments
 

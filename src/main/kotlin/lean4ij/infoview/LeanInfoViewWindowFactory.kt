@@ -88,6 +88,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
 
             // TODO render message
             // TODO this seems kind of should be put inside rendering, check how to do this
+            // TODO maybe it's too broad, maybe only createEditor in EDT
             ApplicationManager.getApplication().invokeLater {
                 val infoViewWindowEditorEx: EditorEx = infoViewWindow.createEditor()
                 infoViewWindowEditorEx.document.setText(interactiveInfoBuilder.toString())
@@ -95,6 +96,8 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 infoViewWindow.setContent(infoViewWindowEditorEx.component)
                 // TODO does it require new object for each update?
                 //      it seems so, otherwise the hyperlinks seems mixed and requires remove
+                //      but still, maybe only one is better, try to remove old hyperlinks
+                //      check if multiple editors would leak or not
                 val mouseMotionListener = InfoviewMouseMotionListener(infoViewWindow, support, file, logicalPosition, interactiveGoals, interactiveTermGoal)
                 infoViewWindowEditorEx.addEditorMouseMotionListener(mouseMotionListener)
             }

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
+import java.util.concurrent.CompletableFuture
 import javax.swing.BorderFactory
 import javax.swing.JEditorPane
 
@@ -16,7 +17,7 @@ import javax.swing.JEditorPane
 class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(true) {
 
     private val goals = JEditorPane()
-    val editor : EditorEx = createEditor()
+    var editor : EditorEx? = null
 
     private val BORDER = BorderFactory.createEmptyBorder(3, 0, 5, 0)
 
@@ -37,13 +38,23 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
     fun updateGoal(goal: String) {
         // for thread model and update ui:
         ApplicationManager.getApplication().invokeLater {
-            editor.document.setText(goal)
+            if (editor == null) {
+                editor = createEditorEDT()
+            }
+            editor!!.document.setText(goal)
             goals.text = goal
         }
     }
 
+    fun createEditorEDT() : EditorEx {
+        val future : CompletableFuture<EditorEx> = CompletableFuture<EditorEx>()
+        ApplicationManager.getApplication().invokeLater { future.complete(createEditor()) }
+        return future.get()
+    }
+
     /**
      * create an editorEx for rendering the info view
+     * **this is only for EDT**, create it using
      */
     fun createEditor(): EditorEx {
         val editor = EditorFactory.getInstance()

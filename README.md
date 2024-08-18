@@ -4,6 +4,8 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 
+![image](https://github.com/user-attachments/assets/fde43071-29e9-4f62-a8ea-d18e433aa780)
+
 <!-- Plugin description -->
 A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 

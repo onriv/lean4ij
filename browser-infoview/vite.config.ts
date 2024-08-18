@@ -5,8 +5,8 @@ import fs from 'fs'; // Node.js file system module
 let hostConfig;
 try {
   hostConfig = JSON.parse(fs.readFileSync('./host-config.json', 'utf8'));
-} catch (error) {
-  console.error("Error reading host config:", error.message);
+} catch (e: any) {
+  console.error("Error reading host config:", e.message);
   // a default fallback
   hostConfig = { host: "localhost:8080" };
 }

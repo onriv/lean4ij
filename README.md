@@ -4,8 +4,8 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
 
-![image](https://github.com/user-attachments/assets/fde43071-29e9-4f62-a8ea-d18e433aa780)
-
+![image](https://github.com/user-attachments/assets/d2a746eb-45fa-4664-a45e-b2795ea670dd)
+(The screenshot is taken from [mathematics_in_lean](https://github.com/leanprover-community/mathematics_in_lean))
 <!-- Plugin description -->
 A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 

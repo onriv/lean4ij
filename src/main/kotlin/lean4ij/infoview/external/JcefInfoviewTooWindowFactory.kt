@@ -1,4 +1,4 @@
-package lean4ij.infoview
+package lean4ij.infoview.external
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

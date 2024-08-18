@@ -47,7 +47,9 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     private val leanFiles = ConcurrentHashMap<String, LeanFile>()
 
     fun file(file: VirtualFile): LeanFile {
-        return file(LspUtil.quote(file.path))
+        val ret = file(LspUtil.quote(file.path))
+        ret.virtualFile = file
+        return ret
     }
 
     fun file(file: String) : LeanFile {

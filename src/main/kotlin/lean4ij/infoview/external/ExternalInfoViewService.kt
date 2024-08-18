@@ -1,5 +1,6 @@
 package lean4ij.infoview.external
 
+import com.google.gson.Gson
 import lean4ij.infoview.external.data.CursorLocation
 import lean4ij.infoview.external.data.InfoviewEvent
 import lean4ij.lsp.data.Range
@@ -28,7 +29,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import lean4ij.infoview.JcefInfoviewService
 import org.eclipse.lsp4j.InitializeResult
 import java.io.File
 import java.net.URL
@@ -94,14 +94,12 @@ class ExternalInfoViewService(val project: Project) {
         // val port = 19090
 
         // TODO only for debug, todo configuration it
-        // TODO exception here: getProperty is null if from real IDE
         System.getProperty("idea.plugins.path")?.let {
             val projectRoot = System.getProperty("idea.plugins.path").replace(arrayOf("build", "idea-sandbox", "plugins").joinToString(File.separator), "")
-            val file = Paths.get(projectRoot, "browser-infoview", "vite.config.ts").toFile()
+            val file = Paths.get(projectRoot, "browser-infoview", "host-config.json").toFile()
             if (file.exists()) {
-                val originalText = file.readText(StandardCharsets.UTF_8)
-                val replacedText = originalText.replace(Regex("const host = 'localhost:\\d+'"), "const host = 'localhost:$port'")
-                file.writeText(replacedText, StandardCharsets.UTF_8)
+                val hostConfig = Gson().toJson(mapOf("host" to "localhost:$port"))
+                file.writeText(hostConfig, StandardCharsets.UTF_8)
             }
         }
 

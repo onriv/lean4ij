@@ -31,6 +31,9 @@ Unicode is supported via live templates, for example typing `\b1<SPACE>` would r
 Infoview is supported using [lean4-infoview](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it requires opening from a web browser
 
 <!-- Plugin description end -->
+
+
+
 ## Development
 
 Please check [DEVELOP.md](./DEVELOP.md).

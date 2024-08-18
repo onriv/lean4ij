@@ -1,7 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'fs'; // Node.js file system module
 
-const host = 'localhost:58400'
+const hostConfig = JSON.parse(fs.readFileSync('./host-config.json', 'utf8'));
+const { host } = hostConfig;
 
 // https://vitejs.dev/config/
 export default defineConfig({

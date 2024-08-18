@@ -1,73 +1,33 @@
 package lean4ij.project
 
-import lean4ij.lsp.data.*
-import lean4ij.lsp.data.Position
-import lean4ij.util.Constants
-import lean4ij.util.LspUtil
-import lean4ij.util.step
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
-import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import lean4ij.infoview.LeanInfoViewWindowFactory
+import lean4ij.lsp.data.*
+import lean4ij.lsp.data.Position
+import lean4ij.util.Constants
+import lean4ij.util.LspUtil
+import lean4ij.util.step
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.nio.charset.StandardCharsets
 import kotlin.math.min
 
-object leanFileProgressFillingLineMarkerRender : FillingLineMarkerRenderer {
-    override fun getPosition(): LineMarkerRendererEx.Position {
-        // TODO right seems not working?
-        return LineMarkerRendererEx.Position.LEFT
-    }
-
-    /**
-     * TODO the reason for keys is that it's related to theme
-     *      use our own key here
-     */
-    // private val textAttributesKey = TextAttributesKey.createTextAttributesKey("LEAN_FILE_PROGRESS")
-    private val textAttributesKey = TextAttributesKey.createTextAttributesKey("LINE_PARTIAL_COVERAGE")
-
-    override fun getTextAttributesKey(): TextAttributesKey {
-        return textAttributesKey
-    }
-
-}
-
-
-/**
- * TODO removed this?
- */
-object leanFileProgressFinishedFillingLineMarkerRender : FillingLineMarkerRenderer {
-    override fun getPosition(): LineMarkerRendererEx.Position {
-        return LineMarkerRendererEx.Position.LEFT
-    }
-
-    /**
-     * TODO the reason for keys is that it's related to theme
-     *      use our own key here
-     */
-    private val textAttributesKey = TextAttributesKey.createTextAttributesKey("LEAN_FILE_PROGRESS_FINISHED")
-    // private val textAttributesKey = TextAttributesKey.createTextAttributesKey("LINE_PARTIAL_COVERAGE")
-
-    override fun getTextAttributesKey(): TextAttributesKey {
-        return textAttributesKey
-    }
-
-}
 
 class LeanFile(private val leanProjectService: LeanProjectService, private val file: String) {
 
@@ -81,6 +41,9 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      * TODO this should be better named
      */
     private val unquotedFile = LspUtil.unquote(file)
+
+    var virtualFile : VirtualFile? = null
+
     private val processingInfoChannel = Channel<FileProgressProcessingInfo>()
     private val project = leanProjectService.project
     private val buildWindowService: BuildWindowService = project.service()
@@ -196,8 +159,23 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      */
     fun updateCaret(logicalPosition: LogicalPosition) {
         val position = Position(line = logicalPosition.line, character = logicalPosition.column)
-        val params = PlainGoalParams(TextDocumentIdentifier(LspUtil.quote(file)), position)
+        val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
+        val params = PlainGoalParams(textDocument, position)
         leanProjectService.updateCaret(params)
+        leanProjectService.scope.launch {
+            if (virtualFile == null) {
+                thisLogger().info("No virtual file for $file, skip updating infoview")
+                return@launch
+            }
+            val session = getSession()
+            val interactiveParams = InteractiveGoalsParams(session, params, textDocument, position)
+            val interactiveGoals = leanProjectService.file(file).getInteractiveGoals(interactiveParams)
+            if (interactiveGoals == null) {
+                thisLogger().warn("No interactiveGoals for $file")
+                return@launch
+            }
+            LeanInfoViewWindowFactory.updateInteractiveGoal(project, virtualFile!!, logicalPosition, interactiveGoals!!)
+        }
     }
 
     fun updateFileProcessingInfo(info: FileProgressProcessingInfo) {
@@ -246,10 +224,16 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
-        // TODO retry
+    suspend fun getInteractiveGoals(params: InteractiveGoalsParams): InteractiveGoals? {
+        return rpcCallWithRetry(params) {
+            leanProjectService.languageServer.await().getInteractiveGoals(it)
+        }
+    }
+
+    private suspend fun <Params, Resp> rpcCallWithRetry(params: Params, action: suspend (Params) -> Resp): Resp?
+            where Params: RpcCallParams {
         try {
-            return leanProjectService.languageServer.await().rpcCall(params)
+            return action(params)
         } catch (ex: ResponseErrorException) {
             val responseError = ex.responseError
             // TODO remove this magic number and find lean source code for it
@@ -258,13 +242,24 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 // the lock in updateSession will avoid update session continuously
                 // also check the comment inside updateSession, in fact we keep it alive forever...
                 updateSession(params.sessionId)
-                val paramsRetry = RpcCallParamsRaw(session!!, params.method, params.textDocument, params.position, params.params)
-                return rpcCallRaw(paramsRetry)
+                params.sessionId = session!!
+                return action(params)
             }
             if (responseError.code == -32603 && responseError.message == "elaboration interrupted") {
                 return null
             }
             if (responseError.code == -32601 && responseError.message.contains("No RPC method")) {
+                return null
+            }
+            /**
+             * TODO for the following error ,
+             *      Error: {
+             *          "code": -32801,
+             *          "message": "Cannot process request to closed file \u0027file:///....\u0027"
+             *      }
+             * should it be automatically reopen?
+             */
+            if (responseError.code == -32801 && responseError.message.contains("Cannot process request to closed file ")) {
                 return null
             }
             if (responseError.code == -32602 && responseError.message.contains("Cannot decode params in RPC call")) {
@@ -278,12 +273,6 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                  */
                 return null
             }
-            /**
-             * {
-             *   "code": -32801,
-             *   "message": "The file worker for file:///I:/repos/CategoriesandHilbertSpaces/CHS/C0_Getting_Started/Test_2.lean has been terminated. Either the header has changed, or the file was closed,  or the server is shutting down."
-             * }
-             */
             /**
              * 2024-08-11 14:17:38,335 [ 624441]   WARN - org.eclipse.lsp4j.jsonrpc.RemoteEndpoint - Unmatched response message: {
              *   "jsonrpc": "2.0",
@@ -299,6 +288,12 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             // org.eclipse.lsp4j.jsonrpc.ResponseErrorException: elaboration interrupted
             // TODO outdated session seems not reported here
             throw ex
+        }
+    }
+
+    suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
+        return rpcCallWithRetry(params) {
+            leanProjectService.languageServer.await().rpcCall(it)
         }
     }
 

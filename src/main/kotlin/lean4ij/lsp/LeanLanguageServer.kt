@@ -14,11 +14,11 @@ import java.util.concurrent.CompletableFuture
 
 class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer) {
 
-    suspend fun plainGoal (params: PlainGoalParams): PlainGoal {
+    suspend fun plainGoal (params: PlainGoalParams): PlainGoal? {
         return plainGoalAsync(params).await()
     }
 
-    suspend fun plainTermGoal(params: PlainTermGoalParams): PlainTermGoal {
+    suspend fun plainTermGoal(params: PlainTermGoalParams): PlainTermGoal? {
         return plainTermGoalAsync(params).await()
     }
 
@@ -30,19 +30,19 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
         return rpcCallAsync(params).await()
     }
 
-    suspend fun getInteractiveGoals(params: InteractiveGoalsParams) : InteractiveGoals {
+    suspend fun getInteractiveGoals(params: InteractiveGoalsParams) : InteractiveGoals? {
         return getInteractiveGoalsAsync(params).await()
     }
 
-    suspend fun infoToInteractive(params: InteractiveInfoParams) : CodeWithInfos {
+    suspend fun infoToInteractive(params: InteractiveInfoParams) : InfoPopup {
         return infoToInteractiveAsync(params).await()
     }
 
-    fun plainGoalAsync (params: PlainGoalParams): CompletableFuture<PlainGoal> {
+    fun plainGoalAsync (params: PlainGoalParams): CompletableFuture<PlainGoal?> {
         return languageServer.plainGoal(params)
     }
 
-    fun plainTermGoalAsync(params: PlainTermGoalParams): CompletableFuture<PlainTermGoal> {
+    fun plainTermGoalAsync(params: PlainTermGoalParams): CompletableFuture<PlainTermGoal?> {
         return languageServer.plainTermGoal(params)
     }
 
@@ -54,15 +54,19 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
         return languageServer.rpcCall(params)
     }
 
-    fun getInteractiveGoalsAsync(params: InteractiveGoalsParams) : CompletableFuture<InteractiveGoals> {
+    fun getInteractiveGoalsAsync(params: InteractiveGoalsParams) : CompletableFuture<InteractiveGoals?> {
         return languageServer.rpcCall(params).thenApply {
             gson.fromJson(it, InteractiveGoals::class.java)
         }
     }
 
-    fun infoToInteractiveAsync(params: InteractiveInfoParams) : CompletableFuture<CodeWithInfos> {
+    /**
+     * TODO weird, where is this params [InteractiveInfoParams] and return result [CodeWithInfos]
+     *      from?   it seems incorrect
+     */
+    fun infoToInteractiveAsync(params: InteractiveInfoParams) : CompletableFuture<InfoPopup> {
         return languageServer.rpcCall(params).thenApply {
-            gson.fromJson(it, CodeWithInfos::class.java)
+            gson.fromJson(it, InfoPopup::class.java)
         }
     }
 

@@ -31,8 +31,8 @@
         <!--         language="Lean4"-->
         <!--         extensions="lean"/>-->
 
-        <toolWindow factoryClass="lean4ij.toolWindow.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
-        <toolWindow factoryClass="lean4ij.infoview.JcefInfoviewTooWindowFactory" id="LeanInfoviewJcef"/>
+        <toolWindow factoryClass="lean4ij.infoview.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
+        <toolWindow factoryClass="lean4ij.infoview.external.JcefInfoviewTooWindowFactory" id="LeanInfoviewJcef"/>
 
         <postStartupActivity implementation="lean4ij.project.LeanProjectActivity"/>
 
@@ -42,7 +42,7 @@
                            key="notification.group.name"/>
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
-        <server id="LeanLanguageServerId"
+        <server id="lean"
                 name="Lean Language Server"
                 factoryClass="lean4ij.lsp.LeanLanguageServerFactory">
             <description><![CDATA[
@@ -52,7 +52,7 @@
         </server>
 
         <fileNamePatternMapping patterns="*.lean4;*.lean"
-                                serverId="LeanLanguageServerId"
+                                serverId="lean"
                                 languageId="lean"/>
     </extensions>
 

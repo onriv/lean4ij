@@ -15,10 +15,10 @@ import java.util.concurrent.CompletableFuture
 interface InternalLeanLanguageServer : LanguageServer, TextDocumentService {
 
     @JsonRequest(Constants.LEAN_PLAIN_GOAL)
-    fun plainGoal(params: PlainGoalParams): CompletableFuture<PlainGoal>
+    fun plainGoal(params: PlainGoalParams): CompletableFuture<PlainGoal?>
 
     @JsonRequest(Constants.LEAN_PLAIN_TERM_GOAL)
-    fun plainTermGoal(params: PlainTermGoalParams): CompletableFuture<PlainTermGoal>
+    fun plainTermGoal(params: PlainTermGoalParams): CompletableFuture<PlainTermGoal?>
 
     /**
      * `$/lean/rpc/connect` client->server request.
@@ -37,7 +37,7 @@ interface InternalLeanLanguageServer : LanguageServer, TextDocumentService {
 
     /**
      * Here `$/lean/rpc/call` request can take a param `method`, if using lsp4j version 0.23, then the json request
-     * can be duplicate, but not lsp4j 0.21. Hence, we still define only one json request, and in [LeanLspServerManager] we dispatch this request
+     * can be duplicate, but not lsp4j 0.21. Hence, we still define only one json request, and in [LeanLanguageServer] we dispatch this request
      * for different method
      * see: [src/Lean/Server/Rpc/RequestHandling.lean#L36](https://github.com/leanprover/lean4/blob/23e49eb519a45496a9740aeb311bf633a459a61e/src/Lean/Server/Rpc/RequestHandling.lean#L36)
      */

@@ -61,8 +61,9 @@ class CodeWithInfosDocumentationHyperLink(
                 val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
                 htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
             }
-            val typeStr = infoToInteractive.type?.toInfoViewString(0, null) ?: ""
-            val exprStr = infoToInteractive.exprExplicit?.toInfoViewString(0, null) ?: ""
+            val sb = StringBuilder()
+            val typeStr = infoToInteractive.type?.toInfoViewString(sb, null) ?: ""
+            val exprStr = infoToInteractive.exprExplicit?.toInfoViewString(sb, null) ?: ""
             ApplicationManager.getApplication().invokeLater {
                 createPopupPanel("$exprStr : $typeStr", htmlDoc)
             }

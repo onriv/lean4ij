@@ -11,6 +11,8 @@ import java.util.concurrent.CompletableFuture
 
 /**
  * defining interface for language server
+ * Here it's a raw interface/contract for LSP4IJ, and there is a class wrap this, that still is not used directly but
+ * handle dispatching, serialization, and async stuff, see [LeanLanguageServer]
  */
 interface InternalLeanLanguageServer : LanguageServer, TextDocumentService {
 

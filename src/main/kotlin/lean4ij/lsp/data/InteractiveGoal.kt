@@ -1,12 +1,6 @@
 package lean4ij.lsp.data
 
-//data class InteractiveGoalCore(
-//    val hyps: Array<InteractiveHypothesisBundle>,
-//    val type: CodeWithInfos,
-//    val ctx: ContextInfo
-//)
-//
- class InteractiveGoal(
+class InteractiveGoal(
     val userName: String? = null,
     val type: CodeWithInfos,
     val mvarId: String,
@@ -22,17 +16,25 @@ package lean4ij.lsp.data
     @Transient
     private var endOffset : Int = -1
 
-     fun toInfoViewString(startOffset: Int) : String {
-         this.startOffset = startOffset
-         val sb = StringBuilder()
+    /**
+     * TODO maybe it's nice to add hyperlink logic here
+     * TODO refactor StringBuilder into a Render
+     */
+     fun toInfoViewString(sb : StringBuilder)  {
          if (userName != null) {
              sb.append("case $userName\n")
          }
-         // TODO hyps
+        // TODO deduplicate
+         for (hyp in hyps) {
+             val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = " : ")
+             sb.append(names)
+             hyp.type.toInfoViewString(sb, null)
+             sb.append("\n")
+         }
          sb.append("⊢ ")
-         sb.append("${type.toInfoViewString(startOffset+sb.length, null)}\n")
+         type.toInfoViewString(sb, null)
+         sb.append("\n")
          this.endOffset = startOffset+sb.count()
-         return sb.toString()
      }
 
     /**

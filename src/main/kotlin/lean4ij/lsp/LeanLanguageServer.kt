@@ -1,17 +1,30 @@
 package lean4ij.lsp
 
+import com.google.gson.*
 import lean4ij.lsp.data.*
 import lean4ij.util.Constants
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonDeserializer
-import com.google.gson.JsonElement
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.future.await
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.DidOpenTextDocumentParams
 import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 
+/**
+ * TODO Add gson util back?
+ */
+inline fun <reified T> fromJson(src: String): T {
+    // val type = object : TypeToken<T>() {}.type
+    return Gson().fromJson(src, T::class.java)
+}
+
+/**
+ * This class declares the suspend like method for the language server, and handling serialization serialization
+ * which making the method type safe, for usage see [lean4ij.project.LeanFile], where handles things like session
+ * outdated and is more biz relevant.
+ * TODO here we don't impl getWidgets. It's implemented with react and we can no do it with swing anyway...
+ *      for the external infoview, it's bridged transparently and doesn't require an explicit declaration
+ */
 class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer) {
 
     suspend fun plainGoal (params: PlainGoalParams): PlainGoal? {
@@ -32,6 +45,14 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
 
     suspend fun getInteractiveGoals(params: InteractiveGoalsParams) : InteractiveGoals? {
         return getInteractiveGoalsAsync(params).await()
+    }
+
+    suspend fun getInteractiveTermGoal(params : InteractiveTermGoalParams) : InteractiveTermGoal? {
+        return getInteractiveTermGoalAsync(params).await()
+    }
+
+    suspend fun getInteractiveDiagnostics(params : InteractiveDiagnosticsParams) : List<InteractiveDiagnostics>? {
+        return getInteractiveDiagnosticsAsync(params).await()
     }
 
     suspend fun infoToInteractive(params: InteractiveInfoParams) : InfoPopup {
@@ -57,6 +78,18 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
     fun getInteractiveGoalsAsync(params: InteractiveGoalsParams) : CompletableFuture<InteractiveGoals?> {
         return languageServer.rpcCall(params).thenApply {
             gson.fromJson(it, InteractiveGoals::class.java)
+        }
+    }
+
+    fun getInteractiveTermGoalAsync(params: InteractiveTermGoalParams) : CompletableFuture<InteractiveTermGoal?> {
+        return languageServer.rpcCall(params).thenApply {
+            gson.fromJson(it, InteractiveTermGoal::class.java)
+        }
+    }
+
+    fun getInteractiveDiagnosticsAsync(params : InteractiveDiagnosticsParams): CompletableFuture<List<InteractiveDiagnostics>?> {
+        return languageServer.rpcCall(params).thenApply {
+            gson.fromJson(it, object : TypeToken<List<InteractiveDiagnostics>>(){}.type)
         }
     }
 

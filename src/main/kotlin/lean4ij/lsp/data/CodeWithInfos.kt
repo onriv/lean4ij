@@ -19,7 +19,7 @@ abstract class CodeWithInfos {
     @Transient
     var parent : CodeWithInfos? = null
 
-    abstract fun toInfoViewString(startOffset: Int, parent : CodeWithInfos?) : String
+    abstract fun toInfoViewString(sb : StringBuilder, parent : CodeWithInfos?) : String
 
     abstract fun getCodeText(offset: Int) : CodeWithInfos?
 

@@ -1,6 +1,5 @@
 package lean4ij.infoview
 
-import com.google.gson.Gson
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
@@ -14,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
 import lean4ij.lsp.data.InteractiveGoals
+import lean4ij.lsp.data.InteractiveTermGoal
 
 
 /**
@@ -37,6 +37,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         /**
          * check https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
          * for how to access a custom tool window
+         * TODO maybe impl displaying plainTermGoal too
          */
         fun updateGoal(project: Project, file: VirtualFile, caret: Caret, plainGoal: List<String>, plainTermGoal: String) {
             val infoViewWindow = getLeanInfoview(project) ?: return
@@ -65,20 +66,26 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             infoViewWindow.updateGoal(contentBuilder.toString())
         }
 
-        fun updateInteractiveGoal(project: Project, file: VirtualFile?, logicalPosition: LogicalPosition, interactiveGoals: InteractiveGoals) {
+        fun updateInteractiveGoal(project: Project, file: VirtualFile?, logicalPosition: LogicalPosition, // TODO this should add some UT for the rendering
+                                  interactiveGoals: InteractiveGoals?, interactiveTermGoal : InteractiveTermGoal?) {
             if (file == null) {
                 return
             }
             val infoViewWindow = getLeanInfoview(project) ?: return
-            val interactiveGoalsBuilder = StringBuilder("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
-            val interactiveGoalsText = interactiveGoals.toInfoViewString(interactiveGoalsBuilder)
+            // TODO implement the fold/open logic
+            val interactiveTextBuilder = StringBuilder("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
+            // TODO here maybe null?
+            interactiveGoals!!.toInfoViewString(interactiveTextBuilder)
+            interactiveTermGoal!!.toInfoViewString(interactiveTextBuilder)
 
+
+            // TODO this seems kind of should be put inside rendering, check how to do this
             ApplicationManager.getApplication().invokeLater {
                 val infoViewWindowEditorEx: EditorEx = infoViewWindow.createEditor()
-                infoViewWindowEditorEx.document.setText(interactiveGoalsText)
+                infoViewWindowEditorEx.document.setText(interactiveTextBuilder.toString())
                 val support = EditorHyperlinkSupport.get(infoViewWindowEditorEx)
                 infoViewWindow.setContent(infoViewWindowEditorEx.component)
-                val mouseMotionListener = InfoviewMouseMotionListener(infoViewWindow, support, file!!, logicalPosition, interactiveGoals)
+                val mouseMotionListener = InfoviewMouseMotionListener(infoViewWindow, support, file!!, logicalPosition, interactiveGoals!!)
                 infoViewWindowEditorEx.addEditorMouseMotionListener(mouseMotionListener)
             }
         }

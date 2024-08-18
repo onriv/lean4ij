@@ -8,17 +8,18 @@ class InteractiveGoals(
 
     /**
      * This is from https://github.com/Julian/lean.nvim/blob/03f7437/lua/lean/infoview/components.lua
+     * TODO implement the fold/open logic
      */
-    fun toInfoViewString(sb: StringBuilder) : String {
+    fun toInfoViewString(sb: StringBuilder) {
+        sb.append("▼ Tactic state")
         if (goals.isEmpty()) {
-            sb.append("goals accomplished 🎉\n")
-            return sb.toString()
+            sb.append("No goals")
+            return
         }
         sb.append("${goals.size} goals\n")
         for (goal in goals) {
-            sb.append(goal.toInfoViewString(sb.length))
+            goal.toInfoViewString(sb)
         }
-        return sb.toString()
     }
 
     /**

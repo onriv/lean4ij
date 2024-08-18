@@ -3,16 +3,15 @@ package lean4ij.lsp.data
 /**
  * see [src/Lean/Widget/TaggedText.lean#L23](https://github.com/leanprover/lean4/blob/23e49eb519a45496a9740aeb311bf633a459a61e/src/Lean/Widget/TaggedText.lean#L23)
  */
-class CodeWithInfosAppend (val append: List<CodeWithInfos>) : CodeWithInfos() {
-    override fun toInfoViewString(startOffset: Int, parent: CodeWithInfos?) : String {
+class CodeWithInfosAppend (private val append: List<CodeWithInfos>) : CodeWithInfos() {
+    override fun toInfoViewString(sb : StringBuilder, parent: CodeWithInfos?): String {
         this.parent = parent
-        this.startOffset = startOffset
-        val sb = StringBuilder()
+        this.startOffset = sb.length
         for (c in append) {
-            sb.append(c.toInfoViewString(startOffset+sb.length, this))
+            c.toInfoViewString(sb, this)
         }
-        this.endOffset=startOffset+sb.length
-        this.codeText = sb.toString()
+        this.endOffset = sb.length
+        this.codeText = sb.substring(startOffset, endOffset)
         return this.codeText
     }
 

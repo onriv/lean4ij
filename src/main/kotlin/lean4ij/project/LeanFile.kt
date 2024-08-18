@@ -168,13 +168,19 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 return@launch
             }
             val session = getSession()
-            val interactiveParams = InteractiveGoalsParams(session, params, textDocument, position)
-            val interactiveGoals = leanProjectService.file(file).getInteractiveGoals(interactiveParams)
-            if (interactiveGoals == null) {
-                thisLogger().warn("No interactiveGoals for $file")
-                return@launch
-            }
-            LeanInfoViewWindowFactory.updateInteractiveGoal(project, virtualFile!!, logicalPosition, interactiveGoals!!)
+            val file = leanProjectService.file(file)
+            val interactiveGoalsParams = InteractiveGoalsParams(session, params, textDocument, position)
+            val interactiveTermGoalParams = InteractiveTermGoalParams(session, params, textDocument, position)
+            // TODO how to determine which diagnostic get?
+            // val diagnosticsParams = InteractiveDiagnosticsParams()
+            val interactiveGoalsAsync = async { file.getInteractiveGoals(interactiveGoalsParams) }
+            val interactiveTermGoalAsync = async { file.getInteractiveTermGoal(interactiveTermGoalParams) }
+            // val diagnostics = file.getInteractiveDiagnostics(diagnosticsParams)
+            // Both interactiveGoals and interactiveTermGoal can be null and hence we pass them to
+            // updateInteractiveGoal nullable
+            val interactiveGoals = interactiveGoalsAsync.await()
+            val interactiveTermGoal = interactiveTermGoalAsync.await()
+            LeanInfoViewWindowFactory.updateInteractiveGoal(project, virtualFile!!, logicalPosition, interactiveGoals, interactiveTermGoal)
         }
     }
 
@@ -227,6 +233,18 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     suspend fun getInteractiveGoals(params: InteractiveGoalsParams): InteractiveGoals? {
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().getInteractiveGoals(it)
+        }
+    }
+
+    suspend fun getInteractiveTermGoal(params : InteractiveTermGoalParams) : InteractiveTermGoal? {
+        return rpcCallWithRetry(params) {
+            leanProjectService.languageServer.await().getInteractiveTermGoal(it)
+        }
+    }
+
+    suspend fun getInteractiveDiagnostics(params : InteractiveDiagnosticsParams) : List<InteractiveDiagnostics>? {
+        return rpcCallWithRetry(params) {
+            leanProjectService.languageServer.await().getInteractiveDiagnostics(it)
         }
     }
 

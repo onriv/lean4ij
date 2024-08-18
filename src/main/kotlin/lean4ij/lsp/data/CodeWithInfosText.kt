@@ -5,10 +5,11 @@ package lean4ij.lsp.data
  */
 class CodeWithInfosText (val text: String) : CodeWithInfos() {
 
-    override fun toInfoViewString(startOffset: Int, parent: CodeWithInfos?) : String {
+    override fun toInfoViewString(sb : StringBuilder, parent: CodeWithInfos?) : String {
         this.parent = parent
-        this.startOffset = startOffset
-        this.endOffset = startOffset+text.length
+        startOffset = sb.length
+        sb.append(text)
+        endOffset = sb.length
         this.codeText = text
         return text
     }

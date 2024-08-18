@@ -14,6 +14,8 @@ object Constants {
     const val LEAN_RPC_KEEP_ALIVE = "\$/lean/rpc/keepAlive"
     const val RPC_METHOD_INFO_TO_INTERACTIVE = "Lean.Widget.InteractiveDiagnostics.infoToInteractive"
     const val RPC_METHOD_GET_INTERACTIVE_GOALS = "Lean.Widget.getInteractiveGoals"
+    const val RPC_METHOD_GET_INTERACTIVE_TERM_GOAL = "Lean.Widget.getInteractiveTermGoal"
+    const val RPC_METHOD_GET_INTERACTIVE_DIAGNOSTICS = "Lean.Widget.getInteractiveDiagnostics"
     const val FILE_PROGRESS = "\$/lean/fileProgress"
 
     /**

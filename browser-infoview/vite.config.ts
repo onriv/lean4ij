@@ -2,7 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'; // Node.js file system module
 
-const hostConfig = JSON.parse(fs.readFileSync('./host-config.json', 'utf8'));
+let hostConfig;
+try {
+  hostConfig = JSON.parse(fs.readFileSync('./host-config.json', 'utf8'));
+} catch (error) {
+  console.error("Error reading host config:", error.message);
+  // a default fallback
+  hostConfig = { host: "localhost:8080" };
+}
 const { host } = hostConfig;
 
 // https://vitejs.dev/config/

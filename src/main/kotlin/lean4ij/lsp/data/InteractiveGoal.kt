@@ -10,15 +10,22 @@ class InteractiveGoal(
     val goalPrefix: String,
     val isRemoved: Boolean? = null) {
 
+    /**
+     * here startOffset and endOffset only for the goal
+     */
     @Transient
-     private var startOffset : Int = -1
+    private var startOffset : Int = -1
 
+    /**
+     * here startOffset and endOffset only for the goal
+     */
     @Transient
     private var endOffset : Int = -1
 
     /**
      * TODO maybe it's nice to add hyperlink logic here
      * TODO refactor StringBuilder into a Render
+     *      all render logic should be refactored, it's inelegant and error prone
      */
      fun toInfoViewString(sb : StringBuilder)  {
          if (userName != null) {
@@ -32,14 +39,17 @@ class InteractiveGoal(
              sb.append("\n")
          }
          sb.append("⊢ ")
+         // here startOffset and endOffset only for the goal
+         this.startOffset = sb.length
          type.toInfoViewString(sb, null)
+         this.endOffset = sb.length
          sb.append("\n")
-         this.endOffset = startOffset+sb.count()
      }
 
     /**
      * TODO try DIY this
-     * TODO kotlin way to do this
+     * TODO kotlin way to do this, if possible treat it immutable
+     *      check also [lean4ij.lsp.data.CodeWithInfos.startOffset]
      */
     fun getStartOffset() = startOffset
 

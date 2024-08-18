@@ -67,6 +67,9 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             infoViewWindow.updateGoal(contentBuilder.toString())
         }
 
+        /**
+         * TODO the infoview-app
+         */
         fun updateInteractiveGoal(project: Project, file: VirtualFile?, logicalPosition: LogicalPosition, // TODO this should add some UT for the rendering
                                   interactiveGoals: InteractiveGoals?, interactiveTermGoal : InteractiveTermGoal?) {
             if (file == null) {
@@ -86,12 +89,13 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO render message
             // TODO this seems kind of should be put inside rendering, check how to do this
             ApplicationManager.getApplication().invokeLater {
-                val infoViewWindowEditorEx: EditorEx = infoViewWindow.editor
+                val infoViewWindowEditorEx: EditorEx = infoViewWindow.createEditor()
                 infoViewWindowEditorEx.document.setText(interactiveInfoBuilder.toString())
                 val support = EditorHyperlinkSupport.get(infoViewWindowEditorEx)
                 infoViewWindow.setContent(infoViewWindowEditorEx.component)
                 // TODO does it require new object for each update?
-                val mouseMotionListener = InfoviewMouseMotionListener(infoViewWindow, support, file, logicalPosition, interactiveGoals!!)
+                //      it seems so, otherwise the hyperlinks seems mixed and requires remove
+                val mouseMotionListener = InfoviewMouseMotionListener(infoViewWindow, support, file, logicalPosition, interactiveGoals, interactiveTermGoal)
                 infoViewWindowEditorEx.addEditorMouseMotionListener(mouseMotionListener)
             }
         }

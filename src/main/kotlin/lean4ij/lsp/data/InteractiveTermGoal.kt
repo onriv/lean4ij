@@ -29,4 +29,20 @@ class InteractiveTermGoal(
         type.toInfoViewString(sb, null)
         sb.append("\n")
     }
+
+    /**
+     * TODO this should absolutely DRY with [lean4ij.lsp.data.InteractiveGoals.getCodeText]
+     */
+    fun getCodeText(offset: Int): CodeWithInfos? {
+        for (hyp in hyps) {
+            val type = hyp.type
+            if (type.startOffset <= offset && offset < type.endOffset) {
+                return type.getCodeText(offset)
+            }
+        }
+        if (type.startOffset <= offset && offset < type.endOffset) {
+            return type.getCodeText(offset)
+        }
+        return null
+    }
 }

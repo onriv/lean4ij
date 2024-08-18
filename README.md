@@ -26,15 +26,27 @@ This plugin uses [Lsp4ij](https://github.com/redhat-developer/lsp4ij) for connec
 The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
 ## Usage
 
-After opening a lean4 project, the language server toolwindow would automatically start the language server.
+Since currently color theme still not implemented, and the infoview-app is hard coded with a light theme as lean4web, it's recommended using a light theme temporally.
+
+For improving performance, the lean language protocol server will not start immediately after opening a lean project, it will start while the editor gains focus, for example switching to another app and then switching back.
 
 Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.
 
-Infoview is supported using [lean4-infoview](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it requires opening from a web browser
+Infoview is supported using [lean4-infoview,](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it can be started from a browser or the internal [JCEF] infoview toolwindow.
 
+Messages and logs about the lean lsp server can be found 
+### Actions
+
+| action id              | action text               | meaning                     |
+|------------------------|---------------------------|-----------------------------|
+| OpenLeanInfoView       | Lean open info view       | open the infoview(swing)    |
+| RestartLeanLsp         | Restart Lean Lsp Server   | restart the  lsp server     |
+| RestartCurrentLeanFile | Restart Current Lean File | restart current file        |
+| DumpCoroutine          | Dump Coroutine            | dump coroutine for debug(*) |
+| ReloadJcefInfoview     | Reload Jcef Infoview      | reload the jcef infoview    |
+
+currently DumpCoroutine hard code outputs to `D:\dumpCoroutines.txt`, `D:\dumpCoroutinesInfo.txt`  and `D:\dumpCoroutinesInfoScopre.txt`, this action should not be used usually.
 <!-- Plugin description end -->
-
-
 
 ## Development
 
@@ -51,7 +63,13 @@ and todos
   - [x] this can be manually done by right-clicking the folder and marking it as exclude
   - [x] automatically exclude, check [this](https://youtrack.jetbrains.com/issue/IDEA-194725/Specify-IntelliJ-exclude-directories-in-build.gradle), or [this](https://youtrack.jetbrains.com/issue/IJPL-8363/Ability-to-have-default-Excluded-Folders-not-per-project), or [this](https://youtrack.jetbrains.com/issue/WEB-11419).
     some plugins have customized logic for it like intellij-rust or intellij-arend
-- [x] infoview toolwindow in jcef
+- [ ] infoview toolwindow in jcef
+  - [x] show goals
+  - [x] show term goal
+  - [ ] show message
+  - [x] popup
+  - [ ] pop up style, fonts, clickable links, etc
+  - [ ] color
 - [ ] mathlib4 seems always failed starting the language server
 - [ ] infoview toolwindow in swing
 - [ ] project create/setup or configuration
@@ -61,6 +79,7 @@ and todos
 - [ ] theme and color
 - [x] find in files will send a didOpen request and make fileProgress, it may hurt the performance.
   currently a fix for this is disabling lsp while lost focus for the editor
+
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

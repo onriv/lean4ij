@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import lean4ij.lsp.data.CodeWithInfos
 import lean4ij.lsp.data.CodeWithInfosTag
 import lean4ij.lsp.data.InteractiveGoals
+import lean4ij.lsp.data.InteractiveTermGoal
 import java.awt.Color
 
 /**
@@ -21,7 +23,8 @@ class InfoviewMouseMotionListener(
     private val support: EditorHyperlinkSupport,
     private val file: VirtualFile,
     private val logicalPosition: LogicalPosition,
-    private val interactiveGoals: InteractiveGoals
+    private val interactiveGoals: InteractiveGoals?,
+    private val interactiveTermGoal: InteractiveTermGoal?
 ) : EditorMouseMotionListener {
     private var hyperLink: RangeHighlighter? = null
     override fun mouseMoved(e: EditorMouseEvent) {
@@ -31,8 +34,18 @@ class InfoviewMouseMotionListener(
         if (!e.isOverText) {
             return
         }
-        val c = interactiveGoals.getCodeText(e.offset) ?: return
+        var c : CodeWithInfos? = null
+        if (interactiveGoals != null) {
+            c = interactiveGoals.getCodeText(e.offset)
+        }
+        if (c == null && interactiveTermGoal != null) {
+            c = interactiveTermGoal.getCodeText(e.offset)
+        }
+        if (c == null) {
+            return
+        }
         var codeWithInfosTag : CodeWithInfosTag? = null
+        // TODO check if these parent-stuff can be cleaner
         if (c is CodeWithInfosTag) {
             codeWithInfosTag = c
         } else if (c.parent != null && c.parent!! is CodeWithInfosTag) {
@@ -44,7 +57,8 @@ class InfoviewMouseMotionListener(
             return
         }
 
-        if (c.parent == null || c.parent!!.parent == null) {
+        // TODO check if these parent-stuff can be cleaner
+        if (c.parent == null) {
             return
         }
         hyperLink = support.createHyperlink(
@@ -52,6 +66,7 @@ class InfoviewMouseMotionListener(
             c.parent!!.endOffset,
             object : TextAttributes() {
                 override fun getBackgroundColor(): Color {
+                    // TODO scheme this color
                     return Color.decode("#add6ff")
                 }
             },

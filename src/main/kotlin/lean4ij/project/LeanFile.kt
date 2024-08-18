@@ -25,6 +25,7 @@ import lean4ij.util.LspUtil
 import lean4ij.util.step
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import java.nio.charset.StandardCharsets
 import kotlin.math.min
 
@@ -253,6 +254,10 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         try {
             return action(params)
         } catch (ex: ResponseErrorException) {
+            // TODO these codes are defined in org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
+            //      just don't know if it's full range
+            //      no! it's not full range
+            // TODO refactor this
             val responseError = ex.responseError
             // TODO remove this magic number and find lean source code for it
             if (responseError.code == -32900 && responseError.message == "Outdated RPC session") {
@@ -267,6 +272,17 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 return null
             }
             if (responseError.code == -32601 && responseError.message.contains("No RPC method")) {
+                /**
+                 * TODO this seems weird too
+                 *      2024-08-11 14:17:38,335 [ 624441]   WARN - org.eclipse.lsp4j.jsonrpc.RemoteEndpoint - Unmatched response message: {
+                 *        "jsonrpc": "2.0",
+                 *        "id": "142",
+                 *        "error": {
+                 *          "code": -32601,
+                 *          "message": "No RPC method \u0027Lean.Widget.getInteractiveDiagnostics\u0027 found"
+                 *        }
+                 *      }
+                 */
                 return null
             }
             /**
@@ -291,16 +307,6 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                  */
                 return null
             }
-            /**
-             * 2024-08-11 14:17:38,335 [ 624441]   WARN - org.eclipse.lsp4j.jsonrpc.RemoteEndpoint - Unmatched response message: {
-             *   "jsonrpc": "2.0",
-             *   "id": "142",
-             *   "error": {
-             *     "code": -32601,
-             *     "message": "No RPC method \u0027Lean.Widget.getInteractiveDiagnostics\u0027 found"
-             *   }
-             * }
-             */
             throw ex
         } catch (ex: Exception) {
             // org.eclipse.lsp4j.jsonrpc.ResponseErrorException: elaboration interrupted

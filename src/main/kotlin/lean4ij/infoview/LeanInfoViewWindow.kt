@@ -45,7 +45,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
     /**
      * create an editorEx for rendering the info view
      */
-    private fun createEditor(): EditorEx {
+    fun createEditor(): EditorEx {
         val editor = EditorFactory.getInstance()
             .createViewer(DocumentImpl(" ", true), toolWindow.project) as EditorEx
         // val editor = editorTextField.getEditor(true)!!

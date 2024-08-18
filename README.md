@@ -79,6 +79,8 @@ and todos
 - [ ] theme and color
 - [x] find in files will send a didOpen request and make fileProgress, it may hurt the performance.
   currently a fix for this is disabling lsp while lost focus for the editor
+- [ ] elan/lake, project create, setup etc
+- [ ] run and build (debug cannot be supported, although arend has this)
 
 ## Acknowledgments
 

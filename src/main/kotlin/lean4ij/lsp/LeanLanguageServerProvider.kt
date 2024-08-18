@@ -23,6 +23,12 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
         instance.addLanguageServerLifecycleListener(LeanLanguageServerLifecycleListener(project))
     }
 
+    /**
+     * TODO elan which lake may cause download lake
+     *     > elan which lake
+     *       info: downloading component 'lean'
+     *       4.0 KiB / 189.8 MiB (  0 %)   0 B/s ETA: Unknown
+     */
     private fun setServerCommand() {
         val elan = getElan()
         val lake = "$elan which lake".runCommand(File(project.basePath!!)).trim()

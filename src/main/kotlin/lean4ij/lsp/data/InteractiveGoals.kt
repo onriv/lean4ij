@@ -11,9 +11,9 @@ class InteractiveGoals(
      * TODO implement the fold/open logic
      */
     fun toInfoViewString(sb: StringBuilder) {
-        sb.append("▼ Tactic state")
+        sb.append("▼ Tactic state\n")
         if (goals.isEmpty()) {
-            sb.append("No goals")
+            sb.append("No goals\n")
             return
         }
         sb.append("${goals.size} goals\n")

@@ -38,6 +38,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
          * check https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
          * for how to access a custom tool window
          * TODO maybe impl displaying plainTermGoal too
+         * TODO since using interactiveGoals for quite recent, this requires some test
          */
         fun updateGoal(project: Project, file: VirtualFile, caret: Caret, plainGoal: List<String>, plainTermGoal: String) {
             val infoViewWindow = getLeanInfoview(project) ?: return
@@ -73,19 +74,24 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             }
             val infoViewWindow = getLeanInfoview(project) ?: return
             // TODO implement the fold/open logic
-            val interactiveTextBuilder = StringBuilder("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
+            val interactiveInfoBuilder = StringBuilder("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
             // TODO here maybe null?
-            interactiveGoals!!.toInfoViewString(interactiveTextBuilder)
-            interactiveTermGoal!!.toInfoViewString(interactiveTextBuilder)
+            if (interactiveGoals != null || interactiveTermGoal != null) {
+                interactiveGoals?.toInfoViewString(interactiveInfoBuilder)
+                interactiveTermGoal?.toInfoViewString(interactiveInfoBuilder)
+            } else {
+                interactiveInfoBuilder.append("No info found.\n")
+            }
 
-
+            // TODO render message
             // TODO this seems kind of should be put inside rendering, check how to do this
             ApplicationManager.getApplication().invokeLater {
-                val infoViewWindowEditorEx: EditorEx = infoViewWindow.createEditor()
-                infoViewWindowEditorEx.document.setText(interactiveTextBuilder.toString())
+                val infoViewWindowEditorEx: EditorEx = infoViewWindow.editor
+                infoViewWindowEditorEx.document.setText(interactiveInfoBuilder.toString())
                 val support = EditorHyperlinkSupport.get(infoViewWindowEditorEx)
                 infoViewWindow.setContent(infoViewWindowEditorEx.component)
-                val mouseMotionListener = InfoviewMouseMotionListener(infoViewWindow, support, file!!, logicalPosition, interactiveGoals!!)
+                // TODO does it require new object for each update?
+                val mouseMotionListener = InfoviewMouseMotionListener(infoViewWindow, support, file, logicalPosition, interactiveGoals!!)
                 infoViewWindowEditorEx.addEditorMouseMotionListener(mouseMotionListener)
             }
         }

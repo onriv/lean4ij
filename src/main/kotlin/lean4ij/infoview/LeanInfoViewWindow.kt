@@ -16,7 +16,7 @@ import javax.swing.JEditorPane
 class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(true) {
 
     private val goals = JEditorPane()
-    private var editor : EditorEx = createEditor()
+    val editor : EditorEx = createEditor()
 
     private val BORDER = BorderFactory.createEmptyBorder(3, 0, 5, 0)
 
@@ -45,7 +45,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
     /**
      * create an editorEx for rendering the info view
      */
-    fun createEditor(): EditorEx {
+    private fun createEditor(): EditorEx {
         val editor = EditorFactory.getInstance()
             .createViewer(DocumentImpl(" ", true), toolWindow.project) as EditorEx
         // val editor = editorTextField.getEditor(true)!!
@@ -65,7 +65,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         editor.headerComponent = null
         editor.setCaretEnabled(false)
         editor.setHorizontalScrollbarVisible(false)
-        editor.setVerticalScrollbarVisible(false)
+        editor.setVerticalScrollbarVisible(true)
         editor.isRendererMode = true
         return editor
     }

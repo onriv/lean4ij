@@ -17,7 +17,7 @@ class InteractiveTermGoal(
      * TODO refactor StringBuilder into a Render
      */
     fun toInfoViewString(sb: StringBuilder) {
-        sb.append("▼ Expected type")
+        sb.append("▼ Expected type\n")
         // TODO deduplicate
         for (hyp in hyps) {
             val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = " : ")

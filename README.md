@@ -11,7 +11,7 @@ A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 
 # Installation
 
-This plugin uses [Lsp4ij](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 lsp server. Please install this first.
+This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 lsp server. Please install this first.
 
 - (Unsupported yet) ~~Using the IDE built-in plugin system:~~
 
@@ -75,7 +75,7 @@ and todos
 - [x] infoview toolwindow in jcef
 - [ ] project create/setup or configuration
 - [ ] distinguish source in .lake as library rather than source
-- [ ] avoid file progressing in search window (it should be caused by didOpen, etc.)
+- [x] avoid file progressing in search window (it should be caused by didOpen, etc.) solved by only enable lsp at focusing editor
 - [ ] setting dialog
 - [ ] theme and color
 - [x] find in files will send a didOpen request and make fileProgress, it may hurt the performance.

@@ -19,6 +19,7 @@
         <!-- // from https://github.com/JetBrains/godot-support/blob/master/rider/src/main/resources/META-INF/plugin.xml-->
         <!-- https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/src/main/resources/META-INF/plugin.xml#L26-->
         <textmate.bundleProvider implementation="lean4ij.language.TextMateBundleProvider"/>
+        <colorSettingsPage implementation="lean4ij.infoview.LeanInfoviewColorSettingPage"/>
 
         <!-- lsp4ij says:-->
         <!-- Indeed, when you manually define a File type for some file name patterns, you loose the TextMate syntax coloration.-->

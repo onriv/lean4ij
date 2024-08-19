@@ -83,7 +83,7 @@ and todos
 - [ ] elan/lake, project create, setup etc
 - [ ] run and build (debug cannot be supported, although arend has this)
 - [ ] some more logs with different levels
-
+- [ ] refactor the frontend impl (currently it's written as for feasibility test)
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

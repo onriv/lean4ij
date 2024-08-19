@@ -11,7 +11,7 @@ A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 
 # Installation
 
-This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 lsp server. Please install this first.
+This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 lsp server. Please install that first.
 
 - (Unsupported yet) ~~Using the IDE built-in plugin system:~~
 

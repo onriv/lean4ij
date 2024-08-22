@@ -26,9 +26,9 @@ This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connec
 The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
 ## Usage
 
-Since currently color theme still not implemented, and the infoview-app is hard coded with a light theme as lean4web, it's recommended using a light theme temporally. And the font used in infoview-app is hardcoded to [Julia Mono](https://juliamono.netlify.app/) hence it's also recommended temporally to set the font as Julia Mono.
+Since the font used in infoview-app is hardcoded to [Julia Mono](https://juliamono.netlify.app/) hence it's also recommended temporally to set the font as Julia.
 
-For improving performance, the lean language protocol server will not start immediately after opening a lean project, it will start while the editor gains focus, for example switching to another app and then switching back.
+The LSP server is start as any lean file is open in the Editor.
 
 Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.
 
@@ -77,7 +77,7 @@ and todos
 - [ ] distinguish source in .lake as library rather than source
 - [x] avoid file progressing in search window (it should be caused by didOpen, etc.) solved by only enable lsp at focusing editor
 - [ ] setting dialog
-- [ ] theme and color
+- [x] theme and color
 - [x] find in files will send a didOpen request and make fileProgress, it may hurt the performance.
   currently a fix for this is disabling lsp while lost focus for the editor
 - [ ] elan/lake, project create, setup etc

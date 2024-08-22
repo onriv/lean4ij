@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'; // Node.js file system module
 
+// ... moving it to a standalone json file make vite's auto reload failed...
 let hostConfig;
 try {
   hostConfig = JSON.parse(fs.readFileSync('./host-config.json', 'utf8'));
@@ -23,6 +24,13 @@ export default defineConfig({
         target: 'ws://'+host,
         ws: true,
         changeOrigin: true,
+      },
+      '/theme.css': {
+        target: 'http://'+host,
+        changeOrigin: true,
+        secure: false,
+        // check https://github.com/vitejs/vite/issues/12157
+        // timeout: 0, // here
       },
       '/api': {
         target: 'http://'+host,

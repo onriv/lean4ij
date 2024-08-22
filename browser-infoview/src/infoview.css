@@ -38,12 +38,11 @@ html,body {
 .goal-goals { color: #367cb6; }
 .goal-vdash { color: #367cb6; }
 .goal-case { color: #1f7a1f; }
-.goal-hyp { color: #cc7a00; }
+.goal-hyp { color: var(--vscode-goal-hyp-color) }
 
 
 .goal-inaccessible {
-    color: var(--vscode-editor-foreground);
-    opacity: 0.7;
+    color: var(--vscode-goal-inaccessible);
     font-style: italic;
     font-weight: normal;
 }

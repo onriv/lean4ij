@@ -207,12 +207,16 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      */
     private suspend fun updateSession(oldSession: String?) {
         if (oldSession == session) {
-            sessionMutex.withLock {
-                if (oldSession == session) {
-                    session = leanProjectService.languageServer.await().rpcConnect(RpcConnectParams(file)).sessionId
-                    // keep alive making infoToInteractive behave better, for the reference must have the same session
-                    // as the goal result, so keep it alive here...
-                    keepAlive()
+            // TODO check this timeout, check the following rpcConnect for the following timeout
+            withTimeout(5*1000) {
+                sessionMutex.withLock {
+                    if (oldSession == session) {
+                        session = leanProjectService.languageServer.await().rpcConnect(RpcConnectParams(file)).sessionId
+                        // keep alive making infoToInteractive behave better, for the reference must have the same session
+                        // as the goal result, so keep it alive here...
+                        // TODO is here will cause multiple keep alive loop?
+                        keepAlive()
+                    }
                 }
             }
         }

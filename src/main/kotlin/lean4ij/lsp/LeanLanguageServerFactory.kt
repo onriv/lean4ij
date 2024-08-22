@@ -19,8 +19,9 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
          * or ide opens, but it seems improving performance for avoiding peak cpu flush as the opening
          * TODO add this on readme
          * TODO maybe some settings for it
+         * TODO it's back to true, inconsistent with readme
          */
-        val isEnable : AtomicBoolean = AtomicBoolean(false)
+        val isEnable : AtomicBoolean = AtomicBoolean(true)
     }
 
     /**

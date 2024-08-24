@@ -32,7 +32,7 @@ This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connec
 The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
 ## Usage
 
-The LSP server is start as any lean file is open in the Editor.
+The LSP server is start as any lean file is open in the Editor. If it not behaves correctly, try firing a restart action.
 
 Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.
 
@@ -88,7 +88,8 @@ and todos
 - [ ] run and build (debug cannot be supported, although arend has this)
 - [ ] some more logs with different levels
 - [ ] refactor the frontend impl (currently it's written as for feasibility test)
-- [ ] all messages in the external infoview failed
+- [x] all messages in the external infoview failed (via caching server notification now)
+- [ ] check why sometimes lsp requires multiple start
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

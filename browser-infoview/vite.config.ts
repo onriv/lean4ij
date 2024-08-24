@@ -4,6 +4,7 @@ import fs from 'fs'; // Node.js file system module
 
 // ... moving it to a standalone json file make vite's auto reload failed...
 let hostConfig;
+const hostPath = './host-config.json';
 try {
   hostConfig = JSON.parse(fs.readFileSync('./host-config.json', 'utf8'));
 } catch (e: any) {
@@ -15,7 +16,17 @@ const { host } = hostConfig;
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'watch-host-config',
+      configureServer(server) {
+        fs.watchFile(hostPath, () => {
+          server.restart().then(r => {})
+        });
+      }
+    }
+  ],
   server: {
     port: 5830,
     proxy: {

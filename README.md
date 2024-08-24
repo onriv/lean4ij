@@ -84,6 +84,7 @@ and todos
 - [ ] run and build (debug cannot be supported, although arend has this)
 - [ ] some more logs with different levels
 - [ ] refactor the frontend impl (currently it's written as for feasibility test)
+- [ ] all messages in the external infoview failed
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

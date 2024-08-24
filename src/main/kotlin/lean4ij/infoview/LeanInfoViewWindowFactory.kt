@@ -110,9 +110,14 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val leanInfoViewWindow = LeanInfoViewWindow(toolWindow)
-        val content = ContentFactory.getInstance().createContent(leanInfoViewWindow, null, false)
-        toolWindow.contentManager.addContent(content)
+        ApplicationManager.getApplication().invokeLater {
+            // This should be run in EDT
+            // TODO check if it's necessary to pull call in EDT
+            //      or, is there better way to do it
+            val leanInfoViewWindow = LeanInfoViewWindow(toolWindow)
+            val content = ContentFactory.getInstance().createContent(leanInfoViewWindow, null, false)
+            toolWindow.contentManager.addContent(content)
+        }
     }
 
     override fun shouldBeAvailable(project: Project) = true

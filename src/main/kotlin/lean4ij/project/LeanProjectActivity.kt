@@ -31,11 +31,18 @@ fun Module.addExcludeFolder(basePath: String) {
             contentEntry.addExcludePattern(".olean")
             contentEntry.addExcludePattern(".ilean")
             contentEntry.addExcludePattern(".c")
+            val lakePath = Path.of(basePath, ".lake")
+            // skip normal project that is not a lean project and contains no .lake directory
+            if (!lakePath.toFile().let { it.exists() && it.isDirectory }) {
+                return@let
+            }
             Files.walk(Path.of(basePath, ".lake"), 5)
                 .filter { path -> path.isDirectory() }
                 .forEach { path ->
+                    // TODO these logger should change the level to trace
                     thisLogger().info("checking if $path should be excluded")
                     if (path.parent.name == ".lake" && path.name == "build" ) {
+                        // TODO these logger should change the level to trace
                         thisLogger().info("adding $path to excludeFolder")
                         // must be of pattern "file://", the last replace is for fixing path in Windows...
                         val uri = path.toUri().toString().replace("file:///", "file://")

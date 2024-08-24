@@ -2,12 +2,10 @@ package lean4ij.infoview.external
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.*
-import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
-import com.intellij.util.ui.UIUtil
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.request.*
@@ -15,16 +13,17 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.*
-import lean4ij.infoview.LeanInfoviewColorSettingPage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import lean4ij.infoview.TextAttributesKeys
 import lean4ij.infoview.external.data.InfoviewEvent
 import lean4ij.lsp.LeanLanguageServer
 import lean4ij.lsp.data.RpcCallParamsRaw
 import lean4ij.lsp.data.RpcConnectParams
 import java.awt.Color
-import java.io.File
-import java.nio.file.Files
+
 
 /**
  * copy from https://github.com/ktorio/ktor-samples/blob/main/sse/src/main/kotlin/io/ktor/samples/sse/SseApplication.kt
@@ -105,7 +104,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
      * 	at io.ktor.server.netty.EventLoopGroupProxy$Companion.create$lambda$1$lambda$0(NettyApplicationEngine.kt:296)
      * 	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
      * 	at java.base/java.lang.Thread.run(Thread.java:840)
-     *
+     * TODO weird, sometimes it seems that all messages no result?
      */
     webSocket("/ws") {
         try {
@@ -116,12 +115,48 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
 
                 // TODO maybe this should be removed if disconnected for avoiding leak?
                 project.messageBus.connect().subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener { scheme ->
+                    // found that this respects font change, it's just that
                     scopeIO.launch {
                         scheme?.let{
                             send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(it))))))
                         }
                     }
                 })
+
+                // TODO maybe this should be removed if disconnected for avoiding leak?
+                // ApplicationManager.getApplication().messageBus.connect()
+                // /*project.messageBus.connect()*/.subscribe<UISettingsListener>(UISettingsListener.TOPIC, UISettingsListener { uiSettings ->
+                //     scopeIO.launch {
+                //         @Suppress("NAME_SHADOWING")
+                //         val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
+                //         send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme)))))
+                //     }
+                // })
+
+                // DataManager.getInstance().dataContextFromFocusAsync
+                //     .onSuccess { context ->
+                //         val allSettings = Settings.KEY.getData(context)
+                //         if (allSettings != null) {
+                //             val fontConfigurable = allSettings.find(AppEditorFontConfigurable.ID) as? AppEditorFontConfigurable
+                //             if (fontConfigurable != null && fontConfigurable.panel != null) {
+                //                 val fontPanel = fontConfigurable.panel!!
+                //                 fontPanel.addListener(
+                //                     object : ColorAndFontSettingsListener.Abstract() {
+                //                         override fun fontChanged() {
+                //                             scopeIO.launch {
+                //                                 @Suppress("NAME_SHADOWING")
+                //                                 val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
+                //                                 send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme)))))
+                //                             }
+                //                         }
+                //                     }
+                //                 )
+                //             }
+                //         }
+                //     }
+                //     .onError {
+                //         thisLogger().error(it)
+                //     }
 
                 val serverRestarted = service.awaitInitializedResult()
                 send(Frame.Text(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted))))
@@ -222,6 +257,10 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
             --header-foreground-color: ${scheme.getAttributes(TextAttributesKeys.Header.key).foregroundColor.toHexRgba()};
             --vscode-editor-background: $background;
             --vscode-editor-foreground: $foreground;
+            /* fonts */
+            font-size: ${scheme.editorFontSize}px;
+            --vscode-editor-font-family: '${scheme.editorFontName}', 'JuliaMono', 'Source Code Pro', 'STIX Two Math', monospace;
+            --vscode-editor-font-size: ${scheme.editorFontSize}px;
         }
     """.trimIndent()
     // --vscode-diffEditor-insertedTextBackground: ${TextAttributesKeys.hexOf(scheme, TextAttributesKeys.InsertedText)};

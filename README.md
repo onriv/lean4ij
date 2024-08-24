@@ -26,8 +26,6 @@ This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connec
 The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
 ## Usage
 
-Since the font used in infoview-app is hardcoded to [Julia Mono](https://juliamono.netlify.app/) hence it's also recommended temporally to set the font as Julia.
-
 The LSP server is start as any lean file is open in the Editor.
 
 Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.

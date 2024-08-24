@@ -71,6 +71,8 @@ class ExternalInfoViewService(val project: Project) {
                     // TODO the infoview app seems doing nothing with file progress
                     //      hence maybe skip it?
                     val event = InfoviewEvent("serverNotification", it)
+                    // TODO does this require synchronization?
+                    notificationMessages.add(event)
                     events.emit(event)
                 }
             }
@@ -133,6 +135,15 @@ class ExternalInfoViewService(val project: Project) {
     }
 
     private val events = MutableSharedFlow<InfoviewEvent>()
+
+    /**
+     * TODO here we send all old notificationMessages to new connections that
+     *      starts after the server and the editor has been initialized
+     *      it may cause by restarting the infoview only or starting
+     *      a new tab in the browser
+     *      Not sure if the infoview is designed in such a way or not, it's kind of lazy
+     */
+    val notificationMessages : MutableList<InfoviewEvent> = mutableListOf()
 
     /**
      * This is for showing the goal without moving the cursor at the startup

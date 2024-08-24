@@ -345,8 +345,8 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    fun publishDiagnostics(diagnostics: List<Diagnostic>) {
-        for (d in diagnostics) {
+    fun publishDiagnostics(diagnostics: PublishDiagnosticsParams) {
+        for (d in diagnostics.diagnostics) {
             buildWindowService.addBuildEvent(file, d.message)
         }
     }

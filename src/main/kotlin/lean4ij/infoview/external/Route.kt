@@ -2,8 +2,6 @@ package lean4ij.infoview.external
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
-import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.*
 import com.intellij.openapi.project.Project
 import io.ktor.server.application.*
@@ -128,6 +126,16 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                     // This is for showing the goal without moving the cursor at the startup
                     // TODO this should be handled earlier
                     send(Frame.Text(Gson().toJson(InfoviewEvent("changedCursorLocation", it))))
+                }
+                // here it's kind of lazy accessing LeanProjectService here directly
+                // TODO here we send all old notificationMessages to new connections that
+                //      starts after the server and the editor has been initialized
+                //      it may cause by restarting the infoview only or starting
+                //      a new tab in the browser
+                //      Not sure if the infoview is designed in such a way or not, it's kind of lazy
+                // TODO and it may keep growing
+                service.notificationMessages.forEach {
+                    send(Frame.Text(Gson().toJson(it)))
                 }
                 service.events().collect {
                     send(Frame.Text(Gson().toJson(it)))

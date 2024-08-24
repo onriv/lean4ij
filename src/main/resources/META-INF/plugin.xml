@@ -78,7 +78,6 @@
 
     <applicationListeners>
         <listener class="lean4ij.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-        <listener class="lean4ij.infoview.external.UISettingsListener" topic="com.intellij.ide.ui.UISettingsListener" />
     </applicationListeners>
 
     <projectListeners>

@@ -114,49 +114,13 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                 send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme)))))
 
                 // TODO maybe this should be removed if disconnected for avoiding leak?
-                project.messageBus.connect().subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener { scheme ->
-                    // found that this respects font change, it's just that
+                project.messageBus.connect().subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener {
+                    val scheme = it ?: EditorColorsManager.getInstance().globalScheme
                     scopeIO.launch {
-                        scheme?.let{
-                            send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(it))))))
-                        }
+                        send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(scheme))))))
                     }
                 })
 
-                // TODO maybe this should be removed if disconnected for avoiding leak?
-                // ApplicationManager.getApplication().messageBus.connect()
-                // /*project.messageBus.connect()*/.subscribe<UISettingsListener>(UISettingsListener.TOPIC, UISettingsListener { uiSettings ->
-                //     scopeIO.launch {
-                //         @Suppress("NAME_SHADOWING")
-                //         val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
-                //         send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme)))))
-                //     }
-                // })
-
-                // DataManager.getInstance().dataContextFromFocusAsync
-                //     .onSuccess { context ->
-                //         val allSettings = Settings.KEY.getData(context)
-                //         if (allSettings != null) {
-                //             val fontConfigurable = allSettings.find(AppEditorFontConfigurable.ID) as? AppEditorFontConfigurable
-                //             if (fontConfigurable != null && fontConfigurable.panel != null) {
-                //                 val fontPanel = fontConfigurable.panel!!
-                //                 fontPanel.addListener(
-                //                     object : ColorAndFontSettingsListener.Abstract() {
-                //                         override fun fontChanged() {
-                //                             scopeIO.launch {
-                //                                 @Suppress("NAME_SHADOWING")
-                //                                 val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
-                //                                 send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme)))))
-                //                             }
-                //                         }
-                //                     }
-                //                 )
-                //             }
-                //         }
-                //     }
-                //     .onError {
-                //         thisLogger().error(it)
-                //     }
 
                 val serverRestarted = service.awaitInitializedResult()
                 send(Frame.Text(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted))))

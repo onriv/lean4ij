@@ -1,10 +1,13 @@
 /*copy from lean4web*/
 :root {
+    /*TODO move to theme from backend*/
     --vscode-font-weight:normal;
     /*--vscode-font-size:12px;*/
     /*--vscode-editor-font-family: 'JuliaMono', 'Source Code Pro', 'STIX Two Math', monospace;*/
+    /*TODO move to theme from backend*/
     --vscode-editor-font-weight:normal;
-    --vscode-editor-font-size:15px;
+    /*moved to theme from backend*/
+    /*--vscode-editor-font-size:15px;*/
     --vscode-foreground: var(--color616161);
     --vscode-errorForeground: #a1260d;
     --vscode-descriptionForeground: #717171;

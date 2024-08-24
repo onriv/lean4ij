@@ -27,17 +27,8 @@ class LeanFileCaretListener(private val project: Project) : CaretListener/*, Pro
     private var editor: Editor? = null
 
     fun update(editor: Editor) {
-        // TODO is it better way to get editor font change event?
-        //      ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/16305446476562-How-can-I-be-notified-when-a-user-has-changed-the-font-size
-        // (editor as EditorEx).addPropertyChangeListener(this)
-        // this.editor?.let { (it as EditorEx).removePropertyChangeListener(this) }
-
         editor.caretModel.addCaretListener(this)
         this.editor?.caretModel?.removeCaretListener(this)
         this.editor = editor
     }
-    //
-    // override fun propertyChange(evt: PropertyChangeEvent?) {
-    //     println(evt)
-    // }
 }

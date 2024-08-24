@@ -6,6 +6,12 @@
 
 ![image](https://github.com/user-attachments/assets/4cca8ddd-f336-4f8c-b5f4-b16b9e725675)
 (The screenshot is taken from [mathematics_in_lean](https://github.com/leanprover-community/mathematics_in_lean))
+and some vedio:
+
+https://github.com/user-attachments/assets/25757345-0249-4999-adc7-7dadf94c8b0e
+
+
+
 <!-- Plugin description -->
 A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 

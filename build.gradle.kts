@@ -45,20 +45,13 @@ dependencies {
     // and https://intellij-support.jetbrains.com/hc/en-us/community/posts/360009759780-Error-while-launching-a-coroutine
     // for the exclusion
     // for intellij idea plugin it should not include coroutines
-    // TODO this must be -jvm for exclude works...
-    //      is it because that only children but not all descendant
-    implementation("io.ktor:ktor-server-core-jvm") {
-        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
-        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
-    }
-    implementation("io.ktor:ktor-server-netty-jvm") {
-        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
-        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
-    }
-    implementation("io.ktor:ktor-server-websockets-jvm") {
-        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
-        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
-    }
+    // ref: https://github.com/hfhbd/kobol/blob/main/intellij-plugin/build.gradle.kts#L30
+    // exclusions have been moved to configurations.runtimeClasspath
+    // TODO weird, even moved to configurations.runtimeClasspath, here it still requires depending the jvm version
+    //      directly
+    implementation("io.ktor:ktor-server-core-jvm")
+    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-websockets-jvm")
     // implementation()
     // for the version, see:
     // https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#coroutinesLibraries
@@ -240,6 +233,12 @@ tasks.test {
     // ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/4407334950290-jarFiles-is-not-set-for-PluginDescriptor
     // for resolving error "jarFiles is not set for PluginDescriptor"
     systemProperty("idea.force.use.core.classloader", "true")
+}
+
+// ref: https://github.com/hfhbd/kobol/blob/main/intellij-plugin/build.gradle.kts#L30
+configurations.runtimeClasspath {
+    exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
+    exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
 }
 
 fun fetchLatestLsp4ijNightlyVersion(): String {

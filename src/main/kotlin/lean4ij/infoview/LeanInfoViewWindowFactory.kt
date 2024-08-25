@@ -2,6 +2,8 @@ package lean4ij.infoview
 
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.LogicalPosition
@@ -12,8 +14,11 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
+import lean4ij.project.LeanProjectService
 
 
 /**
@@ -89,17 +94,13 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO render message
             // TODO this seems kind of should be put inside rendering, check how to do this
             // TODO maybe it's too broad, maybe only createEditor in EDT
-            ApplicationManager.getApplication().invokeLater {
-                val infoViewWindowEditorEx: EditorEx = infoViewWindow.createEditor()
-                infoViewWindowEditorEx.document.setText(interactiveInfoBuilder.toString())
-                val support = EditorHyperlinkSupport.get(infoViewWindowEditorEx)
-                infoViewWindow.setContent(infoViewWindowEditorEx.component)
-                // TODO does it require new object for each update?
-                //      it seems so, otherwise the hyperlinks seems mixed and requires remove
-                //      but still, maybe only one is better, try to remove old hyperlinks
-                //      check if multiple editors would leak or not
-                val mouseMotionListener = InfoviewMouseMotionListener(infoViewWindow, support, file, logicalPosition, interactiveGoals, interactiveTermGoal)
-                infoViewWindowEditorEx.addEditorMouseMotionListener(mouseMotionListener)
+            val scope = project.service<LeanProjectService>().scope
+            // The scope.launch here is mainly for the editor
+            // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html
+            // TODO minimize the invoke later range
+            scope.launch(Dispatchers.EDT) {
+                infoViewWindow.updateEditorMouseMotionListener(interactiveInfoBuilder.toString(), file, logicalPosition, // TODO this should add some UT for the rendering
+                    interactiveGoals, interactiveTermGoal)
             }
         }
 

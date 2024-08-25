@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import lean4ij.util.notify
 import org.eclipse.lsp4j.InitializeResult
 import java.io.File
 import java.net.URL
@@ -121,12 +122,9 @@ class ExternalInfoViewService(val project: Project) {
         // TODO not easier to show though
         // GotItTooltip("externalInfoView", tooltipMessage).show()
 
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup("Custom Notification Group")
-            .createNotification("infoview server start at", NotificationType.INFORMATION)
-            // .setListener(NotificationListener.URL_OPENING_LISTENER)
-            .addAction(BrowseNotificationAction(url, url))
-            .notify(project);
+        project.notify("infoview server start at") {
+            it.addAction(BrowseNotificationAction(url, url))
+        }
 
         buildWindowService.addBuildEvent(fakeFile, message)
         buildWindowService.endBuild(fakeFile)

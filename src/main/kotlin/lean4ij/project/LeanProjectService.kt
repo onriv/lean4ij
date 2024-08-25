@@ -112,6 +112,9 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         _languageServer = CompletableDeferred()
     }
 
+    /**
+     * TODO [lean4ij.lsp.LeanLanguageServerProvider.setServerCommand] contains some duplicated logic for this
+     */
     fun isLeanProject(): Boolean {
         return Path(project.basePath!!, "lean-toolchain").toFile().isFile
     }

@@ -6,11 +6,9 @@
 
 ![image](https://github.com/user-attachments/assets/4cca8ddd-f336-4f8c-b5f4-b16b9e725675)
 (The screenshot is taken from [mathematics_in_lean](https://github.com/leanprover-community/mathematics_in_lean))
-and some vedio:
+and some video:
 
 https://github.com/user-attachments/assets/25757345-0249-4999-adc7-7dadf94c8b0e
-
-
 
 <!-- Plugin description -->
 A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
@@ -31,6 +29,8 @@ This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connec
 
 The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
 ## Usage
+
+For currently there is no functionality of creating a project or setting up a project. Before open any lean project with it please first testing if the project has set up the toolchain correctly. Run any command like `elan which lake` or `lake exe cache get`, etc.
 
 The LSP server is start as any lean file is open in the Editor. If it not behaves correctly, try firing a restart action.
 
@@ -74,6 +74,7 @@ and todos
   - [x] popup
   - [ ] pop up style, fonts, clickable links, etc
   - [ ] color
+  - [x] make the editor singleton  
 - [ ] mathlib4 seems always failed starting the language server
   this is because elan download lake while starting lsp, not fixed yet
 - [x] infoview toolwindow in jcef

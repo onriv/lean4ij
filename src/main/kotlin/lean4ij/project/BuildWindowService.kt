@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import lean4ij.util.notifyErr
 
 open class BuildEvent(val file: String)
 class BuildStart(file: String): BuildEvent(file)
@@ -103,10 +104,7 @@ class BuildWindowService(val project: Project) {
                                 // }
                                 fileProgress.cancel()
                                 builds.remove(s.file)
-                                NotificationGroupManager.getInstance()
-                                    .getNotificationGroup("Custom Notification Group") // TODO notification group is not in bundle
-                                    .createNotification("Build failed, check build window for detail", NotificationType.ERROR)
-                                    .notify(project);
+                                project.notifyErr("Build failed, check build window for detail")
                             } catch(ex : Exception) {
                                 throw ex
                             }

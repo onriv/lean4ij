@@ -2,6 +2,7 @@ package lean4ij.infoview// TODO removed for using internal api:
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
@@ -11,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import lean4ij.lsp.data.CodeWithInfosTag
 import lean4ij.lsp.data.InteractiveInfoParams
@@ -31,6 +34,7 @@ import javax.swing.ScrollPaneConstants
  * TODO remove the internal api used here: DocumentationHtmlUtil.getDocPopupPreferredMinWidth()
  */
 class CodeWithInfosDocumentationHyperLink(
+    val scope: CoroutineScope,
     val toolWindow: LeanInfoViewWindow,
     val file: VirtualFile,
     val logicalPosition: LogicalPosition,
@@ -64,7 +68,9 @@ class CodeWithInfosDocumentationHyperLink(
             val sb = StringBuilder()
             val typeStr = infoToInteractive.type?.toInfoViewString(sb, null) ?: ""
             val exprStr = infoToInteractive.exprExplicit?.toInfoViewString(sb, null) ?: ""
-            ApplicationManager.getApplication().invokeLater {
+            // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html
+            // TODO here must limit the range in EDT
+            launch(Dispatchers.EDT) {
                 createPopupPanel("$exprStr : $typeStr", htmlDoc)
             }
         }
@@ -89,12 +95,8 @@ class CodeWithInfosDocumentationHyperLink(
         return docPanel
     }
 
-    fun createExprPanel(typeAndExpr: String): EditorEx {
-        // This is EDT
-        if (toolWindow.editor == null) {
-            toolWindow.editor = toolWindow.createEditor()
-        }
-        val editor = toolWindow.editor!!
+    suspend fun createExprPanel(typeAndExpr: String): EditorEx {
+        val editor = toolWindow.popupEditor.await()
         editor.document.setText(typeAndExpr)
         // TODO DRY
         val toolWindowSize = toolWindow.toolWindow.component.size
@@ -109,7 +111,7 @@ class CodeWithInfosDocumentationHyperLink(
         return editor
     }
 
-    fun createPopupPanel(typeAndExpr: String, doc: String?) {
+    suspend fun createPopupPanel(typeAndExpr: String, doc: String?) {
         val factory = JBPopupFactory.getInstance()
         val typeAndExprPanel = createExprPanel(typeAndExpr)
         val jPanel = JPanel(VerticalLayout(1))

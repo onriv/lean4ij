@@ -3,12 +3,15 @@ package lean4ij.infoview
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import kotlinx.coroutines.CoroutineScope
 import lean4ij.lsp.data.CodeWithInfos
 import lean4ij.lsp.data.CodeWithInfosTag
 import lean4ij.lsp.data.InteractiveGoals
@@ -19,6 +22,7 @@ import java.awt.Color
  * TODO this class should require some refactor
  */
 class InfoviewMouseMotionListener(
+    private val scope: CoroutineScope,
     private val infoViewWindow: LeanInfoViewWindow,
     private val support: EditorHyperlinkSupport,
     private val file: VirtualFile,
@@ -66,11 +70,15 @@ class InfoviewMouseMotionListener(
             c.parent!!.endOffset,
             object : TextAttributes() {
                 override fun getBackgroundColor(): Color {
-                    // TODO scheme this color
-                    return Color.decode("#add6ff")
+                    // TODO document this
+                    // TODO should scheme be cache?
+                    val scheme = EditorColorsManager.getInstance().globalScheme
+                    // TODO customize attr? or would backgroundColor null?
+                    //      indeed here it can be null, don't know why Kotlin does not mark it as error
+                    return scheme.getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES).backgroundColor
                 }
             },
-            CodeWithInfosDocumentationHyperLink(infoViewWindow, file, logicalPosition, codeWithInfosTag,
+            CodeWithInfosDocumentationHyperLink(scope, infoViewWindow, file, logicalPosition, codeWithInfosTag,
                 RelativePoint(e.mouseEvent) )
         )
     }

@@ -17,14 +17,10 @@ A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 
 This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 lsp server. Please install that first.
 
-- (Unsupported yet) ~~Using the IDE built-in plugin system:~~
-
-  `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
+- Using the IDE built-in plugin system: `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
   `Install`
 
-- Manually:
-
-  Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually using
+- Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually using
   `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...`
 
 The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
@@ -36,7 +32,7 @@ The LSP server is start as any lean file is open in the Editor. If it not behave
 
 Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.
 
-Infoview is supported using [lean4-infoview,](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it can be started from a browser or the internal [JCEF] infoview toolwindow.
+Infoview is supported using [lean4-infoview,](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it can be started from a browser or the internal [JCEF] infoview toolwindow. If it not behaves correctly, try firing a restart action too.
 
 Messages and logs about the lean lsp server can be found in the language server tool window after setting the level to message or trace, check more information about this in [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij).
 ### Actions
@@ -58,7 +54,7 @@ Please check [DEVELOP.md](./DEVELOP.md).
 
 ## Known Issues
 
-The plugin is still on a very early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
+The plugin is still on an early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
 
 and todos
 - [x] file progressing seems block UI thread in some cases 

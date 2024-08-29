@@ -116,14 +116,15 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
     }
 
     companion object {
-        val gson = GsonBuilder()
+        /**
+         * TODO here it can be some refactor to DRY
+         */
+        val gson: Gson = GsonBuilder()
             .registerTypeAdapter(CodeWithInfos::class.java, object : JsonDeserializer<CodeWithInfos> {
-                override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): CodeWithInfos? {
+                override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): CodeWithInfos {
                     if (p0.isJsonObject && p0.asJsonObject.has("tag")) {
                         @Suppress("NAME_SHADOWING")
                         val p1 = p0.asJsonObject.getAsJsonArray("tag")
-
-                        @Suppress("NAME_SHADOWING")
                         val f0: SubexprInfo = p2.deserialize(p1.get(0), SubexprInfo::class.java)
                         val f1: CodeWithInfos = p2.deserialize(p1.get(1), CodeWithInfos::class.java)
                         return CodeWithInfosTag(f0, f1)
@@ -132,8 +133,6 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
                         @Suppress("NAME_SHADOWING")
                         val p1 = p0.asJsonObject.getAsJsonArray("append")
 
-                        @Suppress("NAME_SHADOWING")
-                        val p2 = p2!!
                         val r: MutableList<CodeWithInfos> = ArrayList()
                         for (e in p1) {
                             r.add(p2.deserialize(e, CodeWithInfos::class.java))
@@ -147,6 +146,26 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
                     }
                     throw IllegalStateException(p0.toString())
                 }
+            })
+            .registerTaggedText<MsgEmbed>()
+            .registerTypeAdapter(MsgEmbed::class.java, object :JsonDeserializer<MsgEmbed> {
+                override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): MsgEmbed {
+                    // TODO these and all around deserializer is very similar, maybe refactor them
+                    if (p0.isJsonObject && p0.asJsonObject.has("expr")) {
+                        @Suppress("NAME_SHADOWING")
+                        val p1 = p0.asJsonObject.getAsJsonObject("expr")
+                        val f1: CodeWithInfos = p2.deserialize(p1, CodeWithInfos::class.java)
+                        return MsgEmbedExpr(f1)
+                    }
+                    if (p0.isJsonObject && p0.asJsonObject.has("goal")) {
+                        @Suppress("NAME_SHADOWING")
+                        val p1 = p0.asJsonObject.getAsJsonObject("goal")
+                        val f1: InteractiveGoal = p2.deserialize(p1, InteractiveGoal::class.java)
+                        return MsgEmbedGoal(f1)
+                    }
+                    throw IllegalStateException(p0.toString())
+                }
+
             })
             .registerTypeAdapter(RpcCallParams::class.java, object : JsonDeserializer<RpcCallParams> {
                 override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): RpcCallParams {
@@ -167,4 +186,42 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
             })
             .create()
     }
+}
+
+/**
+ * this is hinted by copilot
+ * TODO does it already exists in some library? I think it must be
+ * TODO add the log for it with the old scala log also for similar purpose
+ *      and in fact the only crucial part it
+ *      val type = object : TypeToken<TaggedText<T>>() {}.type
+ *      all other is already support in Gson (kind of forgetting this)
+ */
+inline fun <reified T> GsonBuilder.registerTaggedText(): GsonBuilder {
+    val type = object : TypeToken<TaggedText<T>>() {}.type
+    return this.registerTypeAdapter(type, object : JsonDeserializer<TaggedText<T>> {
+        override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): TaggedText<T> {
+            if (p0.isJsonObject && p0.asJsonObject.has("tag")) {
+                @Suppress("NAME_SHADOWING")
+                val p1 = p0.asJsonObject.getAsJsonArray("tag")
+                val f0: T = p2.deserialize(p1.get(0), T::class.java)
+                val f1: TaggedText<T> = p2.deserialize(p1.get(1), type)
+                return TaggedTextTag(f0, f1)
+            }
+            if (p0.isJsonObject && p0.asJsonObject.has("append")) {
+                @Suppress("NAME_SHADOWING")
+                val p1 = p0.asJsonObject.getAsJsonArray("append")
+                val r: MutableList<TaggedText<T>> = ArrayList()
+                for (e in p1) {
+                    r.add(p2.deserialize(e, type))
+                }
+                return TaggedTextAppend(r)
+            }
+            if (p0.isJsonObject && p0.asJsonObject.has("text")) {
+                @Suppress("NAME_SHADOWING")
+                val p1 = p0.asJsonObject.getAsJsonPrimitive("text").asString
+                return TaggedTextText(p1)
+            }
+            throw IllegalStateException(p0.toString())
+        }
+    })
 }

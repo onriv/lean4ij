@@ -2,6 +2,8 @@ package lean4ij.infoview.external
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.*
 import com.intellij.openapi.project.Project
 import io.ktor.server.application.*
@@ -22,6 +24,7 @@ import lean4ij.lsp.data.RpcCallParamsRaw
 import lean4ij.lsp.data.RpcConnectParams
 import java.awt.Color
 
+private val logger = logger<ExternalInfoViewService>()
 
 /**
  * copy from https://github.com/ktorio/ktor-samples/blob/main/sse/src/main/kotlin/io/ktor/samples/sse/SseApplication.kt
@@ -29,7 +32,6 @@ import java.awt.Color
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) : Route.() -> Unit = {
-
     /**
      * see: https://ktor.io/docs/server-serving-spa.html#serve-customize
      * and https://ktor.io/docs/server-static-content.html
@@ -106,26 +108,27 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
      */
     webSocket("/ws") {
         try {
-            // send(Frame.Text("connected"))
             val outgoingJob = launch {
                 val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
-                send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme)))))
+                sendWithLog(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme))))
 
                 // TODO maybe this should be removed if disconnected for avoiding leak?
                 project.messageBus.connect().subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener {
                     val scheme = it ?: EditorColorsManager.getInstance().globalScheme
                     scopeIO.launch {
-                        send(Frame.Text(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(scheme))))))
+                        @Suppress("NAME_SHADOWING")
+                        val themeJson = Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(scheme))))
+                        logger.trace(themeJson)
+                        sendWithLog(themeJson)
                     }
                 })
 
-
                 val serverRestarted = service.awaitInitializedResult()
-                send(Frame.Text(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted))))
+                sendWithLog(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted)))
                 service.previousCursorLocation?.let {
                     // This is for showing the goal without moving the cursor at the startup
                     // TODO this should be handled earlier
-                    send(Frame.Text(Gson().toJson(InfoviewEvent("changedCursorLocation", it))))
+                    sendWithLog(Gson().toJson(InfoviewEvent("changedCursorLocation", it)))
                 }
                 // here it's kind of lazy accessing LeanProjectService here directly
                 // TODO here we send all old notificationMessages to new connections that
@@ -135,10 +138,10 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                 //      Not sure if the infoview is designed in such a way or not, it's kind of lazy
                 // TODO and it may keep growing
                 service.notificationMessages.forEach {
-                    send(Frame.Text(Gson().toJson(it)))
+                    sendWithLog(Gson().toJson(it))
                 }
                 service.events().collect {
-                    send(Frame.Text(Gson().toJson(it)))
+                    sendWithLog(Gson().toJson(it))
                 }
             }
             runCatching {
@@ -147,13 +150,15 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                     //      is using consumeEach, but I am not familiar with it
                     val frame = incoming.receive()
                     if (frame is Frame.Text) {
-                        val (requestId, method, data) = frame.readText().split(Regex(","), 3)
+                        val text = frame.readText()
+                        logger.trace("ws received: $text")
+                        val (requestId, method, data) = text.split(Regex(","), 3)
                         if (method == "createRpcSession") {
                             launch {
                                 val params: RpcConnectParams = fromJson(data)
                                 val session = service.getSession(params.uri)
                                 val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
-                                send(Gson().toJson(resp))
+                                sendWithLog(Gson().toJson(resp))
                             }
                         }
                         if (method == "sendClientRequest") {
@@ -161,7 +166,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                                 val params: RpcCallParamsRaw = fromJson(data)
                                 val ret = service.rpcCallRaw(params)
                                 val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
-                                send(Gson().toJson(resp))
+                                sendWithLog(Gson().toJson(resp))
                             }
                         }
                     }
@@ -181,6 +186,16 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
             ex.cause?.cause?.printStackTrace()
             ex.cause?.printStackTrace()
             ex.printStackTrace()
+        }
+    }
+
+    post("/rpc/debug") {
+        val params: RpcCallParamsRaw = call.receiveJson()
+        val ret = service.rpcCallRaw(params)
+        if (ret == null) {
+            call.respond("null")
+        } else {
+            call.respondJson(ret!!)
         }
     }
 
@@ -253,6 +268,12 @@ private suspend inline fun <reified T> ApplicationCall.receiveJson(): T {
 private suspend fun ApplicationCall.respondJson(a: Any) {
     respond(toJson(a))
 }
+
+private suspend fun WebSocketSession.sendWithLog(msg: String) {
+    logger.trace("ws send: $msg")
+    send(msg)
+}
+
 inline fun <reified T> fromJson(json: String) : T {
     return LeanLanguageServer.gson.fromJson(json, T::class.java)
 }

@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import lean4ij.infoview.external.JcefInfoviewService
 
-class ReloadJcefInfoview : AnAction() {
+class RestartJcefInfoview : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         e.project?.service<JcefInfoviewService>()?.reload()
     }

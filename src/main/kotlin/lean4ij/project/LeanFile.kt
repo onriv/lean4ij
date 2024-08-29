@@ -25,7 +25,6 @@ import lean4ij.util.LspUtil
 import lean4ij.util.step
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import java.nio.charset.StandardCharsets
 import kotlin.math.min
 
@@ -173,15 +172,18 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val interactiveGoalsParams = InteractiveGoalsParams(session, params, textDocument, position)
             val interactiveTermGoalParams = InteractiveTermGoalParams(session, params, textDocument, position)
             // TODO how to determine which diagnostic get?
-            // val diagnosticsParams = InteractiveDiagnosticsParams()
+            val line = logicalPosition.line
+            val diagnosticsParams = InteractiveDiagnosticsParams(session, LineRangeParam(LineRange(line, line+1)), textDocument, position)
             val interactiveGoalsAsync = async { file.getInteractiveGoals(interactiveGoalsParams) }
             val interactiveTermGoalAsync = async { file.getInteractiveTermGoal(interactiveTermGoalParams) }
+            val interactiveDiagnosticsAsync = async { file.getInteractiveDiagnostics(diagnosticsParams) }
             // val diagnostics = file.getInteractiveDiagnostics(diagnosticsParams)
             // Both interactiveGoals and interactiveTermGoal can be null and hence we pass them to
             // updateInteractiveGoal nullable
             val interactiveGoals = interactiveGoalsAsync.await()
             val interactiveTermGoal = interactiveTermGoalAsync.await()
-            LeanInfoViewWindowFactory.updateInteractiveGoal(project, virtualFile!!, logicalPosition, interactiveGoals, interactiveTermGoal)
+            val interactiveDiagnostics = interactiveDiagnosticsAsync.await()
+            LeanInfoViewWindowFactory.updateInteractiveGoal(project, virtualFile!!, logicalPosition, interactiveGoals, interactiveTermGoal, interactiveDiagnostics)
         }
     }
 
@@ -235,13 +237,13 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    suspend fun getInteractiveGoals(params: InteractiveGoalsParams): InteractiveGoals? {
+    private suspend fun getInteractiveGoals(params: InteractiveGoalsParams): InteractiveGoals? {
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().getInteractiveGoals(it)
         }
     }
 
-    suspend fun getInteractiveTermGoal(params : InteractiveTermGoalParams) : InteractiveTermGoal? {
+    private suspend fun getInteractiveTermGoal(params : InteractiveTermGoalParams) : InteractiveTermGoal? {
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().getInteractiveTermGoal(it)
         }

@@ -1,0 +1,23 @@
+
+
+POST http://localhost:63214/rpc/debug
+Content-Type: application/json
+Accept: application/json
+
+{
+    "method": "Lean.Widget.getInteractiveDiagnostics",
+    "params": {
+        "lineRange": {
+            "start": 14,
+            "end": 15
+        }
+    },
+    "sessionId": "14402205707365428796",
+    "position": {
+        "line": 14,
+        "character": 23
+    },
+    "textDocument": {
+        "uri": "file:///I:/repos/mathematics_in_lean/MIL/C02_Basics/S02_Proving_Identities_in_Algebraic_Structures.lean"
+    }
+}

@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleManager
 import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
 import lean4ij.util.OsUtil
@@ -163,4 +164,15 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
         }
     }
 
+    override fun getInitializationOptions(rootUri: VirtualFile?): Any {
+        // comparing to vscode's trace log found this
+        // without hasWidgets the rpc call Lean.Widget.getInteractiveDiagnostics
+        // returns only text,
+        // see: lean4/src/Lean/Widget/InteractiveDiagnostic.lean 221 lines, the mapToInteractive method
+        //
+        return mapOf(
+            "editDelay" to 200,
+            "hasWidgets" to true
+        )
+    }
 }

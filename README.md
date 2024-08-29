@@ -37,15 +37,13 @@ Infoview is supported using [lean4-infoview,](https://github.com/leanprover/vsco
 Messages and logs about the lean lsp server can be found in the language server tool window after setting the level to message or trace, check more information about this in [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij).
 ### Actions
 
-| action id              | action text               | meaning                     |
-|------------------------|---------------------------|-----------------------------|
-| OpenLeanInfoView       | Lean open info view       | open the infoview(swing)    |
-| RestartLeanLsp         | Restart Lean Lsp Server   | restart the  lsp server     |
-| RestartCurrentLeanFile | Restart Current Lean File | restart current file        |
-| DumpCoroutine          | Dump Coroutine            | dump coroutine for debug(*) |
-| ReloadJcefInfoview     | Reload Jcef Infoview      | reload the jcef infoview    |
+| action id              | action text                       | meaning                     |
+|------------------------|-----------------------------------|-----------------------------|
+| OpenLeanInfoView       | Lean4 : Lean open info view       | open the infoview(swing)    |
+| RestartLeanLsp         | Lean4 : Restart Lean Lsp Server   | restart the  lsp server     |
+| RestartCurrentLeanFile | Lean4 : Restart Current Lean File | restart current file        |
+| RestartJcefInfoview    | Lean4 : Restart Jcef Infoview     | restart the jcef infoview   |
 
-currently DumpCoroutine hard code outputs to `D:\dumpCoroutines.txt`, `D:\dumpCoroutinesInfo.txt`  and `D:\dumpCoroutinesInfoScopre.txt`, this action should not be used usually.
 <!-- Plugin description end -->
 
 ## Development
@@ -67,6 +65,9 @@ and todos
   - [x] show goals
   - [x] show term goal
   - [ ] show message
+  - [ ] interactive message
+  - [ ] show all messages (all messages currently is skipped for not sure when it's trigger)
+  - [ ] interactive all messages
   - [x] popup
   - [ ] pop up style, fonts, clickable links, etc
   - [ ] color
@@ -87,6 +88,8 @@ and todos
 - [ ] refactor the frontend impl (currently it's written as for feasibility test)
 - [x] all messages in the external infoview failed (via caching server notification now)
 - [ ] check why sometimes lsp requires multiple start
+- [x] all message should be interactive (check lean-infoview/src/infoview/info.tsx)
+      fixed via passing `hasWidgets` when start lsp
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

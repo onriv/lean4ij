@@ -1,13 +1,11 @@
 package lean4ij.infoview
 
-import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
@@ -16,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.project.LeanProjectService
@@ -75,8 +74,14 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         /**
          * TODO the infoview-app
          */
-        fun updateInteractiveGoal(project: Project, file: VirtualFile?, logicalPosition: LogicalPosition, // TODO this should add some UT for the rendering
-                                  interactiveGoals: InteractiveGoals?, interactiveTermGoal : InteractiveTermGoal?) {
+        fun updateInteractiveGoal(
+            project: Project,
+            file: VirtualFile?,
+            logicalPosition: LogicalPosition, // TODO this should add some UT for the rendering
+            interactiveGoals: InteractiveGoals?,
+            interactiveTermGoal: InteractiveTermGoal?,
+            interactiveDiagnostics: List<InteractiveDiagnostics>?
+        ) {
             if (file == null) {
                 return
             }
@@ -84,9 +89,16 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO implement the fold/open logic
             val interactiveInfoBuilder = StringBuilder("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
             // TODO here maybe null?
-            if (interactiveGoals != null || interactiveTermGoal != null) {
+            if (interactiveGoals != null || interactiveTermGoal != null || !interactiveDiagnostics.isNullOrEmpty()) {
                 interactiveGoals?.toInfoViewString(interactiveInfoBuilder)
                 interactiveTermGoal?.toInfoViewString(interactiveInfoBuilder)
+                if (!interactiveDiagnostics.isNullOrEmpty()) {
+                    interactiveInfoBuilder.append("▼ Messages (${interactiveDiagnostics.size})\n")
+                    interactiveDiagnostics.forEach { i ->
+                        interactiveInfoBuilder.append("▼ ${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}\n")
+                        // TODO
+                    }
+                }
             } else {
                 interactiveInfoBuilder.append("No info found.\n")
             }

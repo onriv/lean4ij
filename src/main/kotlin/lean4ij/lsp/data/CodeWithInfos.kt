@@ -25,29 +25,56 @@ abstract class CodeWithInfos {
 
 }
 
+interface InfoViewRenderable {
+    abstract fun toInfoViewString(sb : StringBuilder) : String
+}
+
 /**
  * check src/Lean/Widget/TaggedText.lean" 104 lines --16%--
  */
-open class TaggedText<T> {
-
+abstract class TaggedText<T> where T: InfoViewRenderable {
+    abstract fun toInfoViewString(interactiveInfoBuilder: StringBuilder)
 }
 
-class TaggedTextText<T>(val  text: String) : TaggedText<T>()
-
-class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>()
-
-class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<T>() {
+class TaggedTextText<T>(val  text: String) : TaggedText<T>() where T: InfoViewRenderable {
+    override fun toInfoViewString(interactiveInfoBuilder: StringBuilder) {
+        // TODO
+        println("TaggedTextText")
+    }
 }
 
-open class MsgEmbed
+class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where T: InfoViewRenderable {
+    override fun toInfoViewString(sb: StringBuilder) {
+        f0.toInfoViewString(sb)
+    }
+}
 
-class MsgEmbedExpr(val expr: CodeWithInfos) : MsgEmbed()
-class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed()
+class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<T>() where T: InfoViewRenderable {
+    override fun toInfoViewString(interactiveInfoBuilder: StringBuilder) {
+        for (taggedText in append) {
+            taggedText.toInfoViewString(interactiveInfoBuilder)
+        }
+    }
+}
+
+abstract class MsgEmbed : InfoViewRenderable
+
+class MsgEmbedExpr(val expr: CodeWithInfos) : MsgEmbed() {
+    override fun toInfoViewString(sb: StringBuilder): String {
+        return expr.toInfoViewString(sb, null)
+    }
+}
+
+class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
+    override fun toInfoViewString(sb: StringBuilder): String {
+        return goal.toInfoViewString(sb)
+    }
+}
 
 /**
  * TODO trace! Not implement yet, check src/Lean/Widget/InteractiveDiagnostic.lean" 221 lines --11%--
  *      the definition of MsgEmbed
  */
-class MsgEmbedTrace(val indent: Int, val cls: String): MsgEmbed()
+abstract class MsgEmbedTrace(val indent: Int, val cls: String): MsgEmbed()
 
-class TaggedTextMsgEmbed : TaggedText<MsgEmbed>()
+abstract class TaggedTextMsgEmbed : TaggedText<MsgEmbed>()

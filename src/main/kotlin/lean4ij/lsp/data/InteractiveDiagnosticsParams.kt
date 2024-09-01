@@ -1,5 +1,6 @@
 package lean4ij.lsp.data
 
+import io.kinference.ndarray.extensions.inferType
 import lean4ij.util.Constants
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
@@ -26,4 +27,8 @@ data class InteractiveDiagnostics(
     val range: Range,
     val severity: Int,
     val source : String,
-)
+) {
+    fun toInfoViewString(interactiveInfoBuilder: StringBuilder) {
+        message.toInfoViewString(interactiveInfoBuilder)
+    }
+}

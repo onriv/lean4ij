@@ -9,6 +9,7 @@ class InteractiveGoals(
     /**
      * This is from https://github.com/Julian/lean.nvim/blob/03f7437/lua/lean/infoview/components.lua
      * TODO implement the fold/open logic
+     * TODO should this return a string?
      */
     fun toInfoViewString(sb: StringBuilder) {
         sb.append("▼ Tactic state\n")

@@ -14,9 +14,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import lean4ij.lsp.data.InteractiveDiagnostics
-import lean4ij.lsp.data.InteractiveGoals
-import lean4ij.lsp.data.InteractiveTermGoal
+import lean4ij.lsp.data.*
 import lean4ij.project.LeanProjectService
 
 
@@ -96,6 +94,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     interactiveInfoBuilder.append("▼ Messages (${interactiveDiagnostics.size})\n")
                     interactiveDiagnostics.forEach { i ->
                         interactiveInfoBuilder.append("▼ ${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}\n")
+                        i.toInfoViewString(interactiveInfoBuilder)
                         // TODO
                     }
                 }

@@ -27,7 +27,7 @@ class InteractiveGoal(
      * TODO refactor StringBuilder into a Render
      *      all render logic should be refactored, it's inelegant and error prone
      */
-     fun toInfoViewString(sb : StringBuilder)  {
+     fun toInfoViewString(sb : StringBuilder): String {
          if (userName != null) {
              sb.append("case $userName\n")
          }
@@ -44,6 +44,7 @@ class InteractiveGoal(
          type.toInfoViewString(sb, null)
          this.endOffset = sb.length
          sb.append("\n")
+         return sb.substring(startOffset, endOffset)
      }
 
     /**

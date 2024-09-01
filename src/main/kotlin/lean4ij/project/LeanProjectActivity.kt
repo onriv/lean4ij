@@ -54,6 +54,16 @@ fun Module.addExcludeFolder(basePath: String) {
                             //      maybe it's better not using extension method
                             thisLogger().info("$path excluded")
                         } catch (ex: Exception) {
+                            /**
+                             * TODO weird:
+                             * 2024-09-01 11:30:52,799 [  11446] SEVERE - #c.i.o.m.Module - cannot exclude file://home/riv/Repos/mathematics_in_lean/.lake/packages/batteries/.lake/build/
+                             * java.lang.IllegalStateException: Exclude folder file://home/riv/Repos/mathematics_in_lean/.lake/packages/batteries/.lake/build/ must be under content entry file:///home/riv/Repos/mathematics_in_lean
+                             * 	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:123)
+                             * 	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:139)
+                             * 	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$3(LeanProjectActivity.kt:52)
+                             * 	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$4(LeanProjectActivity.kt:41)
+                             * 	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183)
+                             */
                             thisLogger().error("cannot exclude $uri", ex)
                         }
                     }

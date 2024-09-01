@@ -196,7 +196,7 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
  *      val type = object : TypeToken<TaggedText<T>>() {}.type
  *      all other is already support in Gson (kind of forgetting this)
  */
-inline fun <reified T> GsonBuilder.registerTaggedText(): GsonBuilder {
+inline fun <reified T> GsonBuilder.registerTaggedText(): GsonBuilder where T: InfoViewRenderable  {
     val type = object : TypeToken<TaggedText<T>>() {}.type
     return this.registerTypeAdapter(type, object : JsonDeserializer<TaggedText<T>> {
         override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): TaggedText<T> {

@@ -67,3 +67,4 @@ For first (and while require updating the frontend, run a `gradle buildBrowserIn
   - [✔ Lean LSP extensions](https://leanprover.zulipchat.com/#narrow/stream/113488-general/topic/.E2.9C.94.20Lean.20LSP.20extensions)
 
 
+

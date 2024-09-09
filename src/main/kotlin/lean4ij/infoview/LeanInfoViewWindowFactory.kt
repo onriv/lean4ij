@@ -87,6 +87,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO implement the fold/open logic
             val interactiveInfoBuilder = StringBuilder("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
             // TODO here maybe null?
+            // TODO refactor this
             if (interactiveGoals != null || interactiveTermGoal != null || !interactiveDiagnostics.isNullOrEmpty()) {
                 interactiveGoals?.toInfoViewString(interactiveInfoBuilder)
                 interactiveTermGoal?.toInfoViewString(interactiveInfoBuilder)
@@ -111,7 +112,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO minimize the invoke later range
             scope.launch(Dispatchers.EDT) {
                 infoViewWindow.updateEditorMouseMotionListener(interactiveInfoBuilder.toString(), file, logicalPosition, // TODO this should add some UT for the rendering
-                    interactiveGoals, interactiveTermGoal)
+                    interactiveGoals, interactiveTermGoal, interactiveDiagnostics)
             }
         }
 

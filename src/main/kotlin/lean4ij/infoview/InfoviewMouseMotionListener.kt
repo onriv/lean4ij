@@ -1,7 +1,6 @@
 package lean4ij.infoview
 
 import com.intellij.execution.impl.EditorHyperlinkSupport
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -12,10 +11,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
-import lean4ij.lsp.data.CodeWithInfos
-import lean4ij.lsp.data.CodeWithInfosTag
-import lean4ij.lsp.data.InteractiveGoals
-import lean4ij.lsp.data.InteractiveTermGoal
+import lean4ij.lsp.data.*
 import java.awt.Color
 
 /**
@@ -28,7 +24,8 @@ class InfoviewMouseMotionListener(
     private val file: VirtualFile,
     private val logicalPosition: LogicalPosition,
     private val interactiveGoals: InteractiveGoals?,
-    private val interactiveTermGoal: InteractiveTermGoal?
+    private val interactiveTermGoal: InteractiveTermGoal?,
+    private val interactiveDiagnostics: List<InteractiveDiagnostics>?
 ) : EditorMouseMotionListener {
     private var hyperLink: RangeHighlighter? = null
     override fun mouseMoved(e: EditorMouseEvent) {
@@ -45,6 +42,17 @@ class InfoviewMouseMotionListener(
         if (c == null && interactiveTermGoal != null) {
             c = interactiveTermGoal.getCodeText(e.offset)
         }
+//        // TODO make c and d both TaggedText
+//        var d : TaggedText<MsgEmbed>? = null
+//        if (c == null && interactiveDiagnostics != null) {
+//            for (diagnostic in interactiveDiagnostics) {
+//                d = diagnostic.message.getCodeText(e.offset)
+//                if (d != null) {
+//                    break
+//                }
+//            }
+//        }
+//        if (c == null && d == null) {
         if (c == null) {
             return
         }

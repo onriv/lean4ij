@@ -90,6 +90,7 @@ and todos
 - [ ] check why sometimes lsp requires multiple start
 - [x] all message should be interactive (check lean-infoview/src/infoview/info.tsx)
       fixed via passing `hasWidgets` when start lsp
+- [ ] jcef infoview style adjust
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

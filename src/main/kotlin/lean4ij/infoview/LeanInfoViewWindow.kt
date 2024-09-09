@@ -1,7 +1,6 @@
 package lean4ij.infoview
 
 import com.intellij.execution.impl.EditorHyperlinkSupport
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
@@ -15,10 +14,10 @@ import com.intellij.openapi.wm.ToolWindow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.project.LeanProjectService
-import java.util.concurrent.CompletableFuture
 import javax.swing.BorderFactory
 import javax.swing.JEditorPane
 
@@ -109,8 +108,14 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
     /**
      *  // TODO this should add some UT for the rendering
      */
-    suspend fun updateEditorMouseMotionListener(interactiveInfo: String, file: VirtualFile, logicalPosition: LogicalPosition,
-                                                interactiveGoals: InteractiveGoals?, interactiveTermGoal : InteractiveTermGoal?) {
+    suspend fun updateEditorMouseMotionListener(
+        interactiveInfo: String,
+        file: VirtualFile,
+        logicalPosition: LogicalPosition,
+        interactiveGoals: InteractiveGoals?,
+        interactiveTermGoal: InteractiveTermGoal?,
+        interactiveDiagnostics: List<InteractiveDiagnostics>?
+    ) {
         val editorEx: EditorEx = editor.await()
         editorEx.document.setText(interactiveInfo)
         val support = EditorHyperlinkSupport.get(editorEx)
@@ -122,7 +127,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         if (mouseMotionListener != null) {
             editorEx.removeEditorMouseMotionListener(mouseMotionListener!!)
         }
-        mouseMotionListener = InfoviewMouseMotionListener(leanProject.scope, this, support, file, logicalPosition, interactiveGoals, interactiveTermGoal)
+        mouseMotionListener = InfoviewMouseMotionListener(leanProject.scope, this, support, file, logicalPosition, interactiveGoals, interactiveTermGoal, interactiveDiagnostics)
         editorEx.addEditorMouseMotionListener(mouseMotionListener!!)
     }
 

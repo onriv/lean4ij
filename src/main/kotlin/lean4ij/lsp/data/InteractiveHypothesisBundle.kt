@@ -6,8 +6,8 @@ package lean4ij.lsp.data
 data class InteractiveHypothesisBundle(
     val names: List<String>,
     val fvarIds: List<String>,
-    val type: CodeWithInfos,
-    val value: CodeWithInfos? = null,
+    val type: TaggedText<SubexprInfo>,
+    val value: TaggedText<SubexprInfo>? = null,
     val isInstance: Boolean? = null,
     val isType: Boolean? = null,
     val isInserted: Boolean? = null,

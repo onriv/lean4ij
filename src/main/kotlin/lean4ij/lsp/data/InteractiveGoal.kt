@@ -2,7 +2,7 @@ package lean4ij.lsp.data
 
 class InteractiveGoal(
     val userName: String? = null,
-    val type: CodeWithInfos,
+    val type: TaggedText<SubexprInfo>,
     val mvarId: String,
     val isInserted: Boolean? = null,
     val hyps: Array<InteractiveHypothesisBundle>,
@@ -59,7 +59,7 @@ class InteractiveGoal(
      */
     fun getEndOffset() = endOffset
 
-    fun getCodeText(offset: Int) : CodeWithInfos? {
-        return type.getCodeText(offset)
+    fun getCodeText(offset: Int) : Triple<ContextInfo, Int, Int>? {
+        return type.getCodeText(offset, null)
     }
 }

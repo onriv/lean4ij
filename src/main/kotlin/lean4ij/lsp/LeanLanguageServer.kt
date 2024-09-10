@@ -120,33 +120,7 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
          * TODO here it can be some refactor to DRY
          */
         val gson: Gson = GsonBuilder()
-            .registerTypeAdapter(CodeWithInfos::class.java, object : JsonDeserializer<CodeWithInfos> {
-                override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): CodeWithInfos {
-                    if (p0.isJsonObject && p0.asJsonObject.has("tag")) {
-                        @Suppress("NAME_SHADOWING")
-                        val p1 = p0.asJsonObject.getAsJsonArray("tag")
-                        val f0: SubexprInfo = p2.deserialize(p1.get(0), SubexprInfo::class.java)
-                        val f1: CodeWithInfos = p2.deserialize(p1.get(1), CodeWithInfos::class.java)
-                        return CodeWithInfosTag(f0, f1)
-                    }
-                    if (p0.isJsonObject && p0.asJsonObject.has("append")) {
-                        @Suppress("NAME_SHADOWING")
-                        val p1 = p0.asJsonObject.getAsJsonArray("append")
-
-                        val r: MutableList<CodeWithInfos> = ArrayList()
-                        for (e in p1) {
-                            r.add(p2.deserialize(e, CodeWithInfos::class.java))
-                        }
-                        return CodeWithInfosAppend(r)
-                    }
-                    if (p0.isJsonObject && p0.asJsonObject.has("text")) {
-                        @Suppress("NAME_SHADOWING")
-                        val p1 = p0.asJsonObject.getAsJsonPrimitive("text").asString
-                        return CodeWithInfosText(p1)
-                    }
-                    throw IllegalStateException(p0.toString())
-                }
-            })
+            .registerTaggedText<SubexprInfo>()
             .registerTaggedText<MsgEmbed>()
             .registerTypeAdapter(MsgEmbed::class.java, object :JsonDeserializer<MsgEmbed> {
                 override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): MsgEmbed {
@@ -154,7 +128,7 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
                     if (p0.isJsonObject && p0.asJsonObject.has("expr")) {
                         @Suppress("NAME_SHADOWING")
                         val p1 = p0.asJsonObject.getAsJsonObject("expr")
-                        val f1: CodeWithInfos = p2.deserialize(p1, CodeWithInfos::class.java)
+                        val f1: TaggedText<SubexprInfo> = p2.deserialize(p1, object : TypeToken<TaggedText<SubexprInfo>>() {}.type)
                         return MsgEmbedExpr(f1)
                     }
                     if (p0.isJsonObject && p0.asJsonObject.has("goal")) {

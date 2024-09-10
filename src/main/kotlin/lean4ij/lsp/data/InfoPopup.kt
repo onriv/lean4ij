@@ -16,7 +16,7 @@ package lean4ij.lsp.data
  * see: lean4/src/Lean/Server/FileWorker/WidgetRequests.lean:36:10
  */
 class InfoPopup(
-    val type: CodeWithInfos?,
-    val exprExplicit: CodeWithInfos?,
+    val type: TaggedText<SubexprInfo>?,
+    val exprExplicit: TaggedText<SubexprInfo>?,
     val doc: String?
 )

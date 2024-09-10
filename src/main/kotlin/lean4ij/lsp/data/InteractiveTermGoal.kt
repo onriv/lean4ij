@@ -11,7 +11,7 @@ class InteractiveTermGoal(
     val hyps: Array<InteractiveHypothesisBundle>,
     val range: Range,
     val term: ContextInfo,
-    val type: CodeWithInfos
+    val type: TaggedText<SubexprInfo>
 ) {
     /**
      * TODO refactor StringBuilder into a Render
@@ -33,15 +33,15 @@ class InteractiveTermGoal(
     /**
      * TODO this should absolutely DRY with [lean4ij.lsp.data.InteractiveGoals.getCodeText]
      */
-    fun getCodeText(offset: Int): CodeWithInfos? {
+    fun getCodeText(offset: Int): Triple<ContextInfo, Int, Int>? {
         for (hyp in hyps) {
             val type = hyp.type
             if (type.startOffset <= offset && offset < type.endOffset) {
-                return type.getCodeText(offset)
+                return type.getCodeText(offset, null)
             }
         }
         if (type.startOffset <= offset && offset < type.endOffset) {
-            return type.getCodeText(offset)
+            return type.getCodeText(offset, null)
         }
         return null
     }

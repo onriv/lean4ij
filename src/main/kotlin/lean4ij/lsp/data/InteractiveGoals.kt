@@ -27,12 +27,12 @@ class InteractiveGoals(
      * TODO add unittest for this and the above
      * TODO this should be DRY with [lean4ij.lsp.data.InteractiveTermGoal.getCodeText]
      */
-    fun getCodeText(offset : Int) : CodeWithInfos? {
+    fun getCodeText(offset : Int) : Triple<ContextInfo, Int, Int>? {
         for (goal in goals) {
             for (hyp in goal.hyps) {
                 val type = hyp.type
                 if (type.startOffset <= offset && offset < type.endOffset) {
-                    return type.getCodeText(offset)
+                    return type.getCodeText(offset, null)
                 }
             }
             if (goal.getStartOffset() <= offset && offset < goal.getEndOffset()) {

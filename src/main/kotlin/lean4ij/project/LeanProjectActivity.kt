@@ -49,6 +49,17 @@ fun Module.addExcludeFolder(basePath: String) {
                         try {
                             // TODO it seems no working...
                             //      really weird, it seems working
+                            // TODO weird here there is an exception:
+                            //       2024-09-09 22:53:57,795 [   3408] SEVERE - #c.i.o.m.Module - cannot exclude file://home/onriv/repos/mathematics_in_lean/.lake/packages/importGraph/.lake/build/
+                            //       java.lang.IllegalStateException: Exclude folder file://home/onriv/repos/mathematics_in_lean/.lake/packages/importGraph/.lake/build/ must be under content entry file:///home/onriv/repos/mathematics_in_lean
+                            //      	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:123)
+                            //      	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:139)
+                            //      	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$3(LeanProjectActivity.kt:52)
+                            //      	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$4(LeanProjectActivity.kt:41)
+                            //      	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183)
+                            //      	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+                            //      	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+                            //      	at java.base/java.util.Iterator.forEachRemaining(Iterator.java:133)
                             contentEntry.addExcludeFolder(uri)
                             // TODO here thisLogger is Module
                             //      maybe it's better not using extension method
@@ -56,13 +67,13 @@ fun Module.addExcludeFolder(basePath: String) {
                         } catch (ex: Exception) {
                             /**
                              * TODO weird:
-                             * 2024-09-01 11:30:52,799 [  11446] SEVERE - #c.i.o.m.Module - cannot exclude file://home/riv/Repos/mathematics_in_lean/.lake/packages/batteries/.lake/build/
-                             * java.lang.IllegalStateException: Exclude folder file://home/riv/Repos/mathematics_in_lean/.lake/packages/batteries/.lake/build/ must be under content entry file:///home/riv/Repos/mathematics_in_lean
-                             * 	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:123)
-                             * 	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:139)
-                             * 	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$3(LeanProjectActivity.kt:52)
-                             * 	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$4(LeanProjectActivity.kt:41)
-                             * 	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183)
+                             *      2024-09-01 11:30:52,799 [  11446] SEVERE - #c.i.o.m.Module - cannot exclude file://home/riv/Repos/mathematics_in_lean/.lake/packages/batteries/.lake/build/
+                             *      java.lang.IllegalStateException: Exclude folder file://home/riv/Repos/mathematics_in_lean/.lake/packages/batteries/.lake/build/ must be under content entry file:///home/riv/Repos/mathematics_in_lean
+                             *      	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:123)
+                             *      	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:139)
+                             *      	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$3(LeanProjectActivity.kt:52)
+                             *      	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$4(LeanProjectActivity.kt:41)
+                             *      	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183)
                              */
                             thisLogger().error("cannot exclude $uri", ex)
                         }

@@ -1,7 +1,6 @@
 package lean4ij.infoview// TODO removed for using internal api:
 
 import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.LogicalPosition
@@ -15,7 +14,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import lean4ij.lsp.data.CodeWithInfosTag
+import lean4ij.lsp.data.ContextInfo
 import lean4ij.lsp.data.InteractiveInfoParams
 import lean4ij.lsp.data.Position
 import lean4ij.project.LeanProjectService
@@ -38,7 +37,7 @@ class CodeWithInfosDocumentationHyperLink(
     val toolWindow: LeanInfoViewWindow,
     val file: VirtualFile,
     val logicalPosition: LogicalPosition,
-    val codeWithInfosTag: CodeWithInfosTag,
+    val contextInfo: ContextInfo,
     val point: RelativePoint
 ) : HyperlinkInfo {
     override fun navigate(project: Project) {
@@ -52,7 +51,7 @@ class CodeWithInfosDocumentationHyperLink(
             val position = Position(line = logicalPosition.line, character = logicalPosition.column)
             val rpcParams = InteractiveInfoParams(
                 sessionId = session,
-                params = codeWithInfosTag.f0.info,
+                params = contextInfo,
                 textDocument = textDocument,
                 position = position
             )

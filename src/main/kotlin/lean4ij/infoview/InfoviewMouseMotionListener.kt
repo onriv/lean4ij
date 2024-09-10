@@ -1,6 +1,7 @@
 package lean4ij.infoview
 
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -35,7 +36,7 @@ class InfoviewMouseMotionListener(
         if (!e.isOverText) {
             return
         }
-        var c : CodeWithInfos? = null
+        var c : Triple<ContextInfo, Int, Int>? = null
         if (interactiveGoals != null) {
             c = interactiveGoals.getCodeText(e.offset)
         }
@@ -44,38 +45,34 @@ class InfoviewMouseMotionListener(
         }
 //        // TODO make c and d both TaggedText
 //        var d : TaggedText<MsgEmbed>? = null
-//        if (c == null && interactiveDiagnostics != null) {
-//            for (diagnostic in interactiveDiagnostics) {
-//                d = diagnostic.message.getCodeText(e.offset)
-//                if (d != null) {
-//                    break
-//                }
-//            }
-//        }
+        if (c == null && interactiveDiagnostics != null) {
+            for (diagnostic in interactiveDiagnostics) {
+                c = diagnostic.message.getCodeText(e.offset, null)
+                if (c != null) {
+                    break
+                }
+            }
+        }
 //        if (c == null && d == null) {
         if (c == null) {
             return
         }
-        var codeWithInfosTag : CodeWithInfosTag? = null
-        // TODO check if these parent-stuff can be cleaner
-        if (c is CodeWithInfosTag) {
-            codeWithInfosTag = c
-        } else if (c.parent != null && c.parent!! is CodeWithInfosTag) {
-            codeWithInfosTag = c.parent!! as CodeWithInfosTag
-        } else if (c.parent != null && c.parent!!.parent != null && c.parent!!.parent!! is CodeWithInfosTag) {
-            codeWithInfosTag = c.parent!!.parent!! as CodeWithInfosTag
-        }
-        if (codeWithInfosTag == null) {
-            return
-        }
+//        var codeWithInfosTag : TaggedTextTag<*>? = null
+//        // TODO check if these parent-stuff can be cleaner
+//        if (c is TaggedTextTag<*>) {
+//            codeWithInfosTag = c
+//        } else if (c.parent != null && c.parent!! is TaggedTextTag<*>) {
+//            codeWithInfosTag = c.parent!! as TaggedTextTag<*>
+//        } else if (c.parent != null && c.parent!!.parent != null && c.parent!!.parent!! is TaggedTextTag<*>) {
+//            codeWithInfosTag = c.parent!!.parent!! as TaggedTextTag<*>
+//        }
+//        if (codeWithInfosTag == null) {
+//            return
+//        }
 
-        // TODO check if these parent-stuff can be cleaner
-        if (c.parent == null) {
-            return
-        }
         hyperLink = support.createHyperlink(
-            c.parent!!.startOffset,
-            c.parent!!.endOffset,
+            c.second,
+            c.third,
             object : TextAttributes() {
                 override fun getBackgroundColor(): Color {
                     // TODO document this
@@ -86,7 +83,7 @@ class InfoviewMouseMotionListener(
                     return scheme.getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES).backgroundColor
                 }
             },
-            CodeWithInfosDocumentationHyperLink(scope, infoViewWindow, file, logicalPosition, codeWithInfosTag,
+            CodeWithInfosDocumentationHyperLink(scope, infoViewWindow, file, logicalPosition, c.first,
                 RelativePoint(e.mouseEvent) )
         )
     }

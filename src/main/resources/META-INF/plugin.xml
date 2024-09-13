@@ -27,7 +27,7 @@
         <!-- indeed, this cannot use-->
         <!-- <fileType-->
         <!--         name="Lean4 File"-->
-        <!--         implementationClass="lean4ijuage.Lean4FileType"-->
+        <!--         implementationClass="lean4ij.language.Lean4FileType"-->
         <!--         fieldName="INSTANCE"-->
         <!--         language="Lean4"-->
         <!--         extensions="lean"/>-->
@@ -41,6 +41,12 @@
         <notificationGroup id="Custom Notification Group"
                            displayType="BALLOON"
                            key="notification.group.name"/>
+
+        <codeInsight.inlayProviderFactory
+                implementation="lean4ij.language.InfoviewInlayHintsProviderFactory"
+        />
+        
+
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="lean"

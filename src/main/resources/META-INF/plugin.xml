@@ -42,10 +42,16 @@
                            displayType="BALLOON"
                            key="notification.group.name"/>
 
-        <codeInsight.inlayProviderFactory
-                implementation="lean4ij.language.InfoviewInlayHintsProviderFactory"
+        <codeInsight.declarativeInlayProvider
+                language="textmate"
+                implementationClass="lean4ij.language.Lean4PlaceTypeDeclarativeInlayHintsProvider"
+                isEnabledByDefault="true"
+                group="TYPES_GROUP"
+                providerId="lean.placeholder.types"
+                bundle="messages.MyBundle"
+                nameKey="settings.inlay.placeholder.types.name"
+                descriptionKey="settings.inlay.placeholder.types.name"
         />
-        
 
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">

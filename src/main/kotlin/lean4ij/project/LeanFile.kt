@@ -243,7 +243,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    private suspend fun getInteractiveTermGoal(params : InteractiveTermGoalParams) : InteractiveTermGoal? {
+    public suspend fun getInteractiveTermGoal(params : InteractiveTermGoalParams) : InteractiveTermGoal? {
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().getInteractiveTermGoal(it)
         }

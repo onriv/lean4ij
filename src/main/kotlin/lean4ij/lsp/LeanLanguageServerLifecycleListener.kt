@@ -9,6 +9,7 @@ import com.redhat.devtools.lsp4ij.ServerStatus
 import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleListener
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.PublishDiagnosticsParams
+import org.eclipse.lsp4j.SemanticTokens
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
@@ -36,9 +37,14 @@ class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServer
         if (languageServer.serverDefinition.id != Constants.LEAN_LANGUAGE_SERVER_ID) {
             return
         }
-        (message as? ResponseMessage)?.let { (it.result as? InitializeResult)?.let {it2 ->
-            leanProjectService.setInitializedResult(it2)
-        }}
+        if (message is ResponseMessage) {
+            if (message.result is InitializeResult) {
+                leanProjectService.setInitializedResult(message.result as InitializeResult)
+            }
+            // This is not customize used in yet
+            // if (message.result is SemanticTokens) {
+            // }
+        }
         (message as? NotificationMessage)?.let {
             // TODO for it seems no duplicated method can be defined for current version of lsp4j, we use
             //      listener here

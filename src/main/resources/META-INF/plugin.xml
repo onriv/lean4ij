@@ -44,15 +44,25 @@
 
         <codeInsight.declarativeInlayProvider
                 language="textmate"
-                implementationClass="lean4ij.language.Lean4PlaceTypeDeclarativeInlayHintsProvider"
+                implementationClass="lean4ij.language.OmitTypeInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
-                providerId="lean.placeholder.types"
+                providerId="lean.def.omit.type"
                 bundle="messages.MyBundle"
-                nameKey="settings.inlay.placeholder.types.name"
-                descriptionKey="settings.inlay.placeholder.types.name"
+                nameKey="settings.lean.def.omit.type.name"
+                descriptionKey="settings.lean.def.omit.type.name"
         />
-        <lang.foldingBuilder language="textmate" implementationClass="lean4ij.language.PlaceholderFolding"/>
+        <codeInsight.declarativeInlayProvider
+                language="textmate"
+                implementationClass="lean4ij.language.PlaceHolderInlayHintsProvider"
+                isEnabledByDefault="true"
+                group="OTHER_GROUP"
+                providerId="lean.placeholder.value"
+                bundle="messages.MyBundle"
+                nameKey="settings.lean.placeholder.value.name"
+                descriptionKey="settings.lean.placeholder.value.name"
+        />
+        <!-- <lang.foldingBuilder language="textmate" implementationClass="lean4ij.language.PlaceholderFolding"/> -->
 
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">

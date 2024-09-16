@@ -46,12 +46,13 @@
                 language="textmate"
                 implementationClass="lean4ij.language.Lean4PlaceTypeDeclarativeInlayHintsProvider"
                 isEnabledByDefault="true"
-                group="TYPES_GROUP"
+                group="OTHER_GROUP"
                 providerId="lean.placeholder.types"
                 bundle="messages.MyBundle"
                 nameKey="settings.inlay.placeholder.types.name"
                 descriptionKey="settings.inlay.placeholder.types.name"
         />
+        <lang.foldingBuilder language="textmate" implementationClass="lean4ij.language.PlaceholderFolding"/>
 
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">

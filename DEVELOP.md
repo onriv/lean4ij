@@ -24,6 +24,8 @@ currently the project is using [Lsp4ij](https://github.com/redhat-developer/lsp4
 For some document on lean4 lsp server, please check
 - [src/Lean/Server](https://github.com/leanprover/lean4/tree/master/src/Lean/Server)
 
+Showing log in vscode with `lean.trace.server` set to `verbose`.
+
 # Highlight
 
 The basic syntax highlight adapts the textmate syntax files from [vscode-lean4/syntaxes/](https://raw.githubusercontent.com/leanprover/vscode-lean4/master/vscode-lean4/syntaxes/), using intelij platform sdk's textmate extension api and the implementation is at the class `Lean4TextMateBundleProvider`. 

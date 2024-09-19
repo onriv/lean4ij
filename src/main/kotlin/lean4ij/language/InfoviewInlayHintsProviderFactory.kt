@@ -1,9 +1,12 @@
 package lean4ij.language
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.OwnBypassCollector
 import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.FoldingBuilderEx
@@ -12,12 +15,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.io.await
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import lean4ij.language.OmitTypeInlayHintsCollector.Companion.DEF_REGEX
 import lean4ij.lsp.data.InteractiveTermGoalParams
 import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
@@ -27,6 +31,10 @@ import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.jetbrains.plugins.textmate.psi.TextMateFile
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
 
 /**
  * Ref: https://github.com/JetBrains/intellij-community/blob/idea/242.21829.142/java/java-impl/src/com/intellij/codeInsight/hints/JavaImplicitTypeDeclarativeInlayHintsProvider.kt
@@ -36,7 +44,7 @@ import org.jetbrains.plugins.textmate.psi.TextMateFile
  *     set a := 1
  * in a proof
  */
-class OmitTypeInlayHintsCollector(private val psiFile: PsiFile, private val editor: Editor) : SharedBypassCollector {
+class OmitTypeInlayHintsCollector(private val psiFile: PsiFile, private val editor: Editor, private val project: Project?) : SharedBypassCollector {
 
     companion object {
         /**
@@ -46,48 +54,72 @@ class OmitTypeInlayHintsCollector(private val psiFile: PsiFile, private val edit
         val DEF_REGEX = Regex("""(\b(?:def|set)\s+)(.+)\s+(:=[\n\s]+)""")
     }
 
+    private val inlayHintsCache = CacheBuilder.newBuilder()
+        .expireAfterAccess(50, TimeUnit.MINUTES)
+        // code hash to
+        .build<String, CompletableFuture<List<Pair<Int, String>>>>(
+            object : CacheLoader<String, CompletableFuture<List<Pair<Int, String>>>>() {
+                override fun load(key: String): CompletableFuture<List<Pair<Int, String>>> {
+                    if (project == null) {
+                        throw NullPointerException();
+                    }
+                    val ret = CompletableFuture<List<Pair<Int, String>>>()
+                    val leanProject = project.service<LeanProjectService>()
+                    leanProject.scope.launch {
+                        val file = psiFile.virtualFile
+                        val leanFile = leanProject.file(file)
+                        val hints = mutableListOf<Pair<Int, String>>()
+                        for (m in DEF_REGEX.findAll(key)) {
+                            if (hasTypeNotation(m.groupValues[2], m.range.first + m.groupValues[1].length, leanFile)) {
+                                continue
+                            }
+                            val session = leanFile.getSession()
+                            // This +2 is awkward, there maybe bad case for it
+                            val lineColumn = StringUtil.offsetToLineColumn(key, m.range.last + 2)
+                            val position = Position(line = lineColumn.line, character = lineColumn.column)
+                            val textDocument = TextDocumentIdentifier(LspUtil.quote(file.path))
+                            val params = PlainGoalParams(textDocument, position)
+                            val interactiveTermGoalParams =
+                                InteractiveTermGoalParams(session, params, textDocument, position)
+                            // TODO what if the server not start?
+                            //      will it hang and leak?
+                            val termGoal = leanFile.getInteractiveTermGoal(interactiveTermGoalParams) ?: continue
+                            val inlayHintType = ": ${termGoal.type.toInfoViewString(StringBuilder(), null)}"
+                            hints.add(Pair(m.range.last - m.groupValues[3].length, inlayHintType,))
+                        }
+                        ret.complete(hints)
+                    }
+                    return ret
+                }
+            }
+        )
+
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
-        if (element is TextMateFile) {
+        if (project == null) {
             return
         }
-        val project = editor.project ?: return
-        val leanProject = project.service<LeanProjectService>()
+        if (element !is TextMateFile) {
+            return
+        }
         val file = editor.virtualFile
         if (file.extension != "lean") {
             return
         }
-        val leanFile = leanProject.file(file)
-        // Cannot add inlay hints asynchronously... even with
-        // ApplicationManager.getApplication().invokeLater { ... }
-        // it will not work
-        // hence it's using runBlocking
-        // TODO check if this block EDT or UI
-        runBlocking {
-            for (m in DEF_REGEX.findAll(element.text)) {
-                if (hasTypeNotation(m.groupValues[2], m.range.start+m.groupValues[1].length, leanFile)) {
-                    continue
-                }
-                val session = leanFile.getSession()
-                // This +2 is awkward, there maybe bad case for it
-                val lineColumn = StringUtil.offsetToLineColumn(element.text, m.range.last+2)
-                val position = Position(line = lineColumn.line, character = lineColumn.column)
-                val textDocument = TextDocumentIdentifier(LspUtil.quote(file.path))
-                val params = PlainGoalParams(textDocument, position)
-                val interactiveTermGoalParams = InteractiveTermGoalParams(session, params, textDocument, position)
-                // TODO what if the server not start?
-                //      will it hang and leak?
-                val termGoal = leanFile.getInteractiveTermGoal(interactiveTermGoalParams) ?: continue
-                val inlayHintType = ": ${termGoal.type.toInfoViewString(StringBuilder(), null)}"
+        val text = editor.document.text
+        val inlayHintFuture = inlayHintsCache.get(text)
+        if (inlayHintFuture.isDone) {
+            inlayHintFuture.get().forEach { inlayHintData ->
                 // TODO Here it's kind of awkward:
                 //      com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl.text
                 //      limit the length of inlay hints to 30 characters
-                inlayHintType.chunked(30).forEach {
+                inlayHintData.second.chunked(30).forEach {
                     // TODO what is relatedToPrevious for?
-                    sink.addPresentation(InlineInlayPosition(m.range.last-m.groupValues[3].length , false), hasBackground = true) {
+                    sink.addPresentation(InlineInlayPosition(inlayHintData.first, false), hasBackground = true) {
                         text(it)
                     }
                 }
             }
+
         }
     }
 
@@ -111,8 +143,15 @@ class OmitTypeInlayHintsCollector(private val psiFile: PsiFile, private val edit
 
 class OmitTypeInlayHintsProvider : InlayHintsProvider {
 
+    companion object {
+        val providers = ConcurrentHashMap<String, OmitTypeInlayHintsCollector>()
+    }
+
+
     override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
-        return OmitTypeInlayHintsCollector(file, editor)
+        return providers.computeIfAbsent(file.virtualFile.path) {
+            OmitTypeInlayHintsCollector(file, editor, editor.project)
+        }
     }
 }
 

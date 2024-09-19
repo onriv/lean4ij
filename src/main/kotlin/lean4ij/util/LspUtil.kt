@@ -18,6 +18,7 @@ object LspUtil {
      * and the related [pull request](https://github.com/microsoft/language-server-protocol/pull/1786)).
      *
      * Some LSP servers support only the VS Code-friendly URI format (`file:///c%3A/foo`), so it's safer to use it by default.
+     * check also [com.redhat.devtools.lsp4ij.LSPIJUtils.toTextDocumentIdentifier]
      */
     fun quote(url: String) : String {
         if (url.startsWith(PREFIX)) {

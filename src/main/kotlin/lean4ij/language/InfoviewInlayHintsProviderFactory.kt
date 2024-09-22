@@ -52,7 +52,7 @@ class OmitTypeInlayHintsCollector(private val psiFile: PsiFile, private val edit
          * It's very awkward doing this with regex pattern for this...
          * But we don't have a parser for lean currently
          */
-        val DEF_REGEX = Regex("""(\b(?:def|set)\s+)(.+)\s+(:=[\n\s]+)""")
+        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s+)(.+)\s+(:=[\n\s]+)""")
     }
 
     private val inlayHintsCache = CacheBuilder.newBuilder()

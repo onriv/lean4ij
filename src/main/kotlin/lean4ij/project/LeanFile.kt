@@ -26,6 +26,7 @@ import lean4ij.util.step
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.nio.charset.StandardCharsets
+import kotlin.math.max
 import kotlin.math.min
 
 
@@ -93,6 +94,9 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 }
                 buildWindowService.endBuild(file)
             }
+        }
+        scope.launch {
+            getAllMessages()
         }
     }
 
@@ -347,7 +351,36 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
+    /**
+     * TODO can this be replaced with flow?
+     */
+    private val diagnosticsChannel = Channel<Diagnostic>()
+    private suspend fun getAllMessages() {
+        var maxLine = -1
+         while (true) {
+             try {
+                 val diagnostic = withTimeout(1*1000) {
+                      diagnosticsChannel.receive()
+                 }
+                 maxLine = max(maxLine, diagnostic.range.end.line)
+             } catch (ex: TimeoutCancellationException) {
+                if (maxLine > -1) {
+                    // TODO here do get all messages
+                    // TODO not sure this maxLine logic is correct or necessary
+                    //      it seems it quite often just quite almost the end of the file
+                    thisLogger().info("get all messages for $file, maxLine: $maxLine")
+                    maxLine = -1
+                }
+             }
+         }
+    }
+
     fun publishDiagnostics(diagnostics: PublishDiagnosticsParams) {
+        scope.launch {
+            for (d in diagnostics.diagnostics) {
+                diagnosticsChannel.send(d)
+            }
+        }
         for (d in diagnostics.diagnostics) {
             buildWindowService.addBuildEvent(file, d.message)
         }

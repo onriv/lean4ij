@@ -36,6 +36,7 @@ import org.jetbrains.plugins.textmate.psi.TextMateFile
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 class Hint(val location: Int, val content: String)
 
@@ -59,46 +60,24 @@ class HintSet {
 }
 
 class HintCache {
-    var lastValid = ConcurrentHashMap<LeanFile, HintSet>()
     var cache = ConcurrentHashMap<LeanFile, Pair<Long, CompletableFuture<HintSet>>>()
 
-    private fun temporaryDisplay(file: LeanFile): HintSet {
-//        return lastValid[file] ?: HintSet();
-        return HintSet()
-    }
     /* returns (need recomputation, displaySet) */
-    fun query(file: LeanFile, time: Long): Pair<Boolean, HintSet> {
-        val cur = cache[file] ?: return Pair(true, HintSet());
+    fun query(file: LeanFile, time: Long): CompletableFuture<HintSet>? {
+        val cur = cache[file] ?: return null
 
         // we do not have a run scheduled for this version
         if (cur.first != time) {
-            if (cur.second.isDone) {
-                lastValid[file] = cur.second.get()
-            }
-            else {
-                // if old, cancel it (new run will be scheduled shortly)
-                cur.second.cancel(true);
-            }
+            cur.second.cancel(true);
 
-            return Pair(true, temporaryDisplay(file));
-        }
-        else if (cur.second.isDone) {
-            // cache hit
-            lastValid[file] = cur.second.get()
-            return Pair(false, cur.second.get())
+            return null;
         }
         else {
-            // we have a run for this version
-            // but it's not finished
-
-            // don't need recomputation since that's ongoing right now
-            return Pair(false, temporaryDisplay(file))
+            return cur.second
         }
     }
 
     fun insert(file: LeanFile, time: Long, hints: CompletableFuture<HintSet>) {
-        // TODO is this condition guaranteed?
-        assert(file.virtualFile != null)
         cache[file] = Pair(time, hints);
     }
 }
@@ -106,6 +85,11 @@ class HintCache {
 // Base functionality
 abstract class InlayHintBase(private val editor: Editor, protected val project: Project?) : SharedBypassCollector {
     var hintCache = HintCache()
+
+    companion object {
+        const val TIMEOUT_STEP_MILLIS: Long = 25
+        const val TIMEOUT_MAX_ITS = 10;
+    }
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
         if (project == null || element !is TextMateFile) {
@@ -121,11 +105,13 @@ abstract class InlayHintBase(private val editor: Editor, protected val project: 
         // if cached, return directly
         val time = element.containingFile.modificationStamp;
         val cached = hintCache.query(leanFile, time);
-        cached.second.dumpHints(sink);
-
-        if (cached.first) {
+        val hints: CompletableFuture<HintSet>
+        if (cached != null) {
+            hints = cached
+        }
+        else {
             // recompute
-            val hints = CompletableFuture<HintSet>();
+            hints = CompletableFuture<HintSet>();
             hintCache.insert(leanFile, element.containingFile.modificationStamp, hints);
             leanProject.scope.launch {
                 val content = editor.document.text;
@@ -137,6 +123,26 @@ abstract class InlayHintBase(private val editor: Editor, protected val project: 
                 DaemonCodeAnalyzer.getInstance(project).restart(element.containingFile);
             }
         }
+
+        // wait until future is finished
+        // (see lsp4ij for reference)
+        val computeTime = element.containingFile.modificationStamp;
+        var its = 0
+        while (!hints.isDone) {
+            its += 1
+            if (element.containingFile.modificationStamp != computeTime || its >= TIMEOUT_MAX_ITS) {
+                return
+            }
+
+            try {
+                hints.get(TIMEOUT_STEP_MILLIS, TimeUnit.MILLISECONDS);
+            }
+            catch (_: TimeoutException) {
+                // Ignore timeout
+            }
+        }
+
+        hints.get().dumpHints(sink);
     }
 
     abstract suspend fun computeFor(file: LeanFile, content: String): HintSet;
@@ -157,6 +163,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
          * It's very awkward doing this with regex pattern for this...
          * But we don't have a parser for lean currently
          */
+        // TODO : anonymous have, def {a: Type u}
         val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s+)(.+)\s+(:=[\n\s]+)""")
     }
 
@@ -215,86 +222,42 @@ class OmitTypeInlayHintsProvider : InlayHintsProvider {
     }
 }
 
-/**
- * TODO DRY DRY DRY
- */
-class PlaceHolderInlayHintsCollector(private val psiFile: PsiFile, private val editor: Editor, private val project: Project?) : SharedBypassCollector {
+class PlaceHolderInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
 
-    private val inlayHintsCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(1, TimeUnit.MINUTES)
-        // code hash to
-        .build<String, CompletableFuture<List<Pair<Int, String>>>>(
-            object : CacheLoader<String, CompletableFuture<List<Pair<Int, String>>>>() {
-                override fun load(key: String): CompletableFuture<List<Pair<Int, String>>> {
-                    if (project == null) {
-                        throw NullPointerException();
-                    }
-                    val ret = CompletableFuture<List<Pair<Int, String>>>()
-                    val leanProject = project.service<LeanProjectService>()
-                    leanProject.scope.launch {
-                        val file = psiFile.virtualFile
-                        val leanFile = leanProject.file(file)
-                        val hints = mutableListOf<Pair<Int, String>>()
-                        for (m in Regex("""\b_\b""").findAll(key)) {
-                            // TODO what if it's not start?
-                            // Here it's the internal language server
-                            val languageServer = leanProject.languageServer.await().languageServer
-                            val lineColumn = StringUtil.offsetToLineColumn(key, m.range.first)
-                            // Here we also have another lean4ij.lsp.data.Position defined and imported
-                            // Hence here using the full qualified name
-                            val position = org.eclipse.lsp4j.Position(lineColumn.line, lineColumn.column)
-                            val textDocument = TextDocumentIdentifier(LspUtil.quote(file.path))
-                            val hover = languageServer.hover(HoverParams(textDocument, position)).await()
-                            if (hover.contents.isRight) {
-                                val value = hover.contents.right.value
-                                if (value.contains("placeholder")) {
-                                    // TODO assume that only one line..., this maybe wrong
-                                    val split = value.split("\n")
-                                    if (split.size < 2) {
-                                        // it seems to be something like
-                                        // A placeholder term, to be synthesized by unification.
-                                        continue
-                                    }
-                                    val inlayHint = split[1]
-                                    hints.add(Pair(m.range.last+1, inlayHint))
-                                }
-                            }
-                        }
-                        ret.complete(hints)
-                    }
-                    return ret
-                }
-            }
-        )
-
-    override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
-        return;
-        if (element is TextMateFile) {
-            return
+    override suspend fun computeFor(file: LeanFile, content: String): HintSet {
+        if (project == null) {
+            return HintSet()
         }
-        val project = editor.project ?: return
+
+        val hints = HintSet()
         val leanProject = project.service<LeanProjectService>()
-        val file = editor.virtualFile
-        if (file.extension != "lean") {
-            return
-        }
-        val leanFile = leanProject.file(file)
-        val text = editor.document.text
-        val inlayHintFuture = inlayHintsCache.get(text)
-        if (inlayHintFuture.isDone) {
-            inlayHintFuture.get().forEach { inlayHintData ->
-                // TODO Here it's kind of awkward:
-                //      com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl.text
-                //      limit the length of inlay hints to 30 characters
-                inlayHintData.second.chunked(30).forEach {
-                    // TODO what is relatedToPrevious for?
-                    sink.addPresentation(InlineInlayPosition(inlayHintData.first, false), hasBackground = true) {
-                        text(it)
+        for (m in Regex("""\b_\b""").findAll(content)) {
+            // TODO what if it's not start?
+            // Here it's the internal language server
+            val languageServer = leanProject.languageServer.await().languageServer
+            val lineColumn = StringUtil.offsetToLineColumn(content, m.range.first)
+            // Here we also have another lean4ij.lsp.data.Position defined and imported
+            // Hence here using the full qualified name
+            val position = org.eclipse.lsp4j.Position(lineColumn.line, lineColumn.column)
+            val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))
+            val hover = languageServer.hover(HoverParams(textDocument, position)).await()
+            if (hover.contents.isRight) {
+                val value = hover.contents.right.value
+                if (value.contains("placeholder")) {
+                    // TODO assume that only one line..., this maybe wrong
+                    val split = value.split("\n")
+                    if (split.size < 2) {
+                        // it seems to be something like
+                        // A placeholder term, to be synthesized by unification.
+                        continue
                     }
+                    val inlayHint = split[1]
+                    hints.add(Hint(m.range.last+1, inlayHint))
                 }
             }
-
         }
+
+        return hints
     }
 
 }
@@ -307,7 +270,7 @@ class PlaceHolderInlayHintsProvider : InlayHintsProvider {
 
     override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
         return providers.computeIfAbsent(file.virtualFile.path) {
-            PlaceHolderInlayHintsCollector(file, editor, editor.project)
+            PlaceHolderInlayHintsCollector(editor, editor.project)
         }
     }
 

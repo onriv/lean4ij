@@ -160,6 +160,13 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      * current file update caret
      * now it's just forward back to project service
      * but maybe later it can do its customized job
+     * TODO NOW it's very awkward also to add getAllMessages for it seems
+     *      different time point: updating goals and term goal is at caret moving
+     *      but all message is updating at after diagnostic finished, maybe just
+     *      get the content here...
+     * TODO the keypoint maybe currently no tree structure for infoview like html that can be rendered
+     *      more smoothly and independently
+     * TODO maybe try psi for infoview tool window
      */
     fun updateCaret(logicalPosition: LogicalPosition) {
         val position = Position(line = logicalPosition.line, character = logicalPosition.column)
@@ -172,22 +179,21 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 return@launch
             }
             val session = getSession()
-            val file = leanProjectService.file(file)
             val interactiveGoalsParams = InteractiveGoalsParams(session, params, textDocument, position)
             val interactiveTermGoalParams = InteractiveTermGoalParams(session, params, textDocument, position)
             // TODO how to determine which diagnostic get?
             val line = logicalPosition.line
             val diagnosticsParams = InteractiveDiagnosticsParams(session, LineRangeParam(LineRange(line, line+1)), textDocument, position)
-            val interactiveGoalsAsync = async { file.getInteractiveGoals(interactiveGoalsParams) }
-            val interactiveTermGoalAsync = async { file.getInteractiveTermGoal(interactiveTermGoalParams) }
-            val interactiveDiagnosticsAsync = async { file.getInteractiveDiagnostics(diagnosticsParams) }
+            val interactiveGoalsAsync = async { getInteractiveGoals(interactiveGoalsParams) }
+            val interactiveTermGoalAsync = async { getInteractiveTermGoal(interactiveTermGoalParams) }
+            val interactiveDiagnosticsAsync = async { getInteractiveDiagnostics(diagnosticsParams) }
             // val diagnostics = file.getInteractiveDiagnostics(diagnosticsParams)
             // Both interactiveGoals and interactiveTermGoal can be null and hence we pass them to
             // updateInteractiveGoal nullable
             val interactiveGoals = interactiveGoalsAsync.await()
             val interactiveTermGoal = interactiveTermGoalAsync.await()
             val interactiveDiagnostics = interactiveDiagnosticsAsync.await()
-            LeanInfoViewWindowFactory.updateInteractiveGoal(project, virtualFile!!, logicalPosition, interactiveGoals, interactiveTermGoal, interactiveDiagnostics)
+            LeanInfoViewWindowFactory.updateInteractiveGoal(project, virtualFile!!, logicalPosition, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
         }
     }
 
@@ -253,7 +259,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    suspend fun getInteractiveDiagnostics(params : InteractiveDiagnosticsParams) : List<InteractiveDiagnostics>? {
+    private suspend fun getInteractiveDiagnostics(params : InteractiveDiagnosticsParams) : List<InteractiveDiagnostics>? {
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().getInteractiveDiagnostics(it)
         }
@@ -355,6 +361,8 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      * TODO can this be replaced with flow?
      */
     private val diagnosticsChannel = Channel<Diagnostic>()
+    private var allMessage : List<InteractiveDiagnostics>? = null
+
     private suspend fun getAllMessages() {
         var maxLine = -1
          while (true) {
@@ -369,6 +377,11 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                     // TODO not sure this maxLine logic is correct or necessary
                     //      it seems it quite often just quite almost the end of the file
                     thisLogger().info("get all messages for $file, maxLine: $maxLine")
+                    val session = getSession()
+                    val position = Position(0, 0)
+                    val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
+                    val diagnosticsParams = InteractiveDiagnosticsParams(session, LineRangeParam(LineRange(0, maxLine)), textDocument, position)
+                    allMessage = getInteractiveDiagnostics(diagnosticsParams)
                     maxLine = -1
                 }
              }

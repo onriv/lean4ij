@@ -81,6 +81,10 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
      */
     private fun createEditor(): EditorEx {
         val editor = EditorFactory.getInstance()
+            // java.lang.RuntimeException: Memory leak detected: 'com.intellij.openapi.editor.impl.view.EditorView@601dc681' (class com.intellij.openapi.editor.impl.view.EditorView) was registered in Disposer as a child of 'ROOT_DISPOSABLE' (class com.intellij.openapi.util.Disposer$2) but wasn't disposed.
+            // Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.
+            // See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.
+            // The corresponding Disposer.register() stacktrace is shown as the cause:
             .createViewer(DocumentImpl(" ", true), toolWindow.project) as EditorEx
         // val editor = editorTextField.getEditor(true)!!
         with(editor.settings) {
@@ -114,7 +118,8 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         logicalPosition: LogicalPosition,
         interactiveGoals: InteractiveGoals?,
         interactiveTermGoal: InteractiveTermGoal?,
-        interactiveDiagnostics: List<InteractiveDiagnostics>?
+        interactiveDiagnostics: List<InteractiveDiagnostics>?,
+        interactiveDiagnosticsAllMessages: List<InteractiveDiagnostics>?
     ) {
         val editorEx: EditorEx = editor.await()
         editorEx.document.setText(interactiveInfo)
@@ -127,7 +132,8 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         if (mouseMotionListener != null) {
             editorEx.removeEditorMouseMotionListener(mouseMotionListener!!)
         }
-        mouseMotionListener = InfoviewMouseMotionListener(leanProject.scope, this, support, file, logicalPosition, interactiveGoals, interactiveTermGoal, interactiveDiagnostics)
+        mouseMotionListener = InfoviewMouseMotionListener(leanProject.scope, this, support, file, logicalPosition,
+            interactiveGoals, interactiveTermGoal, interactiveDiagnostics, interactiveDiagnosticsAllMessages)
         editorEx.addEditorMouseMotionListener(mouseMotionListener!!)
     }
 

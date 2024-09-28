@@ -1,7 +1,6 @@
 package lean4ij.infoview
 
 import com.intellij.execution.impl.EditorHyperlinkSupport
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -26,7 +25,8 @@ class InfoviewMouseMotionListener(
     private val logicalPosition: LogicalPosition,
     private val interactiveGoals: InteractiveGoals?,
     private val interactiveTermGoal: InteractiveTermGoal?,
-    private val interactiveDiagnostics: List<InteractiveDiagnostics>?
+    private val interactiveDiagnostics: List<InteractiveDiagnostics>?,
+    private val interactiveDiagnosticsAllMessages: List<InteractiveDiagnostics>?
 ) : EditorMouseMotionListener {
     private var hyperLink: RangeHighlighter? = null
     override fun mouseMoved(e: EditorMouseEvent) {
@@ -43,8 +43,6 @@ class InfoviewMouseMotionListener(
         if (c == null && interactiveTermGoal != null) {
             c = interactiveTermGoal.getCodeText(e.offset)
         }
-//        // TODO make c and d both TaggedText
-//        var d : TaggedText<MsgEmbed>? = null
         if (c == null && interactiveDiagnostics != null) {
             for (diagnostic in interactiveDiagnostics) {
                 c = diagnostic.message.getCodeText(e.offset, null)
@@ -53,22 +51,17 @@ class InfoviewMouseMotionListener(
                 }
             }
         }
-//        if (c == null && d == null) {
+        if (c == null && interactiveDiagnosticsAllMessages != null) {
+            for (diagnostic in interactiveDiagnosticsAllMessages) {
+                c = diagnostic.message.getCodeText(e.offset, null)
+                if (c != null) {
+                    break
+                }
+            }
+        }
         if (c == null) {
             return
         }
-//        var codeWithInfosTag : TaggedTextTag<*>? = null
-//        // TODO check if these parent-stuff can be cleaner
-//        if (c is TaggedTextTag<*>) {
-//            codeWithInfosTag = c
-//        } else if (c.parent != null && c.parent!! is TaggedTextTag<*>) {
-//            codeWithInfosTag = c.parent!! as TaggedTextTag<*>
-//        } else if (c.parent != null && c.parent!!.parent != null && c.parent!!.parent!! is TaggedTextTag<*>) {
-//            codeWithInfosTag = c.parent!!.parent!! as TaggedTextTag<*>
-//        }
-//        if (codeWithInfosTag == null) {
-//            return
-//        }
 
         hyperLink = support.createHyperlink(
             c.second,

@@ -137,6 +137,12 @@ class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer)
                         val f1: InteractiveGoal = p2.deserialize(p1, InteractiveGoal::class.java)
                         return MsgEmbedGoal(f1)
                     }
+                    if (p0.isJsonObject && p0.asJsonObject.has("trace")) {
+                        return MsgUnsupported("Trace message is not supported yet. Please the jcef version infoview.")
+                    }
+                    if (p0.isJsonObject && p0.asJsonObject.has("widget")) {
+                        return MsgUnsupported("Widget message cannot be supported for technical reason. Please the jcef version infoview.")
+                    }
                     throw IllegalStateException(p0.toString())
                 }
 

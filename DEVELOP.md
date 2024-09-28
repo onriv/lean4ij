@@ -37,8 +37,19 @@ The unicode input is implemented via [live template](https://www.jetbrains.com/h
 # InfoView
 
 There is two infoview implementations currently:
-- the external infoview is adapting [lean4-infoview](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview). The frontend source code is in the folder Fbrowser-infoview`. The api is bridged to editor via a websocket connection. Check `Route.kt` file for this. The external infoview can be opened in a web browser and using [JCEF](https://plugins.jetbrains.com/docs/intellij/jcef.html) embedding into the editor.
-- the swing infoview is a raw infoview implemented using intellij platform's swing component.
+- the external infoview
+- the swing infoview
+
+## The external infoview
+the external infoview is adapting [lean4-infoview](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview). The frontend source code is in the folder `browser-infoview`. The api is bridged to editor via a websocket connection. Check `Route.kt` file for this. The external infoview can be opened in a web browser and using [JCEF](https://plugins.jetbrains.com/docs/intellij/jcef.html) embedding into the editor.
+Currently, the code is still very badly organized for requiring further development.
+
+## The swing infoview
+the swing infoview is a raw infoview implemented using intellij platform's swing component.
+Currently, the code is still very badly organized for requiring further development.
+The entrance point for rendering is at `LeanFile.updateCaret`
+
+
 
 ## Developing in Intellij Idea
 (TODO this seems not work)Proxy issue (this should only happen in some specific region)

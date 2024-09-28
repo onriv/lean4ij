@@ -17,6 +17,10 @@ interface InfoViewRenderer {
 
 /**
  * check src/Lean/Widget/TaggedText.lean 104 lines --16%--
+ * This implementation still looses some information at the runtime,
+ * which is not very convenient while debugging
+ * maybe it can be reified, check
+ * https://discuss.kotlinlang.org/t/reified-generics-on-class-level/16711/4
  */
 abstract class TaggedText<T> where T: InfoViewRenderer {
     abstract fun toInfoViewString(sb: StringBuilder, parent : TaggedText<T>?) : String
@@ -122,3 +126,14 @@ class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
  *      the definition of MsgEmbed
  */
 abstract class MsgEmbedTrace(val indent: Int, val cls: String): MsgEmbed()
+
+class MsgUnsupported(val message: String) : MsgEmbed() {
+    override fun toInfoViewString(sb: StringBuilder): String {
+        sb.append(message)
+        return message
+    }
+
+    override fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>? {
+        return null
+    }
+}

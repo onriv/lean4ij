@@ -70,7 +70,9 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         }
 
         /**
-         * TODO the infoview-app
+         * TODO the implementation should absolutely be replaced by better rendering way
+         *      using raw text it's very inconvenient to update things like hovering event
+         *      but though vim/emacs has to do it this way maybe ...
          */
         fun updateInteractiveGoal(
             project: Project,
@@ -78,7 +80,8 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             logicalPosition: LogicalPosition, // TODO this should add some UT for the rendering
             interactiveGoals: InteractiveGoals?,
             interactiveTermGoal: InteractiveTermGoal?,
-            interactiveDiagnostics: List<InteractiveDiagnostics>?
+            interactiveDiagnostics: List<InteractiveDiagnostics>?,
+            allMessage: List<InteractiveDiagnostics>?
         ) {
             if (file == null) {
                 return
@@ -96,11 +99,21 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     interactiveDiagnostics.forEach { i ->
                         interactiveInfoBuilder.append("▼ ${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}\n")
                         i.toInfoViewString(interactiveInfoBuilder)
-                        // TODO
+                        interactiveInfoBuilder.append('\n')
+                        // TODO TODO what?
                     }
                 }
             } else {
                 interactiveInfoBuilder.append("No info found.\n")
+            }
+
+            if (!allMessage.isNullOrEmpty()) {
+                interactiveInfoBuilder.append("▼ All Messages (${allMessage.size})\n")
+                allMessage.forEach { i ->
+                    interactiveInfoBuilder.append("▼ ${file.name}:${i.fullRange.start.line}:${i.fullRange.start.character}\n")
+                    i.toInfoViewString(interactiveInfoBuilder)
+                    interactiveInfoBuilder.append('\n')
+                }
             }
 
             // TODO render message
@@ -112,7 +125,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO minimize the invoke later range
             scope.launch(Dispatchers.EDT) {
                 infoViewWindow.updateEditorMouseMotionListener(interactiveInfoBuilder.toString(), file, logicalPosition, // TODO this should add some UT for the rendering
-                    interactiveGoals, interactiveTermGoal, interactiveDiagnostics)
+                    interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
             }
         }
 

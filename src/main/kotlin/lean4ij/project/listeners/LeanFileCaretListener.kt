@@ -21,7 +21,8 @@ class LeanFileCaretListener(private val project: Project) : CaretListener/*, Pro
      * TODO maybe debouncing here
      */
     override fun caretPositionChanged(event: CaretEvent) {
-        leanProjectService.file(event.editor.virtualFile).updateCaret(event.newPosition)
+        // TODO passing things like editor etc seems cumbersome, maybe add some implement for context
+        leanProjectService.file(event.editor.virtualFile).updateCaret(event.editor, event.newPosition)
     }
 
     private var editor: Editor? = null

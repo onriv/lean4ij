@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -73,11 +74,13 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
          * TODO the implementation should absolutely be replaced by better rendering way
          *      using raw text it's very inconvenient to update things like hovering event
          *      but though vim/emacs has to do it this way maybe ...
+         * TODO passing things like editor etc seems cumbersome, maybe add some implement for context
          */
         fun updateInteractiveGoal(
+            editor: Editor,
             project: Project,
-            file: VirtualFile?,
-            logicalPosition: LogicalPosition, // TODO this should add some UT for the rendering
+            file: VirtualFile?, // TODO this should add some UT for the rendering
+            logicalPosition: LogicalPosition,
             interactiveGoals: InteractiveGoals?,
             interactiveTermGoal: InteractiveTermGoal?,
             interactiveDiagnostics: List<InteractiveDiagnostics>?,
@@ -93,7 +96,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO refactor this
             if (interactiveGoals != null || interactiveTermGoal != null || !interactiveDiagnostics.isNullOrEmpty()) {
                 interactiveGoals?.toInfoViewString(interactiveInfoBuilder)
-                interactiveTermGoal?.toInfoViewString(interactiveInfoBuilder)
+                interactiveTermGoal?.toInfoViewString(editor, interactiveInfoBuilder)
                 if (!interactiveDiagnostics.isNullOrEmpty()) {
                     interactiveInfoBuilder.append("▼ Messages (${interactiveDiagnostics.size})\n")
                     interactiveDiagnostics.forEach { i ->

@@ -3,6 +3,7 @@ package lean4ij.project
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.*
@@ -167,8 +168,9 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      * TODO the keypoint maybe currently no tree structure for infoview like html that can be rendered
      *      more smoothly and independently
      * TODO maybe try psi for infoview tool window
+     * TODO passing things like editor etc seems cumbersome, maybe add some implement for context
      */
-    fun updateCaret(logicalPosition: LogicalPosition) {
+    fun updateCaret(editor: Editor, logicalPosition: LogicalPosition) {
         val position = Position(line = logicalPosition.line, character = logicalPosition.column)
         val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
         val params = PlainGoalParams(textDocument, position)
@@ -193,7 +195,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val interactiveGoals = interactiveGoalsAsync.await()
             val interactiveTermGoal = interactiveTermGoalAsync.await()
             val interactiveDiagnostics = interactiveDiagnosticsAsync.await()
-            LeanInfoViewWindowFactory.updateInteractiveGoal(project, virtualFile!!, logicalPosition, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
+            LeanInfoViewWindowFactory.updateInteractiveGoal(editor, project, virtualFile!!, logicalPosition, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
         }
     }
 

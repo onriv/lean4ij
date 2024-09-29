@@ -1,5 +1,8 @@
 package lean4ij.lsp.data
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+
 /**
  * TODO this is different with the lean4 source code
  *      it's defined using the result shown in infoview-app
@@ -16,8 +19,9 @@ class InteractiveTermGoal(
     /**
      * TODO refactor StringBuilder into a Render
      */
-    fun toInfoViewString(sb: StringBuilder) {
+    fun toInfoViewString(editor: Editor, sb: StringBuilder) {
         sb.append("▼ Expected type\n")
+        val start = sb.length
         // TODO deduplicate
         for (hyp in hyps) {
             val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = " : ")
@@ -27,6 +31,15 @@ class InteractiveTermGoal(
         }
         sb.append("⊢ ")
         type.toInfoViewString(sb, null)
+        val end = sb.length
+        // TODO it can not add fold here directly for the content still not add to editor yet
+        //
+        // ApplicationManager.getApplication().invokeLater {
+        //     editor.foldingModel.runBatchFoldingOperation {
+        //         val region = editor.foldingModel.addFoldRegion(start, end, "TODO")
+        //         region?.isExpanded = false
+        //     }
+        // }
         sb.append("\n")
     }
 

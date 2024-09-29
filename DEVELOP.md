@@ -47,12 +47,12 @@ Currently, the code is still very badly organized for requiring further developm
 ## The swing infoview
 the swing infoview is a raw infoview implemented using intellij platform's swing component.
 Currently, the code is still very badly organized for requiring further development.
-The entrance point for rendering is at `LeanFile.updateCaret`
+The entrance point for rendering is at `LeanFile.updateCaret` which call `LeanInfoViewWindowFactory.updateGoal` when all lsp call finish.
 
 
 
 ## Developing in Intellij Idea
-(TODO this seems not work)Proxy issue (this should only happen in some specific region)
+(TODO this seems not work) Proxy issue (this should only happen in some specific region)
 If the runPlugin task requires some proxy, do
 ```
 ORG_GRADLE_PROJECT_systemProp.https.proxyHost=<ip>

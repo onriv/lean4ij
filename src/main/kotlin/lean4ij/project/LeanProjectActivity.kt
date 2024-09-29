@@ -49,7 +49,7 @@ fun Module.addExcludeFolder(basePath: String) {
                         try {
                             // TODO it seems no working...
                             //      really weird, it seems working
-                            // TODO weird here there is an exception:
+                            // TODO weird here there is an exception:  ---- it's from different prefix in linux, fix it
                             //       2024-09-09 22:53:57,795 [   3408] SEVERE - #c.i.o.m.Module - cannot exclude file://home/onriv/repos/mathematics_in_lean/.lake/packages/importGraph/.lake/build/
                             //       java.lang.IllegalStateException: Exclude folder file://home/onriv/repos/mathematics_in_lean/.lake/packages/importGraph/.lake/build/ must be under content entry file:///home/onriv/repos/mathematics_in_lean
                             //      	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:123)

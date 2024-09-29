@@ -54,6 +54,8 @@ class TaggedTextText<T>(val text: String) : TaggedText<T>() where T: InfoViewRen
     }
 
     override fun getCodeText(offset: Int, t: T?): Triple<ContextInfo, Int, Int>? {
+        // TODO find why here allow null
+        if (t == null) return null
         return t!!.contextInfo(offset, parent!!.startOffset, parent!!.endOffset)
     }
 }

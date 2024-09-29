@@ -53,6 +53,7 @@ class InfoviewMouseMotionListener(
         }
         if (c == null && interactiveDiagnosticsAllMessages != null) {
             for (diagnostic in interactiveDiagnosticsAllMessages) {
+                // TODO why passing null?
                 c = diagnostic.message.getCodeText(e.offset, null)
                 if (c != null) {
                     break

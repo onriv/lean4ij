@@ -251,6 +251,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                 //     	at java.base/java.util.ArrayList$Itr.next(ArrayList.java:967)
                 //     	at lean4ij.infoview.external.RouteKt$externalInfoViewRoute$1$2$outgoingJob$1.invokeSuspend(Route.kt:288)
                 //     	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+                // TODO it's because while looping there is a chance that notificationMessages is being updated, fix it
                 service.notificationMessages.forEach {
                     sendWithLog(Gson().toJson(it))
                 }

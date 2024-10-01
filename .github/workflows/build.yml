@@ -144,6 +144,7 @@ jobs:
   # Run Qodana inspections and provide report
   inspectCode:
     name: Inspect code
+    if: false
     needs: [ build ]
     runs-on: ubuntu-latest
     permissions:

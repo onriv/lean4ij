@@ -334,6 +334,8 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     }
 
     suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
+        // always use the session in the file rather than the external infoview
+        params.sessionId = session!!
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().rpcCall(it)
         }

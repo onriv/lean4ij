@@ -52,17 +52,17 @@ The entrance point for rendering is at `LeanFile.updateCaret` which call `LeanIn
 
 
 ## Developing in Intellij Idea
-(TODO this seems not work) Proxy issue (this should only happen in some specific region)
-If the runPlugin task requires some proxy, do
+ Proxy issue (this should only happen in some specific region)
+If the runPlugin task requires some proxy, create a file named `local.properties` and add the following content to it.
+```properties
+https.proxyHost=...
+https.proxyPort=...
 ```
-ORG_GRADLE_PROJECT_systemProp.https.proxyHost=<ip>
-ORG_GRADLE_PROJECT_systemProp.https.proxyPort=<port>
-ORG_GRADLE_PROJECT_systemProp.https.nonProxyHosts=*.nonproxyrepos.com|localhost
-```
-in system environment. Replace the `<ip>` and `<port>` to real value.
-ref: https://docs.gradle.org/current/userguide/project_properties.html
-
 For first (and while require updating the frontend, run a `gradle buildBrowserInfoview` before run `runIde`)
+
+# Debug and troubleshooting
+
+
 
 # Ref
 

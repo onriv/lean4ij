@@ -7,3 +7,6 @@ out
 # this is a host concifg for reading port of the external service
 # since the port is randomly choosed, we ignore this file
 browser-infoview/host-config.json
+
+# this is for local properties like system proxy that should not be tracked by git
+local.properties

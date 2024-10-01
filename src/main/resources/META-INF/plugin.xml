@@ -2,7 +2,7 @@
 <idea-plugin>
     <id>lean4ij</id>
     <name>Lean4ij</name>
-    <vendor>onriv</vendor>
+    <vendor>lean4ij</vendor>
 
     <depends>com.intellij.modules.platform</depends>
 <!--    <depends>com.intellij.modules.ultimate</depends>-->

@@ -9,6 +9,21 @@ import java.util.regex.Pattern
 
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import java.util.*
+import kotlin.collections.ArrayList
+
+// Load properties from the external file
+val properties = Properties()
+file("local.properties").let { localPropertiesFile ->
+    if (localPropertiesFile.exists() && localPropertiesFile.isFile && localPropertiesFile.canRead()) {
+        localPropertiesFile.inputStream().use { properties.load(it) }
+    }
+}
+
+// Set the proxy properties
+properties.forEach { key, value ->
+    System.setProperty(key as String, value as String)
+}
 
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
@@ -91,7 +106,7 @@ intellij {
     // from https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/build.gradle.kts
     platformPlugins.add("org.jetbrains.plugins.textmate")
     platformPlugins.addAll(properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }.get())
-    println("platformPlugins: $platformPlugins")
+    println("Depends on platformPlugins: $platformPlugins")
     plugins = platformPlugins
 }
 
@@ -255,7 +270,7 @@ fun fetchLatestLsp4ijNightlyVersion(): String {
         val matcher = pattern.matcher(response.body())
         if (matcher.find()) {
             onlineVersion = matcher.group(1)
-            println("Latest approved nightly build: $onlineVersion")
+            println("Depend on the latest approved nightly build of LSP4IJ: $onlineVersion")
         }
     } catch (e:Exception) {
         println("Failed to fetch LSP4IJ nightly build version: ${e.message}")

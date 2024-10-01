@@ -137,122 +137,11 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                 //      a new tab in the browser
                 //      Not sure if the infoview is designed in such a way or not, it's kind of lazy
                 // TODO and it may keep growing
-                // TODO weird, once got the following exception, why is it change here, which cause ConcurrentModificationException
-                //      kotlinx.coroutines.JobCancellationException: Parent job is Cancelling; job=JobImpl{Cancelling}@bd36423
-                //     	at kotlinx.coroutines.JobSupport.getChildJobCancellationCause(JobSupport.kt:718)
-                //     	at kotlinx.coroutines.JobSupport.createCauseException(JobSupport.kt:724)
-                //     	at kotlinx.coroutines.JobSupport.makeCancelling(JobSupport.kt:756)
-                //     	at kotlinx.coroutines.JobSupport.cancelImpl$kotlinx_coroutines_core(JobSupport.kt:675)
-                //     	at kotlinx.coroutines.JobSupport.parentCancelled(JobSupport.kt:641)
-                //     	at kotlinx.coroutines.ChildHandleNode.invoke(JobSupport.kt:1439)
-                //     	at kotlinx.coroutines.JobSupport.notifyCancelling(JobSupport.kt:1477)
-                //     	at kotlinx.coroutines.JobSupport.tryMakeCompletingSlowPath(JobSupport.kt:904)
-                //     	at kotlinx.coroutines.JobSupport.tryMakeCompleting(JobSupport.kt:867)
-                //     	at kotlinx.coroutines.JobSupport.cancelMakeCompleting(JobSupport.kt:700)
-                //     	at kotlinx.coroutines.JobSupport.cancelImpl$kotlinx_coroutines_core(JobSupport.kt:671)
-                //     	at kotlinx.coroutines.JobSupport.childCancelled(JobSupport.kt:655)
-                //     	at kotlinx.coroutines.ChildHandleNode.childCancelled(JobSupport.kt:1440)
-                //     	at kotlinx.coroutines.JobSupport.cancelParent(JobSupport.kt:360)
-                //     	at kotlinx.coroutines.JobSupport.notifyCancelling(JobSupport.kt:334)
-                //     	at kotlinx.coroutines.JobSupport.tryMakeCompletingSlowPath(JobSupport.kt:904)
-                //     	at kotlinx.coroutines.JobSupport.tryMakeCompleting(JobSupport.kt:867)
-                //     	at kotlinx.coroutines.JobSupport.makeCompletingOnce$kotlinx_coroutines_core(JobSupport.kt:832)
-                //     	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:100)
-                //     	at kotlinx.coroutines.debug.internal.DebugProbesImpl$CoroutineOwner.resumeWith(DebugProbesImpl.kt:549)
-                //     	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
-                //     	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
-                //     	at io.netty.util.concurrent.AbstractEventExecutor.runTask(AbstractEventExecutor.java:173)
-                //     	at io.netty.util.concurrent.AbstractEventExecutor.safeExecute(AbstractEventExecutor.java:166)
-                //     	at io.netty.util.concurrent.SingleThreadEventExecutor.runAllTasks(SingleThreadEventExecutor.java:469)
-                //     	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:569)
-                //     	at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:994)
-                //     	at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
-                //     	at io.ktor.server.netty.EventLoopGroupProxy$Companion.create$lambda$1$lambda$0(NettyApplicationEngine.kt:296)
-                //     	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
-                //     	at java.base/java.lang.Thread.run(Thread.java:840)
-                //     Caused by: java.util.ConcurrentModificationException
-                //     	at java.base/java.util.ArrayList$Itr.checkForComodification(ArrayList.java:1013)
-                //     	at java.base/java.util.ArrayList$Itr.next(ArrayList.java:967)
-                //     Caused by: java.util.ConcurrentModificationException
-                //
-                //     	at lean4ij.infoview.external.RouteKt$externalInfoViewRoute$1$2$outgoingJob$1.invokeSuspend(Route.kt:288)
-                //     	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
-                //     	... 10 more
-                //     java.util.ConcurrentModificationException
-                //     	at java.base/java.util.ArrayList$Itr.checkForComodification(ArrayList.java:1013)
-                //     	at java.base/java.util.ArrayList$Itr.next(ArrayList.java:967)
-                //     	at lean4ij.infoview.external.RouteKt$externalInfoViewRoute$1$2$outgoingJob$1.invokeSuspend(Route.kt:288)
-                //     	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
-                //     	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
-                //     	at io.netty.util.concurrent.AbstractEventExecutor.runTask(AbstractEventExecutor.java:173)
-                //     	at io.netty.util.concurrent.AbstractEventExecutor.safeExecute(AbstractEventExecutor.java:166)
-                //     	at io.netty.util.concurrent.SingleThreadEventExecutor.runAllTasks(SingleThreadEventExecutor.java:469)
-                //     	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:569)
-                //     	at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:994)
-                //     	at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
-                //     	at io.ktor.server.netty.EventLoopGroupProxy$Companion.create$lambda$1$lambda$0(NettyApplicationEngine.kt:296)
-                //     	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
-                //     	at java.base/java.lang.Thread.run(Thread.java:840)
-                //     java.util.ConcurrentModificationException
-                //     	at java.base/java.util.ArrayList$Itr.checkForComodification(ArrayList.java:1013)
-                //     	at java.base/java.util.ArrayList$Itr.next(ArrayList.java:967)
-                //     	at lean4ij.infoview.external.RouteKt$externalInfoViewRoute$1$2$outgoingJob$1.invokeSuspend(Route.kt:288)
-                //     	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
-                //     	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
-                //     	at io.netty.util.concurrent.AbstractEventExecutor.runTask(AbstractEventExecutor.java:173)
-                //     	at io.netty.util.concurrent.AbstractEventExecutor.safeExecute(AbstractEventExecutor.java:166)
-                //     	at io.netty.util.concurrent.SingleThreadEventExecutor.runAllTasks(SingleThreadEventExecutor.java:469)
-                //     	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:569)
-                //     	at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:994)
-                //     	at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
-                //     	at io.ktor.server.netty.EventLoopGroupProxy$Companion.create$lambda$1$lambda$0(NettyApplicationEngine.kt:296)
-                //     	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
-                //     	at java.base/java.lang.Thread.run(Thread.java:840)
-                //     kotlinx.coroutines.JobCancellationException: Parent job is Cancelling; job=JobImpl{Cancelling}@3e4cfca0
-                //     	at kotlinx.coroutines.JobSupport.getChildJobCancellationCause(JobSupport.kt:718)
-                //     	at kotlinx.coroutines.JobSupport.createCauseException(JobSupport.kt:724)
-                //     	at kotlinx.coroutines.JobSupport.makeCancelling(JobSupport.kt:756)
-                //     	at kotlinx.coroutines.JobSupport.cancelImpl$kotlinx_coroutines_core(JobSupport.kt:675)
-                //     	at kotlinx.coroutines.JobSupport.parentCancelled(JobSupport.kt:641)
-                //     	at kotlinx.coroutines.ChildHandleNode.invoke(JobSupport.kt:1439)
-                //     	at kotlinx.coroutines.JobSupport.notifyCancelling(JobSupport.kt:1477)
-                //     	at kotlinx.coroutines.JobSupport.makeCancelling(JobSupport.kt:751)
-                //     	at kotlinx.coroutines.JobSupport.cancelImpl$kotlinx_coroutines_core(JobSupport.kt:675)
-                //     	at kotlinx.coroutines.JobSupport.childCancelled(JobSupport.kt:655)
-                //     	at kotlinx.coroutines.ChildHandleNode.childCancelled(JobSupport.kt:1440)
-                //     	at kotlinx.coroutines.JobSupport.cancelParent(JobSupport.kt:360)
-                //     	at kotlinx.coroutines.JobSupport.notifyCancelling(JobSupport.kt:334)
-                //     	at kotlinx.coroutines.JobSupport.tryMakeCompletingSlowPath(JobSupport.kt:904)
-                //     	at kotlinx.coroutines.JobSupport.tryMakeCompleting(JobSupport.kt:867)
-                //     	at kotlinx.coroutines.JobSupport.cancelMakeCompleting(JobSupport.kt:700)
-                //     	at kotlinx.coroutines.JobSupport.cancelImpl$kotlinx_coroutines_core(JobSupport.kt:671)
-                //     	at kotlinx.coroutines.JobSupport.childCancelled(JobSupport.kt:655)
-                //     	at kotlinx.coroutines.ChildHandleNode.childCancelled(JobSupport.kt:1440)
-                //     	at kotlinx.coroutines.JobSupport.cancelParent(JobSupport.kt:360)
-                //     	at kotlinx.coroutines.JobSupport.notifyCancelling(JobSupport.kt:334)
-                //     	at kotlinx.coroutines.JobSupport.tryMakeCompletingSlowPath(JobSupport.kt:904)
-                //     	at kotlinx.coroutines.JobSupport.tryMakeCompleting(JobSupport.kt:867)
-                //     	at kotlinx.coroutines.JobSupport.makeCompletingOnce$kotlinx_coroutines_core(JobSupport.kt:832)
-                //     	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:100)
-                //     	at kotlinx.coroutines.debug.internal.DebugProbesImpl$CoroutineOwner.resumeWith(DebugProbesImpl.kt:549)
-                //     	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
-                //     	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
-                //     	at io.netty.util.concurrent.AbstractEventExecutor.runTask(AbstractEventExecutor.java:173)
-                //     	at io.netty.util.concurrent.AbstractEventExecutor.safeExecute(AbstractEventExecutor.java:166)
-                //     	at io.netty.util.concurrent.SingleThreadEventExecutor.runAllTasks(SingleThreadEventExecutor.java:469)
-                //     	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:569)
-                //     	at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:994)
-                //     	at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
-                //     	at io.ktor.server.netty.EventLoopGroupProxy$Companion.create$lambda$1$lambda$0(NettyApplicationEngine.kt:296)
-                //     	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
-                //     	at java.base/java.lang.Thread.run(Thread.java:840)
-                //     Caused by: java.util.ConcurrentModificationException
-                //     	at java.base/java.util.ArrayList$Itr.checkForComodification(ArrayList.java:1013)
-                //     	at java.base/java.util.ArrayList$Itr.next(ArrayList.java:967)
-                //     	at lean4ij.infoview.external.RouteKt$externalInfoViewRoute$1$2$outgoingJob$1.invokeSuspend(Route.kt:288)
-                //     	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
                 // TODO it's because while looping there is a chance that notificationMessages is being updated, fix it
-                service.notificationMessages.forEach {
+                val copiedMessages = synchronized(service.notificationMessages) {
+                    listOf(service.notificationMessages)
+                }
+                copiedMessages.forEach {
                     sendWithLog(Gson().toJson(it))
                 }
                 service.events().collect {
@@ -261,29 +150,37 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
             }
             runCatching {
                 while (true) {
-                    // TODO the original example in https://ktor.io/docs/server-websockets.html#handle-multiple-session
-                    //      is using consumeEach, but I am not familiar with it
-                    val frame = incoming.receive()
-                    if (frame is Frame.Text) {
-                        val text = frame.readText()
-                        logger.trace("ws received: $text")
-                        val (requestId, method, data) = text.split(Regex(","), 3)
-                        if (method == "createRpcSession") {
-                            launch {
-                                val params: RpcConnectParams = fromJson(data)
-                                val session = service.getSession(params.uri)
-                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
-                                sendWithLog(Gson().toJson(resp))
+                    try {
+                        // TODO the original example in https://ktor.io/docs/server-websockets.html#handle-multiple-session
+                        //      is using consumeEach, but I am not familiar with it
+                        val frame = incoming.receive()
+                        if (frame is Frame.Text) {
+                            val text = frame.readText()
+                            logger.trace("ws received: $text")
+                            val (requestId, method, data) = text.split(Regex(","), 3)
+                            if (method == "createRpcSession") {
+                                launch {
+                                    val params: RpcConnectParams = fromJson(data)
+                                    val session = service.getSession(params.uri)
+                                    val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
+                                    sendWithLog(Gson().toJson(resp))
+                                }
+                            }
+                            if (method == "sendClientRequest") {
+                                launch {
+                                    val params: RpcCallParamsRaw = fromJson(data)
+                                    val ret = service.rpcCallRaw(params)
+                                    val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
+                                    sendWithLog(Gson().toJson(resp))
+                                }
                             }
                         }
-                        if (method == "sendClientRequest") {
-                            launch {
-                                val params: RpcCallParamsRaw = fromJson(data)
-                                val ret = service.rpcCallRaw(params)
-                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
-                                sendWithLog(Gson().toJson(resp))
-                            }
-                        }
+                    } catch (e: Exception) {
+                        // TODO handle it seriously
+                        e.printStackTrace()
+                        e.cause?.printStackTrace()
+                        e.cause?.cause?.printStackTrace()
+                        thisLogger().error(e)
                     }
                 }
             }.onFailure { exception ->
@@ -291,6 +188,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                 exception.printStackTrace()
                 exception.cause?.printStackTrace()
                 exception.cause?.cause?.printStackTrace()
+                thisLogger().error(exception)
                 // kotlinx.coroutines.channels.ClosedReceiveChannelException: Channel was closed
             }.also {
                 // TODO check what also means
@@ -301,6 +199,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
             ex.cause?.cause?.printStackTrace()
             ex.cause?.printStackTrace()
             ex.printStackTrace()
+            thisLogger().error(ex)
         }
     }
 

@@ -91,6 +91,16 @@ and todos
 - [x] all message should be interactive (check lean-infoview/src/infoview/info.tsx)
       fixed via passing `hasWidgets` when start lsp
 - [ ] jcef infoview style adjust
+
+## Troubleshooting
+- Currently, some log is printed in the build window for the progressing file and the url to the external/jcef infoview, if something does not work normally, some log there may help.
+- There are also detailed logs for the lsp server supported by LSP4IJ via the "language servers" tool window after setting the debug/trace level to verbose.
+- Some logs are also sent in the standard log file like `idea.log`. For different systems the path of it's the following paths, it can also be opened via `Help/Show log in ...` in the menu.
+  - (Linux) `$HOME.cache/JetBrains/<Product>/log/idea.log`
+  - (Windows) `$HOME\AppData\Local\JetBrains\<Product>\log\idea.log`
+  - (Macos) `~/Library/Caches/<Product>/log/idea.log`
+
+
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:
@@ -102,6 +112,7 @@ The following projects give great help for developing the plugin:
 - [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij)
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].
+- For linux:   
 
 [template]: https://github.com/JetBrains/intellij-platform-plugin-template
 [docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation

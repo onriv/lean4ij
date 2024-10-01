@@ -18,6 +18,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 import com.intellij.openapi.module.Module
 import lean4ij.lsp.LeanLanguageServerFactory
+import lean4ij.util.OsUtil
 import java.awt.event.FocusEvent
 
 fun Module.addExcludeFolder(basePath: String) {
@@ -43,23 +44,19 @@ fun Module.addExcludeFolder(basePath: String) {
                     thisLogger().info("checking if $path should be excluded")
                     if (path.parent.name == ".lake" && path.name == "build" ) {
                         // TODO these logger should change the level to trace
+                        // TODO extract this out and make a general class or something for normalizing all these url and path
                         thisLogger().info("adding $path to excludeFolder")
                         // must be of pattern "file://", the last replace is for fixing path in Windows...
-                        val uri = path.toUri().toString().replace("file:///", "file://")
+                        val uri = path.toUri().toString().let {
+                            var ret = it
+                            if (OsUtil.isWindows()) {
+                                // TODO switch back to Windows for testing this behavior
+                                ret = it.replace("file:///", "file://")
+                            }
+                            ret
+                        }
+
                         try {
-                            // TODO it seems no working...
-                            //      really weird, it seems working
-                            // TODO weird here there is an exception:  ---- it's from different prefix in linux, fix it
-                            //       2024-09-09 22:53:57,795 [   3408] SEVERE - #c.i.o.m.Module - cannot exclude file://home/onriv/repos/mathematics_in_lean/.lake/packages/importGraph/.lake/build/
-                            //       java.lang.IllegalStateException: Exclude folder file://home/onriv/repos/mathematics_in_lean/.lake/packages/importGraph/.lake/build/ must be under content entry file:///home/onriv/repos/mathematics_in_lean
-                            //      	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:123)
-                            //      	at com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridge.addExcludeFolder(ModifiableContentEntryBridge.kt:139)
-                            //      	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$3(LeanProjectActivity.kt:52)
-                            //      	at lean4ij.project.LeanProjectActivityKt.addExcludeFolder$lambda$6$lambda$5$lambda$4(LeanProjectActivity.kt:41)
-                            //      	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183)
-                            //      	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
-                            //      	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
-                            //      	at java.base/java.util.Iterator.forEachRemaining(Iterator.java:133)
                             contentEntry.addExcludeFolder(uri)
                             // TODO here thisLogger is Module
                             //      maybe it's better not using extension method

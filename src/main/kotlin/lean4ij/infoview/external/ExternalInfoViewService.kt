@@ -72,8 +72,11 @@ class ExternalInfoViewService(val project: Project) {
                     // TODO the infoview app seems doing nothing with file progress
                     //      hence maybe skip it?
                     val event = InfoviewEvent("serverNotification", it)
-                    // TODO does this require synchronization?
-                    notificationMessages.add(event)
+                    // Lock the field notificationMessages for it may be looped in Route.kt in the same time
+                    // TODO This is like some temporally way for making it works, it must be some better way
+                    synchronized(notificationMessages) {
+                        notificationMessages.add(event)
+                    }
                     events.emit(event)
                 }
             }
@@ -140,6 +143,7 @@ class ExternalInfoViewService(val project: Project) {
      *      it may cause by restarting the infoview only or starting
      *      a new tab in the browser
      *      Not sure if the infoview is designed in such a way or not, it's kind of lazy
+     * TODO and it may expand infinitely?
      */
     val notificationMessages : MutableList<InfoviewEvent> = mutableListOf()
 

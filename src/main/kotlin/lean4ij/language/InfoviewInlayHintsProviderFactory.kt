@@ -49,7 +49,7 @@ class HintSet {
 
     fun dumpHints(sink: InlayTreeSink) {
         this.hints.forEach { hint ->
-            hint.content.chunked(30).forEach {
+            hint.content.chunked(50).forEach {
                 // TODO what is relatedToPrevious for?
                 sink.addPresentation(InlineInlayPosition(hint.location, false), hasBackground = true) {
                     text(it)
@@ -163,7 +163,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
          * It's very awkward doing this with regex pattern for this...
          * But we don't have a parser for lean currently
          */
-        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s+)(.*)\s*(:=[\n\s]+)""")
+        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s)(.*?)(\s*:=[\n\s]+)""")
     }
 
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
@@ -184,7 +184,13 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             //      will it hang and leak?
             val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams) ?: continue
             val inlayHintType = ": ${termGoal.type.toInfoViewString(StringBuilder(), null)}"
-            hints.add(Hint(m.range.last - m.groupValues[3].length, inlayHintType))
+            var hintPos = m.range.last - m.groupValues[3].length ;
+            // anonymous have is slightly weird
+            if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
+                println(m.groupValues[1])
+                hintPos += 1;
+            }
+            hints.add(Hint(hintPos, inlayHintType))
         }
 
         return hints

@@ -91,32 +91,56 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             }
             val infoViewWindow = getLeanInfoview(project) ?: return
             // TODO implement the fold/open logic
-            val interactiveInfoBuilder = InfoviewRender("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
+            val infoviewRender = InfoviewRender()
+            val start = infoviewRender.length
+            val header = "${file.name}:${logicalPosition.line+1}:${logicalPosition.column}"
+            infoviewRender.append("${header}\n")
             // TODO here maybe null?
             // TODO refactor this
             if (interactiveGoals != null || interactiveTermGoal != null || !interactiveDiagnostics.isNullOrEmpty()) {
-                interactiveGoals?.toInfoViewString(interactiveInfoBuilder)
-                interactiveTermGoal?.toInfoViewString(editor, interactiveInfoBuilder)
+                interactiveGoals?.toInfoViewString(infoviewRender)
+                interactiveTermGoal?.toInfoViewString(editor, infoviewRender)
                 if (!interactiveDiagnostics.isNullOrEmpty()) {
-                    interactiveInfoBuilder.append("▼ Messages (${interactiveDiagnostics.size})\n")
+                    val header = "Messages (${interactiveDiagnostics.size})"
+                    val start = infoviewRender.length
+                    infoviewRender.append("${header}\n")
                     interactiveDiagnostics.forEach { i ->
-                        interactiveInfoBuilder.append("▼ ${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}\n")
-                        i.toInfoViewString(interactiveInfoBuilder)
-                        interactiveInfoBuilder.append('\n')
-                        // TODO TODO what?
+                        infoviewRender.append("▼ ${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}\n")
+                        i.toInfoViewString(infoviewRender)
+                        infoviewRender.append('\n')
                     }
+                    // The last line break should not be folded, here the impl seems kind of adhoc
+                    infoviewRender.deleteLastChar()
+                    val end = infoviewRender.length
+                    infoviewRender.addFoldingOperation(start, end, header)
+                    infoviewRender.append('\n')
                 }
             } else {
-                interactiveInfoBuilder.append("No info found.\n")
+                infoviewRender.append("No info found.\n")
             }
+            // The last line break should not be folded, here the impl seems kind of adhoc
+            infoviewRender.deleteLastChar()
+            val end = infoviewRender.length
+            infoviewRender.addFoldingOperation(start, end, header)
+            infoviewRender.append("\n")
 
             if (!allMessage.isNullOrEmpty()) {
-                interactiveInfoBuilder.append("▼ All Messages (${allMessage.size})\n")
+                val header = "All Messages (${allMessage.size})"
+                val start = infoviewRender.length
+                infoviewRender.append("$header\n")
                 allMessage.forEach { i ->
-                    interactiveInfoBuilder.append("▼ ${file.name}:${i.fullRange.start.line}:${i.fullRange.start.character}\n")
-                    i.toInfoViewString(interactiveInfoBuilder)
-                    interactiveInfoBuilder.append('\n')
+                    val header = "${file.name}:${i.fullRange.start.line}:${i.fullRange.start.character}"
+                    val start = infoviewRender.length
+                    infoviewRender.append("${header}\n")
+                    i.toInfoViewString(infoviewRender)
+                    val end = infoviewRender.length
+                    infoviewRender.addFoldingOperation(start, end, header)
+                    infoviewRender.append('\n')
                 }
+                infoviewRender.deleteLastChar()
+                val end = infoviewRender.length
+                infoviewRender.addFoldingOperation(start, end, header, false)
+                infoviewRender.append("\n")
             }
 
             // TODO render message
@@ -127,7 +151,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html
             // TODO minimize the invoke later range
             scope.launch(Dispatchers.EDT) {
-                infoViewWindow.updateEditorMouseMotionListener(interactiveInfoBuilder.toString(), file, logicalPosition, // TODO this should add some UT for the rendering
+                infoViewWindow.updateEditorMouseMotionListener(infoviewRender, file, logicalPosition, // TODO this should add some UT for the rendering
                     interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
             }
         }

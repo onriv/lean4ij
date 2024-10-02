@@ -27,25 +27,31 @@ class InteractiveGoal(
      * TODO refactor StringBuilder into a Render
      *      all render logic should be refactored, it's inelegant and error prone
      */
-     fun toInfoViewString(sb : InfoviewRender): String {
-         if (userName != null) {
-             sb.append("case $userName\n")
-         }
+    fun toInfoViewString(sb: InfoviewRender, haveMultiGoals: Boolean): String {
+        val header = "case $userName"
+        val start = sb.length
+        if (userName != null) {
+            sb.append("${header}\n")
+        }
         // TODO deduplicate
-         for (hyp in hyps) {
-             val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = " : ")
-             sb.append(names)
-             hyp.type.toInfoViewString(sb, null)
-             sb.append("\n")
-         }
-         sb.append("⊢ ")
-         // here startOffset and endOffset only for the goal
-         this.startOffset = sb.length
-         type.toInfoViewString(sb, null)
-         this.endOffset = sb.length
-         sb.append("\n")
-         return sb.substring(startOffset, endOffset)
-     }
+        for (hyp in hyps) {
+            val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = " : ")
+            sb.append(names)
+            hyp.type.toInfoViewString(sb, null)
+            sb.append("\n")
+        }
+        sb.append("⊢ ")
+        // here startOffset and endOffset only for the goal
+        this.startOffset = sb.length
+        type.toInfoViewString(sb, null)
+        this.endOffset = sb.length
+        val end = sb.length
+        if (haveMultiGoals) {
+            sb.addFoldingOperation(start, end, header)
+        }
+        sb.append("\n")
+        return sb.substring(startOffset, endOffset)
+    }
 
     /**
      * TODO try DIY this

@@ -1,5 +1,7 @@
 package lean4ij.lsp.data
 
+data class FoldingData(val startOffset: Int, val endOffset: Int, val placeholderText: String, val expanded: Boolean=true)
+
 
 /**
  * TODO this may better be placed in the infoview package,
@@ -29,7 +31,18 @@ class InfoviewRender(val sb: StringBuilder) {
         return sb.toString()
     }
 
+    private val _foldings: MutableList<FoldingData> = mutableListOf()
+
+    fun addFoldingOperation(startOffset: Int, endOffset: Int, placeholderText: String, expanded: Boolean=true) {
+        _foldings.add(FoldingData(startOffset, endOffset, placeholderText, expanded))
+    }
+
+    fun deleteLastChar() {
+        sb.deleteCharAt(sb.length - 1)
+    }
+
     val length : Int get() = sb.length
+    val foldings : List<FoldingData> get() = _foldings.toList()
 }
 
 /**
@@ -44,15 +57,27 @@ class InteractiveGoals(
      * TODO should this return a string?
      */
     fun toInfoViewString(sb: InfoviewRender) {
-        sb.append("▼ Tactic state\n")
+        val header = "Tactic state"
+        val start = sb.length
+        sb.append("$header\n")
         if (goals.isEmpty()) {
             sb.append("No goals\n")
             return
         }
-        sb.append("${goals.size} goals\n")
-        for (goal in goals) {
-            goal.toInfoViewString(sb)
+        val haveMultiGoals = goals.size > 1
+        if (haveMultiGoals) {
+            sb.append("${goals.size} goals\n")
+        } else {
+            sb.append("1 goal\n")
         }
+        for (goal in goals) {
+            goal.toInfoViewString(sb, haveMultiGoals)
+        }
+        // The last line break should not be folded, here the impl seems kind of adhoc
+        sb.deleteLastChar()
+        val end = sb.length
+        sb.addFoldingOperation(start, end, header)
+        sb.append('\n')
     }
 
     /**

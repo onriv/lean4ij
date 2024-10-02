@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
@@ -99,6 +100,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
             additionalColumnsCount = 1
             isFoldingOutlineShown = false
             isVirtualSpace = false
+            isFoldingOutlineShown = true
         }
         editor.headerComponent = null
         editor.setCaretEnabled(false)
@@ -113,7 +115,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
      *  // TODO this should add some UT for the rendering
      */
     suspend fun updateEditorMouseMotionListener(
-        interactiveInfo: String,
+        interactiveInfo: InfoviewRender,
         file: VirtualFile,
         logicalPosition: LogicalPosition,
         interactiveGoals: InteractiveGoals?,
@@ -122,7 +124,15 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         interactiveDiagnosticsAllMessages: List<InteractiveDiagnostics>?
     ) {
         val editorEx: EditorEx = editor.await()
-        editorEx.document.setText(interactiveInfo)
+        editorEx.document.setText(interactiveInfo.toString())
+        editorEx.foldingModel.runBatchFoldingOperation {
+            editorEx.foldingModel.clearFoldRegions()
+            for (folding in interactiveInfo.foldings) {
+                val foldRegion = editorEx.foldingModel.addFoldRegion(folding.startOffset, folding.endOffset, folding.placeholderText)
+                foldRegion?.isExpanded = folding.expanded
+            }
+        }
+
         val support = EditorHyperlinkSupport.get(editorEx)
         setContent(editorEx.component)
         // TODO does it require new object for each update?

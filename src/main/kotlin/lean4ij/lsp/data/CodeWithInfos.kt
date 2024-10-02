@@ -111,7 +111,7 @@ class MsgEmbedExpr(val expr: TaggedText<SubexprInfo>) : MsgEmbed() {
 
 class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
     override fun toInfoViewString(sb: InfoviewRender): String {
-        return goal.toInfoViewString(sb)
+        return goal.toInfoViewString(sb, false)
     }
 
     override fun contextInfo(offset: Int, startOffset: Int, endOffset : Int) : Triple<ContextInfo, Int, Int>? {

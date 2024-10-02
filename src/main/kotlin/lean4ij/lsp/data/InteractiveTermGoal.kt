@@ -20,8 +20,9 @@ class InteractiveTermGoal(
      * TODO refactor StringBuilder into a Render
      */
     fun toInfoViewString(editor: Editor, sb: InfoviewRender) {
-        sb.append("▼ Expected type\n")
+        val header = "Expected type"
         val start = sb.length
+        sb.append("$header\n")
         // TODO deduplicate
         for (hyp in hyps) {
             val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = " : ")
@@ -34,12 +35,7 @@ class InteractiveTermGoal(
         val end = sb.length
         // TODO it can not add fold here directly for the content still not add to editor yet
         //
-        // ApplicationManager.getApplication().invokeLater {
-        //     editor.foldingModel.runBatchFoldingOperation {
-        //         val region = editor.foldingModel.addFoldRegion(start, end, "TODO")
-        //         region?.isExpanded = false
-        //     }
-        // }
+        sb.addFoldingOperation(start, end, header)
         sb.append("\n")
     }
 

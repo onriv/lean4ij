@@ -187,7 +187,6 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             var hintPos = m.range.last - m.groupValues[3].length ;
             // anonymous have is slightly weird
             if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
-                println(m.groupValues[1])
                 hintPos += 1;
             }
             hints.add(Hint(hintPos, inlayHintType))

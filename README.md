@@ -53,45 +53,7 @@ Please check [DEVELOP.md](./DEVELOP.md).
 
 ## Known Issues
 
-The plugin is still on an early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues.
-
-and todos
-- [x] file progressing seems block UI thread in some cases 
-  - solved by highlight on ranges rather than lines
-- [x] skip index `.lake/build`
-  - [x] this can be manually done by right-clicking the folder and marking it as exclude
-  - [x] automatically exclude, check [this](https://youtrack.jetbrains.com/issue/IDEA-194725/Specify-IntelliJ-exclude-directories-in-build.gradle), or [this](https://youtrack.jetbrains.com/issue/IJPL-8363/Ability-to-have-default-Excluded-Folders-not-per-project), or [this](https://youtrack.jetbrains.com/issue/WEB-11419).
-    some plugins have customized logic for it like intellij-rust or intellij-arend
-- [ ] infoview toolwindow in swing
-  - [x] show goals
-  - [x] show term goal
-  - [x] show message
-  - [x] interactive message
-  - [x] show all messages (all messages currently is skipped for not sure when it's trigger)
-  - [x] interactive all messages
-  - [x] popup
-  - [ ] pop up style, fonts, clickable links, etc
-  - [x] color
-  - [x] make the editor singleton  
-- [ ] mathlib4 seems always failed starting the language server
-  this is because elan download lake while starting lsp, not fixed yet
-- [x] infoview toolwindow in jcef
-- [ ] project create/setup or configuration
-- [ ] distinguish source in .lake as library rather than source
-- [x] avoid file progressing in search window (it should be caused by didOpen, etc.) solved by only enable lsp at focusing editor
-- [ ] setting dialog
-- [x] theme and color
-- [x] find in files will send a didOpen request and make fileProgress, it may hurt the performance.
-  currently a fix for this is disabling lsp while lost focus for the editor
-- [ ] elan/lake, project create, setup etc
-- [ ] run and build (debug cannot be supported, although arend has this)
-- [ ] some more logs with different levels
-- [ ] refactor the frontend impl (currently it's written as for feasibility test)
-- [x] all messages in the external infoview failed (via caching server notification now)
-- [ ] check why sometimes lsp requires multiple start
-- [x] all message should be interactive (check lean-infoview/src/infoview/info.tsx)
-      fixed via passing `hasWidgets` when start lsp
-- [ ] jcef infoview style adjust
+The plugin is still on an early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues, and [TODO.md](./TODO.md)
 
 ## Troubleshooting
 - Currently, some log is printed in the build window for the progressing file and the url to the external/jcef infoview, if something does not work normally, some log there may help.
@@ -100,7 +62,6 @@ and todos
   - (Linux) `$HOME.cache/JetBrains/<Product>/log/idea.log`
   - (Windows) `$HOME\AppData\Local\JetBrains\<Product>\log\idea.log`
   - (Macos) `~/Library/Caches/<Product>/log/idea.log`
-
 
 ## Acknowledgments
 
@@ -111,9 +72,9 @@ The following projects give great help for developing the plugin:
 - [Julian/lean.nvim](https://github.com/Julian/lean.nvim)
 - [leanprover-community/lean4-mode](https://github.com/leanprover-community/lean4-mode)
 - [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij)
----
+
 Plugin based on the [IntelliJ Platform Plugin Template][template].
-- For linux:   
+- For linux:
 
 [template]: https://github.com/JetBrains/intellij-platform-plugin-template
 [docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation

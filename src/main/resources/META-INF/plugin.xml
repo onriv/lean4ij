@@ -27,7 +27,7 @@
         <!-- indeed, this cannot use-->
         <!-- <fileType-->
         <!--         name="Lean4 File"-->
-        <!--         implementationClass="lean4ijuage.Lean4FileType"-->
+        <!--         implementationClass="lean4ij.language.Lean4FileType"-->
         <!--         fieldName="INSTANCE"-->
         <!--         language="Lean4"-->
         <!--         extensions="lean"/>-->
@@ -41,6 +41,29 @@
         <notificationGroup id="Custom Notification Group"
                            displayType="BALLOON"
                            key="notification.group.name"/>
+
+        <codeInsight.declarativeInlayProvider
+                language="textmate"
+                implementationClass="lean4ij.language.OmitTypeInlayHintsProvider"
+                isEnabledByDefault="true"
+                group="OTHER_GROUP"
+                providerId="lean.def.omit.type"
+                bundle="messages.MyBundle"
+                nameKey="settings.lean.def.omit.type.name"
+                descriptionKey="settings.lean.def.omit.type.name"
+        />
+        <codeInsight.declarativeInlayProvider
+                language="textmate"
+                implementationClass="lean4ij.language.PlaceHolderInlayHintsProvider"
+                isEnabledByDefault="true"
+                group="OTHER_GROUP"
+                providerId="lean.placeholder.value"
+                bundle="messages.MyBundle"
+                nameKey="settings.lean.placeholder.value.name"
+                descriptionKey="settings.lean.placeholder.value.name"
+        />
+        <!-- <lang.foldingBuilder language="textmate" implementationClass="lean4ij.language.PlaceholderFolding"/> -->
+
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="lean"

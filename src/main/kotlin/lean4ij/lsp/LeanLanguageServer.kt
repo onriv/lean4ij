@@ -25,7 +25,7 @@ inline fun <reified T> fromJson(src: String): T {
  * TODO here we don't impl getWidgets. It's implemented with react and we can no do it with swing anyway...
  *      for the external infoview, it's bridged transparently and doesn't require an explicit declaration
  */
-class LeanLanguageServer(private val languageServer: InternalLeanLanguageServer) {
+class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
 
     suspend fun plainGoal (params: PlainGoalParams): PlainGoal? {
         return plainGoalAsync(params).await()

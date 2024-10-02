@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import lean4ij.lsp.data.ContextInfo
+import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveInfoParams
 import lean4ij.lsp.data.Position
 import lean4ij.project.LeanProjectService
@@ -64,7 +65,7 @@ class CodeWithInfosDocumentationHyperLink(
                 val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
                 htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
             }
-            val sb = StringBuilder()
+            val sb = InfoviewRender()
             val typeStr = infoToInteractive.type?.toInfoViewString(sb, null) ?: ""
             val exprStr = infoToInteractive.exprExplicit?.toInfoViewString(sb, null) ?: ""
             // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html

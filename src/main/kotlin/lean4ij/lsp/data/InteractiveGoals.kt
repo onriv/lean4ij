@@ -1,5 +1,37 @@
 package lean4ij.lsp.data
 
+
+/**
+ * TODO this may better be placed in the infoview package,
+ *      but currently we added rich behaviors in these data classes
+ */
+class InfoviewRender(val sb: StringBuilder) {
+
+    constructor(): this(StringBuilder())
+    constructor(text: String): this(StringBuilder(text))
+
+    fun append(text: String) {
+        sb.append(text)
+    }
+    fun append(char: Char) {
+        sb.append(char)
+    }
+
+    fun substring(start: Int, end: Int) : String {
+        return sb.substring(start, end)
+    }
+
+    fun substring(start: Int) : String {
+        return sb.substring(start)
+    }
+
+    override fun toString(): String {
+        return sb.toString()
+    }
+
+    val length : Int get() = sb.length
+}
+
 /**
  * see [src/Lean/Widget/InteractiveGoal.lean#L106-L105](https://github.com/leanprover/lean4/blob/23e49eb519a45496a9740aeb311bf633a459a61e/src/Lean/Widget/InteractiveGoal.lean#L106-L105)
  */
@@ -11,7 +43,7 @@ class InteractiveGoals(
      * TODO implement the fold/open logic
      * TODO should this return a string?
      */
-    fun toInfoViewString(sb: StringBuilder) {
+    fun toInfoViewString(sb: InfoviewRender) {
         sb.append("▼ Tactic state\n")
         if (goals.isEmpty()) {
             sb.append("No goals\n")

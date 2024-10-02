@@ -1,17 +1,14 @@
 package lean4ij.lsp.data
 
-import com.jetbrains.rd.framework.base.deepClonePolymorphic
-import kotlin.math.exp
-
 /**
  * copy from src/Lean/Widget/InteractiveCode.lean:45
  * The polymorphism is achieved via class inheritance
  * TODO using Kotlin's property for getter/setter and avoid
  *      all fields being public
+ * TODO this maybe should be renamed
  */
-
-interface InfoViewRenderer {
-    fun toInfoViewString(sb : StringBuilder) : String
+interface InfoViewContent {
+    fun toInfoViewString(sb : InfoviewRender) : String
     fun contextInfo(offset: Int, startOffset: Int, endOffset : Int) : Triple<ContextInfo, Int, Int>?
 }
 
@@ -22,8 +19,8 @@ interface InfoViewRenderer {
  * maybe it can be reified, check
  * https://discuss.kotlinlang.org/t/reified-generics-on-class-level/16711/4
  */
-abstract class TaggedText<T> where T: InfoViewRenderer {
-    abstract fun toInfoViewString(sb: StringBuilder, parent : TaggedText<T>?) : String
+abstract class TaggedText<T> where T: InfoViewContent {
+    abstract fun toInfoViewString(sb: InfoviewRender, parent : TaggedText<T>?) : String
 
     @Transient
     var startOffset : Int = -1
@@ -43,8 +40,8 @@ abstract class TaggedText<T> where T: InfoViewRenderer {
     abstract fun getCodeText(offset: Int, t: T?) : Triple<ContextInfo, Int, Int>?
 }
 
-class TaggedTextText<T>(val text: String) : TaggedText<T>() where T: InfoViewRenderer {
-    override fun toInfoViewString(sb: StringBuilder, parent : TaggedText<T>?): String {
+class TaggedTextText<T>(val text: String) : TaggedText<T>() where T: InfoViewContent {
+    override fun toInfoViewString(sb: InfoviewRender, parent : TaggedText<T>?): String {
         this.parent = parent
         startOffset = sb.length
         sb.append(text)
@@ -60,8 +57,8 @@ class TaggedTextText<T>(val text: String) : TaggedText<T>() where T: InfoViewRen
     }
 }
 
-class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where T: InfoViewRenderer {
-    override fun toInfoViewString(sb: StringBuilder, parent : TaggedText<T>?): String {
+class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where T: InfoViewContent {
+    override fun toInfoViewString(sb: InfoviewRender, parent : TaggedText<T>?): String {
         this.parent = parent
         // TODO handle events
         startOffset = sb.length
@@ -78,8 +75,8 @@ class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where
     }
 }
 
-class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<T>() where T: InfoViewRenderer {
-    override fun toInfoViewString(sb: StringBuilder, parent: TaggedText<T>?) : String {
+class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<T>() where T: InfoViewContent {
+    override fun toInfoViewString(sb: InfoviewRender, parent: TaggedText<T>?) : String {
         this.parent = parent
         this.startOffset = sb.length
         for (c in append) {
@@ -100,10 +97,10 @@ class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<
     }
 }
 
-abstract class MsgEmbed : InfoViewRenderer
+abstract class MsgEmbed : InfoViewContent
 
 class MsgEmbedExpr(val expr: TaggedText<SubexprInfo>) : MsgEmbed() {
-    override fun toInfoViewString(sb: StringBuilder): String {
+    override fun toInfoViewString(sb: InfoviewRender): String {
         return expr.toInfoViewString(sb, null)
     }
 
@@ -113,7 +110,7 @@ class MsgEmbedExpr(val expr: TaggedText<SubexprInfo>) : MsgEmbed() {
 }
 
 class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
-    override fun toInfoViewString(sb: StringBuilder): String {
+    override fun toInfoViewString(sb: InfoviewRender): String {
         return goal.toInfoViewString(sb)
     }
 
@@ -130,7 +127,7 @@ class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
 abstract class MsgEmbedTrace(val indent: Int, val cls: String): MsgEmbed()
 
 class MsgUnsupported(val message: String) : MsgEmbed() {
-    override fun toInfoViewString(sb: StringBuilder): String {
+    override fun toInfoViewString(sb: InfoviewRender): String {
         sb.append(message)
         return message
     }

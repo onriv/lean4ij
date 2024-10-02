@@ -27,7 +27,7 @@ class InteractiveGoal(
      * TODO refactor StringBuilder into a Render
      *      all render logic should be refactored, it's inelegant and error prone
      */
-     fun toInfoViewString(sb : StringBuilder): String {
+     fun toInfoViewString(sb : InfoviewRender): String {
          if (userName != null) {
              sb.append("case $userName\n")
          }

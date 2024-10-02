@@ -150,37 +150,39 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
             }
             runCatching {
                 while (true) {
-                    try {
-                        // TODO the original example in https://ktor.io/docs/server-websockets.html#handle-multiple-session
-                        //      is using consumeEach, but I am not familiar with it
-                        val frame = incoming.receive()
-                        if (frame is Frame.Text) {
-                            val text = frame.readText()
-                            logger.trace("ws received: $text")
-                            val (requestId, method, data) = text.split(Regex(","), 3)
-                            if (method == "createRpcSession") {
-                                launch {
-                                    val params: RpcConnectParams = fromJson(data)
-                                    val session = service.getSession(params.uri)
-                                    val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
-                                    sendWithLog(Gson().toJson(resp))
-                                }
+                    // TODO the original example in https://ktor.io/docs/server-websockets.html#handle-multiple-session
+                    //      is using consumeEach, but I am not familiar with it
+                    // when this throw an exception, it means that the connection from external/jcef infoview closed
+                    // the  exception must not be catch inside the while loop
+                    val frame = incoming.receive()
+                    if (frame is Frame.Text) {
+                        val text = frame.readText()
+                        logger.trace("ws received: $text")
+                        val (requestId, method, data) = text.split(Regex(","), 3)
+                        if (method == "createRpcSession") {
+                            launch {
+                                val params: RpcConnectParams = fromJson(data)
+                                val session = service.getSession(params.uri)
+                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
+                                sendWithLog(Gson().toJson(resp))
                             }
-                            if (method == "sendClientRequest") {
-                                launch {
+                        }
+                        if (method == "sendClientRequest") {
+                            launch {
+                                try {
                                     val params: RpcCallParamsRaw = fromJson(data)
                                     val ret = service.rpcCallRaw(params)
                                     val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
                                     sendWithLog(Gson().toJson(resp))
+                                } catch (e: Exception) {
+                                    // TODO handle it seriously
+                                    e.printStackTrace()
+                                    e.cause?.printStackTrace()
+                                    e.cause?.cause?.printStackTrace()
+                                    thisLogger().error(e)
                                 }
                             }
                         }
-                    } catch (e: Exception) {
-                        // TODO handle it seriously
-                        e.printStackTrace()
-                        e.cause?.printStackTrace()
-                        e.cause?.cause?.printStackTrace()
-                        thisLogger().error(e)
                     }
                 }
             }.onFailure { exception ->

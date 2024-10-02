@@ -19,7 +19,7 @@ class InteractiveTermGoal(
     /**
      * TODO refactor StringBuilder into a Render
      */
-    fun toInfoViewString(editor: Editor, sb: StringBuilder) {
+    fun toInfoViewString(editor: Editor, sb: InfoviewRender) {
         sb.append("▼ Expected type\n")
         val start = sb.length
         // TODO deduplicate

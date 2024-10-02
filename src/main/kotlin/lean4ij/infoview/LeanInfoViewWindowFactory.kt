@@ -91,7 +91,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             }
             val infoViewWindow = getLeanInfoview(project) ?: return
             // TODO implement the fold/open logic
-            val interactiveInfoBuilder = StringBuilder("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
+            val interactiveInfoBuilder = InfoviewRender("▼ ${file.name}:${logicalPosition.line+1}:${logicalPosition.column}\n")
             // TODO here maybe null?
             // TODO refactor this
             if (interactiveGoals != null || interactiveTermGoal != null || !interactiveDiagnostics.isNullOrEmpty()) {

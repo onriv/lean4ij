@@ -163,8 +163,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
          * It's very awkward doing this with regex pattern for this...
          * But we don't have a parser for lean currently
          */
-        // TODO : anonymous have, def {a: Type u}
-        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s+)(.+)\s+(:=[\n\s]+)""")
+        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s+)(.*)\s*(:=[\n\s]+)""")
     }
 
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {

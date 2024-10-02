@@ -196,15 +196,22 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
      * The parser for this part should not be hard though
      */
     private fun hasTypeNotation(s: String, offset: Int, leanFile: LeanFile): Boolean {
-        if (!s.contains(':')) {
-            return false
+        // if there exists a balanced :, return true
+        var openBracket = 0
+        var openFlower = 0
+        var openSquare = 0
+        for (c in s) {
+            if (c == '(') openBracket++
+            else if (c == ')') openBracket--;
+            else if (c == '{') openFlower++;
+            else if (c == '}') openFlower--;
+            else if (c == '[') openSquare++;
+            else if (c == ']') openSquare--;
+            else if (c == ':' && openBracket == 0 && openFlower == 0 && openSquare == 0) {
+                return true;
+            }
         }
-        if (!s.substringAfterLast(':').contains(')')) {
-            return true
-        }
-        if (!s.substringBefore(':').contains('(')) {
-            return true
-        }
+
         return false
     }
 }

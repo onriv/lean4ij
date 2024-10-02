@@ -2,7 +2,6 @@ package lean4ij.infoview
 
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
@@ -13,9 +12,10 @@ import java.awt.Color
 import javax.swing.Icon
 
 enum class AttrSelect {
-    foreground,
-    backgrounnd,
-    color
+    FOREGROUND,
+    BACKGROUNND,
+    COLOR,
+    ALL,
 }
 
 fun createTextAttributesKey(color: Color?, fallbackKey: TextAttributesKey?) {
@@ -27,12 +27,18 @@ fun createTextAttributesKey(color: Color?, fallbackKey: TextAttributesKey?) {
 enum class TextAttributesKeys(val style: String, private val fallbackKey: TextAttributesKey,
                               val attrSelect: AttrSelect,
                               val key: TextAttributesKey = TextAttributesKey.createTextAttributesKey(style, fallbackKey)) {
-    Header("header", DefaultLanguageHighlighterColors.CLASS_NAME, AttrSelect.foreground),
-    GoalHyp("goal-hyp", DefaultLanguageHighlighterColors.INSTANCE_FIELD, AttrSelect.foreground),
-    GoalInaccessible("goal-inaccessible", DefaultLanguageHighlighterColors.LINE_COMMENT, AttrSelect.foreground),
+    Header("header", DefaultLanguageHighlighterColors.CLASS_NAME, AttrSelect.FOREGROUND),
+    GoalHyp("goal-hyp", DefaultLanguageHighlighterColors.INSTANCE_FIELD, AttrSelect.FOREGROUND),
+    GoalInaccessible("goal-inaccessible", DefaultLanguageHighlighterColors.LINE_COMMENT, AttrSelect.FOREGROUND),
     // The default color of the following two seems not bad
-    // InsertedText("inserted-text", DiffColors.DIFF_INSERTED, AttrSelect.backgrounnd),
-    // RemovedText("removed-text", DiffColors.DIFF_DELETED, AttrSelect.backgrounnd),
+    InsertedText("inserted-text", DiffColors.DIFF_INSERTED, AttrSelect.BACKGROUNND),
+    RemovedText("removed-text", DiffColors.DIFF_DELETED, AttrSelect.BACKGROUNND),
+
+    SwingInfoviewCurrentPosition("swing-infoview-current-position", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE, AttrSelect.ALL),
+    SwingInfoviewExpectedType("swing-infoview-expected-type", DefaultLanguageHighlighterColors.CLASS_NAME, AttrSelect.ALL),
+    SwingInfoviewGoalSymbol("swing-infoview-goal-symbol", DefaultLanguageHighlighterColors.STRING, AttrSelect.ALL),
+    SwingInfoviewAllMessagePos("swing-infoview-all-message-pos", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, AttrSelect.ALL),
+    SwingInfoviewAllMessageSorryPos("swing-infoview-all-message-sorry-pos", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE, AttrSelect.ALL),
 }
 
 /**

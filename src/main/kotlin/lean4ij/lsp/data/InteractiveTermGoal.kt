@@ -2,6 +2,8 @@ package lean4ij.lsp.data
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import lean4ij.infoview.TextAttributesKeys
 
 /**
  * TODO this is different with the lean4 source code
@@ -22,15 +24,25 @@ class InteractiveTermGoal(
     fun toInfoViewString(editor: Editor, sb: InfoviewRender) {
         val header = "Expected type"
         val start = sb.length
-        sb.append("$header\n")
+        sb.append("$header")
+        sb.highlight(start, sb.length, EditorColorsManager.getInstance().globalScheme.getAttributes(TextAttributesKeys.SwingInfoviewExpectedType.key))
+        sb.append('\n')
         // TODO deduplicate
         for (hyp in hyps) {
-            val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = " : ")
+            val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = "")
+            val start = sb.length
             sb.append(names)
+            if (names.contains("✝")) {
+                sb.highlight(start, sb.length, TextAttributesKeys.GoalInaccessible)
+            } else {
+                sb.highlight(start, sb.length, TextAttributesKeys.GoalHyp)
+            }
+            sb.append(" : ")
             hyp.type.toInfoViewString(sb, null)
             sb.append("\n")
         }
-        sb.append("⊢ ")
+        sb.append("⊢", TextAttributesKeys.SwingInfoviewGoalSymbol)
+        sb.append(" ")
         type.toInfoViewString(sb, null)
         val end = sb.length
         // TODO it can not add fold here directly for the content still not add to editor yet

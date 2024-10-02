@@ -72,11 +72,7 @@ class ExternalInfoViewService(val project: Project) {
                     // TODO the infoview app seems doing nothing with file progress
                     //      hence maybe skip it?
                     val event = InfoviewEvent("serverNotification", it)
-                    // Lock the field notificationMessages for it may be looped in Route.kt in the same time
-                    // TODO This is like some temporally way for making it works, it must be some better way
-                    synchronized(notificationMessages) {
-                        notificationMessages.add(event)
-                    }
+                    notificationMessages.add(event)
                     events.emit(event)
                 }
             }

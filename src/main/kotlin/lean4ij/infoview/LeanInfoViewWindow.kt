@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
@@ -124,6 +126,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         interactiveDiagnosticsAllMessages: List<InteractiveDiagnostics>?
     ) {
         val editorEx: EditorEx = editor.await()
+        editorEx.markupModel.removeAllHighlighters()
         editorEx.document.setText(interactiveInfo.toString())
         editorEx.foldingModel.runBatchFoldingOperation {
             editorEx.foldingModel.clearFoldRegions()
@@ -132,6 +135,11 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
                 foldRegion?.isExpanded = folding.expanded
             }
         }
+        // highlights
+        for (highlight in interactiveInfo.highlights) {
+            editorEx.markupModel.addRangeHighlighter(highlight.startOffset, highlight.endOffset, HighlighterLayer.SYNTAX, highlight.textAttributes, HighlighterTargetArea.EXACT_RANGE)
+        }
+
 
         val support = EditorHyperlinkSupport.get(editorEx)
         setContent(editorEx.component)

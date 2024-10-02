@@ -1,5 +1,7 @@
 package lean4ij.lsp.data
 
+import lean4ij.infoview.TextAttributesKeys
+
 class InteractiveGoal(
     val userName: String? = null,
     val type: TaggedText<SubexprInfo>,
@@ -33,14 +35,22 @@ class InteractiveGoal(
         if (userName != null) {
             sb.append("${header}\n")
         }
-        // TODO deduplicate
+        // TODO deduplicate DRY DRY DRY
         for (hyp in hyps) {
-            val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = " : ")
+            val start = sb.length
+            val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = "")
             sb.append(names)
+            if (names.contains("✝")) {
+                sb.highlight(start, sb.length, TextAttributesKeys.GoalInaccessible)
+            } else {
+                sb.highlight(start, sb.length, TextAttributesKeys.GoalHyp)
+            }
+            sb.append(" : ")
             hyp.type.toInfoViewString(sb, null)
             sb.append("\n")
         }
-        sb.append("⊢ ")
+        sb.append("⊢", TextAttributesKeys.SwingInfoviewGoalSymbol)
+        sb.append(" ")
         // here startOffset and endOffset only for the goal
         this.startOffset = sb.length
         type.toInfoViewString(sb, null)

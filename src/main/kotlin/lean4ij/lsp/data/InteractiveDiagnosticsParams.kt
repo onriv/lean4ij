@@ -28,7 +28,7 @@ data class InteractiveDiagnostics(
     val severity: Int,
     val source : String,
 ) {
-    fun toInfoViewString(interactiveInfoBuilder: InfoviewRender) {
-        message.toInfoViewString(interactiveInfoBuilder, null)
+    fun toInfoViewString(interactiveInfoBuilder: InfoviewRender): String {
+        return message.toInfoViewString(interactiveInfoBuilder, null)
     }
 }

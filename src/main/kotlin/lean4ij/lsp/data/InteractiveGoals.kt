@@ -1,6 +1,12 @@
 package lean4ij.lsp.data
 
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.TextAttributes
+import lean4ij.infoview.TextAttributesKeys
+
 data class FoldingData(val startOffset: Int, val endOffset: Int, val placeholderText: String, val expanded: Boolean=true)
+data class HighlightData(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes)
 
 
 /**
@@ -15,6 +21,16 @@ class InfoviewRender(val sb: StringBuilder) {
     fun append(text: String) {
         sb.append(text)
     }
+
+    /**
+     * append with highlight
+     */
+    fun append(text: String, key: TextAttributesKeys) {
+        val start = sb.length
+        sb.append(text)
+        highlight(start, sb.length, key)
+    }
+
     fun append(char: Char) {
         sb.append(char)
     }
@@ -32,6 +48,7 @@ class InfoviewRender(val sb: StringBuilder) {
     }
 
     private val _foldings: MutableList<FoldingData> = mutableListOf()
+    private val _highlights: MutableList<HighlightData> = mutableListOf()
 
     fun addFoldingOperation(startOffset: Int, endOffset: Int, placeholderText: String, expanded: Boolean=true) {
         _foldings.add(FoldingData(startOffset, endOffset, placeholderText, expanded))
@@ -41,8 +58,21 @@ class InfoviewRender(val sb: StringBuilder) {
         sb.deleteCharAt(sb.length - 1)
     }
 
+    fun highlight(startOffset: Int, endOffset: Int, textAttributes: TextAttributes) {
+        _highlights.add(HighlightData(startOffset, endOffset, textAttributes))
+    }
+
+    fun highlight(startOffset: Int, endOffset: Int, key: TextAttributesKey) {
+        return highlight(startOffset, endOffset, EditorColorsManager.getInstance().globalScheme.getAttributes(key))
+    }
+
+    fun highlight(startOffset: Int, endOffset: Int, key: TextAttributesKeys) {
+        return highlight(startOffset, endOffset, EditorColorsManager.getInstance().globalScheme.getAttributes(key.key))
+    }
+
     val length : Int get() = sb.length
     val foldings : List<FoldingData> get() = _foldings.toList()
+    val highlights : List<HighlightData> get() = _highlights.toList()
 }
 
 /**

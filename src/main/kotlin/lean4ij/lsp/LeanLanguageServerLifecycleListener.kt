@@ -4,6 +4,7 @@ import lean4ij.project.LeanProjectService
 import lean4ij.util.Constants
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.jetbrains.rd.framework.base.deepClonePolymorphic
 import com.redhat.devtools.lsp4ij.LanguageServerWrapper
 import com.redhat.devtools.lsp4ij.ServerStatus
 import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleListener

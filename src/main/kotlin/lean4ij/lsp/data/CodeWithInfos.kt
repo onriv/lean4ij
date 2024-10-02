@@ -10,6 +10,7 @@ package lean4ij.lsp.data
 interface InfoViewContent {
     fun toInfoViewString(sb : InfoviewRender) : String
     fun contextInfo(offset: Int, startOffset: Int, endOffset : Int) : Triple<ContextInfo, Int, Int>?
+    fun mayHighlight(sb: InfoviewRender, startOffset: Int, endOffset: Int) {}
 }
 
 /**
@@ -65,6 +66,7 @@ class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where
         f0.toInfoViewString(sb)
         f1.toInfoViewString(sb, this)
         endOffset = sb.length
+        f0.mayHighlight(sb, startOffset, endOffset)
         codeText = sb.substring(startOffset, endOffset)
         return codeText
     }

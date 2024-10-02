@@ -32,7 +32,8 @@ The LSP server is start as any lean file is open in the Editor. If it not behave
 
 Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.
 
-Infoview is supported using [lean4-infoview,](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it can be started from a browser or the internal [JCEF] infoview toolwindow. If it not behaves correctly, try firing a restart action too.
+Infoview is supported using [lean4-infoview,](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and currently it can be started from a browser or the internal [JCEF] infoview toolwindow. If it not behaves correctly, try firing a restart action too. There is also an infoview implemented in swing that's native
+in Jetbrains platform, it contains some basic functionally and for popup it requires a click.
 
 Messages and logs about the lean lsp server can be found in the language server tool window after setting the level to message or trace, check more information about this in [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij).
 ### Actions
@@ -64,13 +65,13 @@ and todos
 - [ ] infoview toolwindow in swing
   - [x] show goals
   - [x] show term goal
-  - [ ] show message
-  - [ ] interactive message
-  - [ ] show all messages (all messages currently is skipped for not sure when it's trigger)
-  - [ ] interactive all messages
+  - [x] show message
+  - [x] interactive message
+  - [x] show all messages (all messages currently is skipped for not sure when it's trigger)
+  - [x] interactive all messages
   - [x] popup
   - [ ] pop up style, fonts, clickable links, etc
-  - [ ] color
+  - [x] color
   - [x] make the editor singleton  
 - [ ] mathlib4 seems always failed starting the language server
   this is because elan download lake while starting lsp, not fixed yet

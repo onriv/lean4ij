@@ -137,10 +137,9 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                 //      a new tab in the browser
                 //      Not sure if the infoview is designed in such a way or not, it's kind of lazy
                 // TODO and it may keep growing
-                // TODO it's because while looping there is a chance that notificationMessages is being updated, fix it
-                val copiedMessages = synchronized(service.notificationMessages) {
-                    listOf(service.notificationMessages)
-                }
+                // Here the copy is for avoiding ConcurrentModificationException since
+                // it's also changed in ExternalInfoViewService
+                val copiedMessages = service.notificationMessages.toList()
                 copiedMessages.forEach {
                     sendWithLog(Gson().toJson(it))
                 }

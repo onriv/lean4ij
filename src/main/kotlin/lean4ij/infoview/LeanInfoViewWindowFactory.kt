@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
@@ -38,39 +39,6 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         }
 
         /**
-         * check https://stackoverflow.com/questions/66548934/how-to-access-components-inside-a-custom-toolwindow-from-an-actios
-         * for how to access a custom tool window
-         * TODO maybe impl displaying plainTermGoal too
-         * TODO since using interactiveGoals for quite recent, this requires some test
-         */
-        fun updateGoal(project: Project, file: VirtualFile, caret: Caret, plainGoal: List<String>, plainTermGoal: String) {
-            val infoViewWindow = getLeanInfoview(project) ?: return
-            val contentBuilder = StringBuilder("▼ ${file.name}:${caret.logicalPosition.line+1}:${caret.logicalPosition.column}\n")
-            if (plainGoal.isEmpty() && plainTermGoal.isEmpty()) {
-                contentBuilder.append("No info found.\n")
-            } else {
-                if (plainGoal.isNotEmpty()) {
-                    contentBuilder.append(" ▼ Tactic state\n")
-                    if (plainGoal.size == 1) {
-                        contentBuilder.append(" 1 goal\n")
-                    } else {
-                        contentBuilder.append(" ${plainGoal.size} goals\n")
-                    }
-                    for (s in plainGoal) {
-                        contentBuilder.append(s)
-                        contentBuilder.append("\n")
-                    }
-                }
-                if (plainTermGoal.isNotEmpty()) {
-                    contentBuilder.append(" ▼ Expected type\n")
-                    contentBuilder.append(plainTermGoal)
-                }
-            }
-
-            infoViewWindow.updateGoal(contentBuilder.toString())
-        }
-
-        /**
          * TODO the implementation should absolutely be replaced by better rendering way
          *      using raw text it's very inconvenient to update things like hovering event
          *      but though vim/emacs has to do it this way maybe ...
@@ -94,7 +62,9 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             val infoviewRender = InfoviewRender()
             val start = infoviewRender.length
             val header = "${file.name}:${logicalPosition.line+1}:${logicalPosition.column}"
-            infoviewRender.append("${header}\n")
+            infoviewRender.append("${header}")
+            infoviewRender.highlight(start, infoviewRender.length, EditorColorsManager.getInstance().globalScheme.getAttributes(TextAttributesKeys.SwingInfoviewCurrentPosition.key))
+            infoviewRender.append('\n')
             // TODO here maybe null?
             // TODO refactor this
             if (interactiveGoals != null || interactiveTermGoal != null || !interactiveDiagnostics.isNullOrEmpty()) {
@@ -131,10 +101,17 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 allMessage.forEach { i ->
                     val header = "${file.name}:${i.fullRange.start.line}:${i.fullRange.start.character}"
                     val start = infoviewRender.length
-                    infoviewRender.append("${header}\n")
-                    i.toInfoViewString(infoviewRender)
-                    val end = infoviewRender.length
-                    infoviewRender.addFoldingOperation(start, end, header)
+                    infoviewRender.append(header)
+                    val end1 = infoviewRender.length
+                    infoviewRender.append('\n')
+                    val content = i.toInfoViewString(infoviewRender)
+                    if (content.contains("declaration uses 'sorry'")) {
+                        infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessageSorryPos)
+                    } else {
+                        infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessagePos)
+                    }
+                    val end2 = infoviewRender.length
+                    infoviewRender.addFoldingOperation(start, end2, header)
                     infoviewRender.append('\n')
                 }
                 infoviewRender.deleteLastChar()

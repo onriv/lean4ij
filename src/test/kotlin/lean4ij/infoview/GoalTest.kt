@@ -36,7 +36,7 @@ class GoalTest {
 //                }
 //            }
         var goals : InteractiveGoals = gson.fromJson(s, InteractiveGoals::class.java)
-        val sb = StringBuilder()
+        val sb = InfoviewRender()
         goals.toInfoViewString(sb)
         println(sb.toString())
 

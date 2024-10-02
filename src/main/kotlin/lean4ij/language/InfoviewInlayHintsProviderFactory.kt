@@ -1,7 +1,6 @@
 package lean4ij.language
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
+import com.google.common.base.MoreObjects
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
@@ -9,7 +8,6 @@ import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
-import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer
 import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
@@ -18,12 +16,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.util.userData
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.io.await
 import kotlinx.coroutines.launch
+import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveTermGoalParams
 import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
@@ -95,7 +93,8 @@ abstract class InlayHintBase(private val editor: Editor, protected val project: 
         if (project == null || element !is TextMateFile) {
             return
         }
-        val file = editor.virtualFile
+        // TODO weird, here editor.virtualFile could be null
+        val file = MoreObjects.firstNonNull(editor.virtualFile, element.virtualFile)
         if (file.extension != "lean") {
             return
         }
@@ -184,7 +183,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             // TODO what if the server not start?
             //      will it hang and leak?
             val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams) ?: continue
-            val inlayHintType = ": ${termGoal.type.toInfoViewString(StringBuilder(), null)}"
+            val inlayHintType = ": ${termGoal.type.toInfoViewString(InfoviewRender(), null)}"
             hints.add(Hint(m.range.last - m.groupValues[3].length, inlayHintType))
         }
 

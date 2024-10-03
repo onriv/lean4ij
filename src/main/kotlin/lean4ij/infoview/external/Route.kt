@@ -17,6 +17,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import lean4ij.Lean4Settings
+import lean4ij.Lean4SettingsView
 import lean4ij.infoview.TextAttributesKeys
 import lean4ij.infoview.external.data.InfoviewEvent
 import lean4ij.lsp.LeanLanguageServer
@@ -123,6 +125,22 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                     }
                 })
 
+                launch {
+                    // here it's very vague in the design for different packages that using Lean4SettingsView here maybe
+                    Lean4SettingsView.events.collect { event ->
+                        // TODO maybe the event contains detail for the change is better
+                        val theme = if (event.enableExtraCssForVscodeInfoview) {
+                            event.extraCssForVscodeInfoview
+                        } else {
+                            val scheme = EditorColorsManager.getInstance().globalScheme
+                            createThemeCss(scheme)
+                        }
+                        val themeJson = Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme)))
+                        logger.trace(themeJson)
+                        sendWithLog(themeJson)
+                    }
+                }
+
                 val serverRestarted = service.awaitInitializedResult()
                 sendWithLog(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted)))
                 service.previousCursorLocation?.let {
@@ -139,6 +157,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                 // TODO and it may keep growing
                 // Here the copy is for avoiding ConcurrentModificationException since
                 // it's also changed in ExternalInfoViewService
+                // TODO it seems still not resolved, and the ConcurrentModificationException comes from Gson serialization, which means that something is changing some NotificationMessage?
                 val copiedMessages = service.notificationMessages.toList()
                 copiedMessages.forEach {
                     sendWithLog(Gson().toJson(it))
@@ -239,32 +258,30 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
     theme.forEach { (t, u) ->
         if (!u.contains(".")) {
             val colorKey = ColorKey.find(u)
-            themeSb.append("    ${t}: ${scheme.getColor(colorKey)!!.toHexRgba()};")
+            themeSb.append("    ${t}: ${scheme.getColor(colorKey)!!.toHexRgba()};\n")
             return@forEach
         }
-        val (keyStr,  attrStr) = u.split(".")
+        val (keyStr, attrStr) = u.split(".")
         val attrKey = TextAttributesKey.find(keyStr)
         val attr = scheme.getAttributes(attrKey)
         if (attrStr == "foreground") {
-            themeSb.append("    ${t}: ${attr.foregroundColor.toHexRgba()};")
+            themeSb.append("    ${t}: ${attr.foregroundColor.toHexRgba()};\n")
         }
         if (attrStr == "background") {
-            themeSb.append("    ${t}: ${attr.backgroundColor.toHexRgba()};")
+            themeSb.append("    ${t}: ${attr.backgroundColor.toHexRgba()};\n")
         }
-        themeSb.append("\n")
+        // themeSb.append("\n")
     }
-    return """
-        :root {
-            $themeSb
-            --header-foreground-color: ${scheme.getAttributes(TextAttributesKeys.Header.key).foregroundColor.toHexRgba()};
-            --vscode-editor-background: $background;
-            --vscode-editor-foreground: $foreground;
-            /* fonts */
-            font-size: ${scheme.editorFontSize}px;
-            --vscode-editor-font-family: '${scheme.editorFontName}', 'JuliaMono', 'Source Code Pro', 'STIX Two Math', monospace;
-            --vscode-editor-font-size: ${scheme.editorFontSize}px;
-        }
-    """.trimIndent()
+    return """:root {
+${themeSb}    --header-foreground-color: ${scheme.getAttributes(TextAttributesKeys.Header.key).foregroundColor.toHexRgba()};
+    --vscode-editor-background: $background;
+    --vscode-editor-foreground: $foreground;
+    /* fonts */
+    font-size: ${scheme.editorFontSize}px;
+    --vscode-editor-font-family: '${scheme.editorFontName}', 'JuliaMono', 'Source Code Pro', 'STIX Two Math', monospace;
+    --vscode-editor-font-size: ${scheme.editorFontSize}px;
+}
+"""//.trimIndent()
     // --vscode-diffEditor-insertedTextBackground: ${TextAttributesKeys.hexOf(scheme, TextAttributesKeys.InsertedText)};
     // --vscode-diffEditor-removedTextBackground: ${TextAttributesKeys.RemovedText.hexOf(scheme)};
     // --vscode-goal-hyp-color: ${TextAttributesKeys.GoalHyp.hexOf(scheme)};

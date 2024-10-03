@@ -37,4 +37,5 @@
 - [x] all message should be interactive (check lean-infoview/src/infoview/info.tsx)
       fixed via passing `hasWidgets` when start lsp
 - [ ] jcef infoview style adjust
+- [ ] unify jcef/browser/external/vscode infoview font name...
 - [ ] setting page

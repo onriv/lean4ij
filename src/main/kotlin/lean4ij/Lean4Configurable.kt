@@ -69,7 +69,9 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
 )
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableNativeInfoview = true
+    var disableNativeInfoviewUpdateAtWindowClosed = false
     var enableVscodeInfoview = true
+    var disableVscodeInfoviewUpdateAtWindowClosed = false
     var enableExtraCssForVscodeInfoview = false
     // TODO this function should not be ref here, but move it to here and ref it from the infoview package maybe
     var extraCssForVscodeInfoview = createThemeCss(EditorColorsManager.getInstance().globalScheme)
@@ -96,7 +98,11 @@ class Lean4SettingsView {
 
     // Infoview settings
     private val enableNativeInfoview = JBCheckBox("Enable the native infoview", lean4Settings.enableNativeInfoview)
+    // TODO
+    private val disableNativeInfoviewUpdateAtWindowClosed = JBCheckBox("Disable native infoview update at tool window closed", lean4Settings.disableNativeInfoviewUpdateAtWindowClosed)
     private val enableVscodeInfoview = JBCheckBox("Enable the vscode infoview", lean4Settings.enableVscodeInfoview)
+    // TODO
+    private val disableVscodeInfoviewUpdateAtWindowClosed = JBCheckBox("Disable vscode infoview update at tool window closed", lean4Settings.disableVscodeInfoviewUpdateAtWindowClosed)
     private val enableExtraCssForVscodeInfoview = JBCheckBox("Enable extra css for vscode infoview", lean4Settings.enableExtraCssForVscodeInfoview)
 
     /**

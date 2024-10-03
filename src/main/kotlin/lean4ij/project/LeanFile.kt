@@ -6,7 +6,11 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,17 +18,43 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
+import lean4ij.Lean4Settings
 import lean4ij.infoview.LeanInfoViewWindowFactory
-import lean4ij.lsp.data.*
+import lean4ij.lsp.data.FileProgressProcessingInfo
+import lean4ij.lsp.data.InteractiveDiagnostics
+import lean4ij.lsp.data.InteractiveDiagnosticsParams
+import lean4ij.lsp.data.InteractiveGoals
+import lean4ij.lsp.data.InteractiveGoalsParams
+import lean4ij.lsp.data.InteractiveTermGoal
+import lean4ij.lsp.data.InteractiveTermGoalParams
+import lean4ij.lsp.data.LineRange
+import lean4ij.lsp.data.LineRangeParam
+import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
+import lean4ij.lsp.data.RpcCallParams
+import lean4ij.lsp.data.RpcCallParamsRaw
+import lean4ij.lsp.data.RpcConnectParams
+import lean4ij.lsp.data.RpcKeepAliveParams
 import lean4ij.util.Constants
 import lean4ij.util.LspUtil
 import lean4ij.util.step
-import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.Diagnostic
+import org.eclipse.lsp4j.DidCloseTextDocumentParams
+import org.eclipse.lsp4j.DidOpenTextDocumentParams
+import org.eclipse.lsp4j.PublishDiagnosticsParams
+import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.TextDocumentItem
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.nio.charset.StandardCharsets
 import kotlin.math.max
@@ -32,6 +62,8 @@ import kotlin.math.min
 
 
 class LeanFile(private val leanProjectService: LeanProjectService, private val file: String) {
+
+    private val lean4Settings = service<Lean4Settings>()
 
     companion object {
         val progressingLineMarker = DefaultLineMarkerRenderer(
@@ -171,6 +203,18 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      * TODO passing things like editor etc seems cumbersome, maybe add some implement for context
      */
     fun updateCaret(editor: Editor, logicalPosition: LogicalPosition) {
+        if (lean4Settings.enableNativeInfoview) {
+            updateInternalInfoview(editor, logicalPosition)
+        } else {
+            LeanInfoViewWindowFactory.getLeanInfoview(project)?.let { leanInfoviewWindow ->
+                leanProjectService.scope.launch {
+                    leanInfoviewWindow.updateDirectText("Internal infoview is not enable.")
+                }
+            }
+        }
+    }
+
+    private fun updateInternalInfoview(editor: Editor, logicalPosition: LogicalPosition) {
         val position = Position(line = logicalPosition.line, character = logicalPosition.column)
         val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
         val params = PlainGoalParams(textDocument, position)

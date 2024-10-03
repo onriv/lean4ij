@@ -112,6 +112,12 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         return editor
     }
 
+    suspend fun updateDirectText(text: String) {
+        val editorEx: EditorEx = editor.await()
+        editorEx.document.setText(text)
+        editorEx.component.repaint()
+    }
+
     private var mouseMotionListener : EditorMouseMotionListener? = null
     /**
      *  // TODO this should add some UT for the rendering

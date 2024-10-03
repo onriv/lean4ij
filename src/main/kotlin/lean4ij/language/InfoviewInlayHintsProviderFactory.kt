@@ -47,7 +47,7 @@ class HintSet {
 
     fun dumpHints(sink: InlayTreeSink) {
         this.hints.forEach { hint ->
-            hint.content.chunked(30).forEach {
+            hint.content.chunked(50).forEach {
                 // TODO what is relatedToPrevious for?
                 sink.addPresentation(InlineInlayPosition(hint.location, false), hasBackground = true) {
                     text(it)
@@ -162,8 +162,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
          * It's very awkward doing this with regex pattern for this...
          * But we don't have a parser for lean currently
          */
-        // TODO : anonymous have, def {a: Type u}
-        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s+)(.+)\s+(:=[\n\s]+)""")
+        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s)(.*?)(\s*:=[\n\s]+)""")
     }
 
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
@@ -184,7 +183,12 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             //      will it hang and leak?
             val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams) ?: continue
             val inlayHintType = ": ${termGoal.type.toInfoViewString(InfoviewRender(), null)}"
-            hints.add(Hint(m.range.last - m.groupValues[3].length, inlayHintType))
+            var hintPos = m.range.last - m.groupValues[3].length ;
+            // anonymous have is slightly weird
+            if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
+                hintPos += 1;
+            }
+            hints.add(Hint(hintPos, inlayHintType))
         }
 
         return hints
@@ -195,15 +199,22 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
      * The parser for this part should not be hard though
      */
     private fun hasTypeNotation(s: String, offset: Int, leanFile: LeanFile): Boolean {
-        if (!s.contains(':')) {
-            return false
+        // if there exists a balanced :, return true
+        var openBracket = 0
+        var openFlower = 0
+        var openSquare = 0
+        for (c in s) {
+            if (c == '(') openBracket++
+            else if (c == ')') openBracket--;
+            else if (c == '{') openFlower++;
+            else if (c == '}') openFlower--;
+            else if (c == '[') openSquare++;
+            else if (c == ']') openSquare--;
+            else if (c == ':' && openBracket == 0 && openFlower == 0 && openSquare == 0) {
+                return true;
+            }
         }
-        if (!s.substringAfterLast(':').contains(')')) {
-            return true
-        }
-        if (!s.substringBefore(':').contains('(')) {
-            return true
-        }
+
         return false
     }
 }

@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.AlignX
@@ -67,8 +68,11 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
     name = "Lean4Settings",
     storages = [Storage("Lean4.xml")]
 )
+// TODO this in fact can be different to implement the immutable state directly rather than using an
+//      extra class
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableNativeInfoview = true
+    var hoveringTimeBeforePopupNativeInfoviewDoc = 200
     var disableNativeInfoviewUpdateAtWindowClosed = false
     var enableVscodeInfoview = true
     var disableVscodeInfoviewUpdateAtWindowClosed = false
@@ -76,6 +80,8 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     // TODO this function should not be ref here, but move it to here and ref it from the infoview package maybe
     var extraCssForVscodeInfoview = createThemeCss(EditorColorsManager.getInstance().globalScheme)
 
+    // TODO this in fact can be different to implement the immutable state directly rather than using an
+    //      extra class
     override fun getState() = this
 
     override fun loadState(state: Lean4Settings) {
@@ -98,8 +104,10 @@ class Lean4SettingsView {
 
     // Infoview settings
     private val enableNativeInfoview = JBCheckBox("Enable the native infoview", lean4Settings.enableNativeInfoview)
+    private val hoveringTimeBeforePopupNativeInfoviewDoc = JBIntSpinner(lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc, 50, 3000)
     // TODO
     private val disableNativeInfoviewUpdateAtWindowClosed = JBCheckBox("Disable native infoview update at tool window closed", lean4Settings.disableNativeInfoviewUpdateAtWindowClosed)
+    // TODO
     private val enableVscodeInfoview = JBCheckBox("Enable the vscode infoview", lean4Settings.enableVscodeInfoview)
     // TODO
     private val disableVscodeInfoviewUpdateAtWindowClosed = JBCheckBox("Disable vscode infoview update at tool window closed", lean4Settings.disableVscodeInfoviewUpdateAtWindowClosed)
@@ -138,10 +146,13 @@ class Lean4SettingsView {
     }
 
     val isModified: Boolean get() {
-        return enableNativeInfoview.isSelected != lean4Settings.enableNativeInfoview ||
-                enableVscodeInfoview.isSelected != lean4Settings.enableVscodeInfoview ||
-                enableExtraCssForVscodeInfoview.isSelected != lean4Settings.enableExtraCssForVscodeInfoview ||
-                extraCssForVscodeInfoview.text != lean4Settings.extraCssForVscodeInfoview
+        val enableNativeInfoviewChanged = enableNativeInfoview.isSelected != lean4Settings.enableNativeInfoview
+        val enableVscodeInfoviewChanged = enableVscodeInfoview.isSelected != lean4Settings.enableVscodeInfoview
+        val enableExtraCssForVscodeInfoviewChanged = enableExtraCssForVscodeInfoview.isSelected != lean4Settings.enableExtraCssForVscodeInfoview
+        val extraCssForVscodeInfoviewChanged = extraCssForVscodeInfoview.text != lean4Settings.extraCssForVscodeInfoview
+        val hoveringTimeBeforePopupNativeInfoviewDocChanged = hoveringTimeBeforePopupNativeInfoviewDoc.number != lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc
+        return enableNativeInfoviewChanged || enableVscodeInfoviewChanged || enableExtraCssForVscodeInfoviewChanged ||
+                extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged
     }
 
     fun apply() {
@@ -149,7 +160,9 @@ class Lean4SettingsView {
         lean4Settings.enableVscodeInfoview = enableVscodeInfoview.isSelected
         lean4Settings.enableExtraCssForVscodeInfoview = enableExtraCssForVscodeInfoview.isSelected
         lean4Settings.extraCssForVscodeInfoview = extraCssForVscodeInfoview.text
+        lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc = hoveringTimeBeforePopupNativeInfoviewDoc.number
         // TODO is it OK here runBlocking?
+        // TODO full state
         runBlocking {
             _events.emit(Lean4SettingsState(
                 lean4Settings.enableNativeInfoview,
@@ -165,11 +178,13 @@ class Lean4SettingsView {
         enableVscodeInfoview.isSelected = lean4Settings.enableVscodeInfoview
         enableExtraCssForVscodeInfoview.isSelected = lean4Settings.enableExtraCssForVscodeInfoview
         extraCssForVscodeInfoview.text = lean4Settings.extraCssForVscodeInfoview
+        hoveringTimeBeforePopupNativeInfoviewDoc.number = lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc
     }
 
     fun createComponent() = panel {
         group("Infoview Settings") {
             row { cell(enableNativeInfoview) }
+            labeled("Time limit for popping up native infoview doc", hoveringTimeBeforePopupNativeInfoviewDoc)
             row { cell(enableVscodeInfoview) }
             row { cell(enableExtraCssForVscodeInfoview)}
             row {

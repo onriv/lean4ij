@@ -1,7 +1,7 @@
 package lean4ij.infoview
 
-import com.google.rpc.Code
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -13,15 +13,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.time.withTimeout
 import kotlinx.coroutines.withTimeout
+import lean4ij.Lean4Settings
 import lean4ij.lsp.data.*
-import lean4ij.project.BuildEvent
 import lean4ij.project.LeanProjectService
 import java.awt.Color
 
@@ -39,6 +34,7 @@ class InfoviewMouseMotionListener(
     private val interactiveDiagnostics: List<InteractiveDiagnostics>?,
     private val interactiveDiagnosticsAllMessages: List<InteractiveDiagnostics>?
 ) : EditorMouseMotionListener {
+    private val lean4Settings = service<Lean4Settings>()
     private var hyperLink: RangeHighlighter? = null
     override fun mouseMoved(e: EditorMouseEvent) {
         emitOffset(e.offset)
@@ -119,7 +115,7 @@ class InfoviewMouseMotionListener(
             try {
                 // TODO the time control here seems problematic
                 //      it seems longer than the setting
-                offset = withTimeout(200) {
+                offset = withTimeout(lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc.toLong()) {
                     offsetsFlow.receive()
                 }
                 isHovering = false

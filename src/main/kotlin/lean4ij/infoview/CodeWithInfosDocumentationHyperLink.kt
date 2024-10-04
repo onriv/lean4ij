@@ -1,11 +1,13 @@
 package lean4ij.infoview// TODO removed for using internal api:
 
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
@@ -41,6 +43,9 @@ class CodeWithInfosDocumentationHyperLink(
     val contextInfo: ContextInfo,
     val point: RelativePoint
 ) : HyperlinkInfo {
+
+    private var popupPanel: JBPopup? = null
+
     override fun navigate(project: Project) {
         val leanProjectService : LeanProjectService = project.service()
         leanProjectService.scope.launch {
@@ -124,19 +129,27 @@ class CodeWithInfosDocumentationHyperLink(
         popup.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
         popup.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 
-        factory.createComponentPopupBuilder(popup, popup)
+        popupPanel = factory.createComponentPopupBuilder(popup, popup)
             // .setTitle(title)
             .setResizable(true)
             .setMovable(true)
             .setRequestFocus(true)
             .createPopup()
-            .show(point)
             // .showInScreenCoordinates(toolWindow.toolWindow.component, point)
             // .showInBestPositionFor(editor)
             // .showInCenterOf(toolWindow.component)
             // .showInFocusCenter()
             // .show(factory.guessBestPopupLocation(toolWindow.toolWindow.component))
+        popupPanel?.show(point)
 
+    }
+
+    fun cancel() {
+        popupPanel?.let {
+            ApplicationManager.getApplication().invokeLater {
+                it.cancel()
+            }
+        }
     }
 
     /**

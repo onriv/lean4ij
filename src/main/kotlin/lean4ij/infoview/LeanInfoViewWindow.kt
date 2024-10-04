@@ -1,10 +1,12 @@
 package lean4ij.infoview
 
+import com.intellij.codeInsight.codeVision.ui.mousePoint
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -156,7 +158,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         if (mouseMotionListener != null) {
             editorEx.removeEditorMouseMotionListener(mouseMotionListener!!)
         }
-        mouseMotionListener = InfoviewMouseMotionListener(leanProject.scope, this, support, file, logicalPosition,
+        mouseMotionListener = InfoviewMouseMotionListener(leanProject, this, support, file, logicalPosition,
             interactiveGoals, interactiveTermGoal, interactiveDiagnostics, interactiveDiagnosticsAllMessages)
         editorEx.addEditorMouseMotionListener(mouseMotionListener!!)
     }

@@ -1,4 +1,4 @@
-package lean4ij.infoview// TODO removed for using internal api:
+package lean4ij.infoview
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -16,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.util.maximumWidth
 import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +44,13 @@ class CodeWithInfosDocumentationHyperLink(
     val contextInfo: ContextInfo,
     val point: RelativePoint
 ) : HyperlinkInfo {
-
+    companion object {
+        /**
+         * For heuristic determining the height of popup expr doc
+         * TODO should this be a config?
+         */
+        private var height: Int? = null
+    }
     private var popupPanel: JBPopup? = null
 
     override fun navigate(project: Project) {
@@ -122,28 +128,45 @@ class CodeWithInfosDocumentationHyperLink(
         return docPanel
     }
 
-    suspend fun createExprPanel(typeAndExpr: String): EditorEx {
-        val editor = toolWindow.popupEditor.await()
-        editor.document.setText(typeAndExpr)
-        // TODO DRY
-        val toolWindowSize = toolWindow.toolWindow.component.size
+    /**
+     * TODO the width is still not the best
+     * check com.intellij.codeInsight.documentation.DocumentationEditorPane#getPreferredContentWidth ...
+     * or use document directly
+     */
+    fun createExprPanel(typeAndExpr: String): JEditorPane {
+        // val editor = toolWindow.popupEditor.await()
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        val schemeFont = scheme.getFont(EditorFontType.PLAIN)
+        var exprPane = JEditorPane().apply {
+            contentType = "text/html"
+            // must add this, ref: https://stackoverflow.com/questions/12542733/setting-default-font-in-jeditorpane
+            putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
+            // TODO maybe some setting for this, font/size etc
+            font = schemeFont
+            text = typeAndExpr
+        }
 
+        val toolWindowSize = toolWindow.toolWindow.component.size
+        // It took me lots of time to handle the size...
+        // it turns out that the preferredSize should not be overridden or set at the beginning
+        // it should be called first to get some internal logic (quite complicated seems)
         val maxWidth = toolWindowSize.width * 8 / 10
-        // TODO this uses internal api
-        // val width = Math.min(getPreferredContentWidth(doc.length), maxWidth)
-        val width = maxWidth
-        editor.component.size = Dimension(width, Short.MAX_VALUE.toInt())
-        val result = editor.component.preferredSize
-        editor.component.preferredSize = Dimension(width, result.height)
-        editor.setBorder(null)
-        return editor
+        exprPane.maximumSize = Dimension(maxWidth, Short.MAX_VALUE.toInt())
+        // // TODO this uses internal api
+        // // val width = Math.min(getPreferredContentWidth(doc.length), maxWidth)
+        // val width = maxWidth
+        // exprPane.size = Dimension(width, Short.MAX_VALUE.toInt())
+        // val result = exprPane.preferredSize
+        // exprPane.preferredSize = Dimension(width, result.height)
+
+        return exprPane
     }
 
-    suspend fun createPopupPanel(typeAndExpr: String, doc: String?) {
+     fun createPopupPanel(typeAndExpr: String, doc: String?) {
         val factory = JBPopupFactory.getInstance()
         val typeAndExprPanel = createExprPanel(typeAndExpr)
         val jPanel = JPanel(VerticalLayout(1))
-        jPanel.add(typeAndExprPanel.component)
+        jPanel.add(typeAndExprPanel)
         if (doc != null) {
             val docPanel = createDocPanel(doc)
             jPanel.add(docPanel)
@@ -174,24 +197,4 @@ class CodeWithInfosDocumentationHyperLink(
             }
         }
     }
-
-    /**
-     * copy from com.intellij.codeInsight.documentation.DocumentationEditorPane#getPreferredContentWidth ...
-     * TODO this method use internal api
-     */
-    // private fun getPreferredContentWidth(textLength: Int): Int {
-    //     // Heuristics to calculate popup width based on the amount of the content.
-    //     // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
-    //     // 200 chars and less is 300px, 1000 chars and more is 500px.
-    //     // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
-    //     val contentLengthPreferredSize = if (textLength < 200) {
-    //         docPopupPreferredMinWidth
-    //     } else if (textLength > 200 && textLength < 1000) {
-    //         docPopupPreferredMinWidth +
-    //                 (textLength - 200) * (docPopupPreferredMaxWidth - docPopupPreferredMinWidth) / (1000 - 200)
-    //     } else {
-    //         docPopupPreferredMaxWidth
-    //     }
-    //     return scale(contentLengthPreferredSize)
-    // }
 }

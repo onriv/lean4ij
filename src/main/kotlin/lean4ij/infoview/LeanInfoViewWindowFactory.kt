@@ -39,6 +39,11 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         }
 
         /**
+         * TODO should this be a setting?
+         */
+        var expandAllMessage : Boolean = false
+
+        /**
          * TODO the implementation should absolutely be replaced by better rendering way
          *      using raw text it's very inconvenient to update things like hovering event
          *      but though vim/emacs has to do it this way maybe ...
@@ -75,7 +80,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     val start = infoviewRender.length
                     infoviewRender.append("${header}\n")
                     interactiveDiagnostics.forEach { i ->
-                        infoviewRender.append("▼ ${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}\n")
+                        infoviewRender.append("${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}\n")
                         i.toInfoViewString(infoviewRender)
                         infoviewRender.append('\n')
                     }
@@ -99,15 +104,26 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 val start = infoviewRender.length
                 infoviewRender.append("$header\n")
                 allMessage.forEach { i ->
-                    val header = "${file.name}:${i.fullRange.start.line}:${i.fullRange.start.character}"
+                    val header = "${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}"
                     val start = infoviewRender.length
                     infoviewRender.append(header)
                     val end1 = infoviewRender.length
                     infoviewRender.append('\n')
-                    val content = i.toInfoViewString(infoviewRender)
-                    if (content.contains("declaration uses 'sorry'")) {
-                        infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessageSorryPos)
+                    // TODO better way than class check?
+                    if (i.message is TaggedTextTag) {
+                        // TODO rather than using string contains in the following, move highlight logic into
+                        //      the toInfoViewString method
+                        val content = i.message.toInfoViewString(infoviewRender, null)
+                        if (i.message.f0 is MsgUnsupported) {
+                            infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessageUnsupportedPos)
+                        } else if (content.contains("declaration uses 'sorry'")) {
+                            infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessageSorryPos)
+                        } else {
+                            infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessagePos)
+                        }
                     } else {
+                        // TODO for TaggedTextAppend there is also case for not supported trace
+                        val content = i.message.toInfoViewString(infoviewRender, null)
                         infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessagePos)
                     }
                     val end2 = infoviewRender.length
@@ -116,7 +132,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 }
                 infoviewRender.deleteLastChar()
                 val end = infoviewRender.length
-                infoviewRender.addFoldingOperation(start, end, header, false)
+                infoviewRender.addFoldingOperation(FoldingData(start, end, header, expandAllMessage, isAllMessages = true))
                 infoviewRender.append("\n")
             }
 

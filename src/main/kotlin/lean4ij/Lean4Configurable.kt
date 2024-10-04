@@ -184,7 +184,7 @@ class Lean4SettingsView {
     fun createComponent() = panel {
         group("Infoview Settings") {
             row { cell(enableNativeInfoview) }
-            labeled("Time limit for popping up native infoview doc", hoveringTimeBeforePopupNativeInfoviewDoc)
+            labeled("Time limit for popping up native infoview doc (millis): ", hoveringTimeBeforePopupNativeInfoviewDoc).enabledIf(enableNativeInfoview.selected)
             row { cell(enableVscodeInfoview) }
             row { cell(enableExtraCssForVscodeInfoview)}
             row {

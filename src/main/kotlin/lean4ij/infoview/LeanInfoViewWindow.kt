@@ -5,10 +5,12 @@ import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -138,9 +140,22 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         editorEx.document.setText(interactiveInfo.toString())
         editorEx.foldingModel.runBatchFoldingOperation {
             editorEx.foldingModel.clearFoldRegions()
+            var allMessagesFoldRegion : FoldRegion? = null
             for (folding in interactiveInfo.foldings) {
                 val foldRegion = editorEx.foldingModel.addFoldRegion(folding.startOffset, folding.endOffset, folding.placeholderText)
                 foldRegion?.isExpanded = folding.expanded
+                if (folding.isAllMessages) {
+                    allMessagesFoldRegion = foldRegion
+                }
+            }
+            editorEx.foldingModel.addListener(object : FoldingListener {
+                override fun onFoldRegionStateChange(region: FoldRegion) {
+                    if (allMessagesFoldRegion == region) {
+                        LeanInfoViewWindowFactory.expandAllMessage = region.isExpanded
+                    }
+                }
+            }) {
+                // TODO should some disposal add here?
             }
         }
         // highlights

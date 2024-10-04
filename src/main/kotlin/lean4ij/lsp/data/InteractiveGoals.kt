@@ -5,7 +5,10 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
 import lean4ij.infoview.TextAttributesKeys
 
-data class FoldingData(val startOffset: Int, val endOffset: Int, val placeholderText: String, val expanded: Boolean=true)
+data class FoldingData(val startOffset: Int, val endOffset: Int, val placeholderText: String, val expanded: Boolean=true,
+                       // this is to denote that the folding is for "All Messages"
+                       // TODO it's very adhoc and blur define it here, maybe some better way to do this
+                       val isAllMessages: Boolean=false)
 data class HighlightData(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes)
 
 
@@ -50,8 +53,15 @@ class InfoviewRender(val sb: StringBuilder) {
     private val _foldings: MutableList<FoldingData> = mutableListOf()
     private val _highlights: MutableList<HighlightData> = mutableListOf()
 
+    /**
+     * TODO maybe add some indent logic
+     */
+    fun addFoldingOperation(folding: FoldingData) {
+        _foldings.add(folding)
+    }
+
     fun addFoldingOperation(startOffset: Int, endOffset: Int, placeholderText: String, expanded: Boolean=true) {
-        _foldings.add(FoldingData(startOffset, endOffset, placeholderText, expanded))
+        addFoldingOperation(FoldingData(startOffset, endOffset, placeholderText, expanded))
     }
 
     fun deleteLastChar() {

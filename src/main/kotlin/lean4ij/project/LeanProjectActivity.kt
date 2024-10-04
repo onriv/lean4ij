@@ -33,8 +33,6 @@ fun Module.addExcludeFolder(basePath: String) {
             contentEntry.addExcludePattern(".ilean")
             contentEntry.addExcludePattern(".c")
             // contentEntry.addSourceFolder()
-            contentEntry.addSourceFolder()
-
 
             val lakePath = Path.of(basePath, ".lake")
             // skip normal project that is not a lean project and contains no .lake directory

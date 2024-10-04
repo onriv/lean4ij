@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -13,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,6 +30,7 @@ import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.MarkdownParser
 import java.awt.Dimension
+import java.awt.Font
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -69,6 +73,14 @@ class CodeWithInfosDocumentationHyperLink(
                 val flavour = CommonMarkFlavourDescriptor()
                 val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
                 htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
+                if (htmlDoc.startsWith("<body>") && htmlDoc.endsWith("</body>")) {
+                    htmlDoc = htmlDoc.substring("<body>".length, htmlDoc.length - "</body>".length)
+                }
+                if (htmlDoc.startsWith("<p>") && htmlDoc.endsWith("</p>")) {
+                    htmlDoc = htmlDoc.substring("<p>".length, htmlDoc.length - "</p>".length)
+                }
+                // TODO maybe some css for this?
+                htmlDoc = "<body>${htmlDoc}</body>"
             }
             val sb = InfoviewRender()
             val typeStr = infoToInteractive.type?.toInfoViewString(sb, null) ?: ""
@@ -83,8 +95,14 @@ class CodeWithInfosDocumentationHyperLink(
 
     fun createDocPanel(doc: String): JEditorPane {
         val toolWindowSize = toolWindow.toolWindow.component.size
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        val schemeFont = scheme.getFont(EditorFontType.PLAIN)
         val docPanel = JEditorPane().apply {
             contentType = "text/html"
+            // must add this, ref: https://stackoverflow.com/questions/12542733/setting-default-font-in-jeditorpane
+            putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
+            // TODO maybe some setting for this, font/size etc
+            font = JBFont.regular()
             text = doc
         }
         // It took me lots of time to handle the size...

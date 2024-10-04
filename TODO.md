@@ -38,4 +38,5 @@
       fixed via passing `hasWidgets` when start lsp
 - [ ] jcef infoview style adjust
 - [ ] unify jcef/browser/external/vscode infoview font name...
+- [ ] jcef infoview popup link should be opened in external web browser
 - [ ] setting page

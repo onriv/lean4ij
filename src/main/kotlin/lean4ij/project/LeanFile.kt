@@ -428,7 +428,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                     val session = getSession()
                     val position = Position(0, 0)
                     val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
-                    val diagnosticsParams = InteractiveDiagnosticsParams(session, LineRangeParam(LineRange(0, maxLine)), textDocument, position)
+                    val diagnosticsParams = InteractiveDiagnosticsParams(session, LineRangeParam(LineRange(0, maxLine+1)), textDocument, position)
                     allMessage = getInteractiveDiagnostics(diagnosticsParams)
                     maxLine = -1
                 }

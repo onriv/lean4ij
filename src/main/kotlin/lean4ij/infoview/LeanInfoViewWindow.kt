@@ -51,7 +51,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
                 editor.completeExceptionally(ex)
             }
             try {
-                popupEditor.complete(createEditor())
+                popupEditor.complete(createEditor(true))
             } catch (ex: Throwable) {
                 // TODO should here log?
                 popupEditor.completeExceptionally(ex)
@@ -86,7 +86,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
      * create an editorEx for rendering the info view
      * **this is only for EDT**, create it using
      */
-    private fun createEditor(): EditorEx {
+    private fun createEditor(isPopupDoc: Boolean=false): EditorEx {
         val editor = EditorFactory.getInstance()
             // java.lang.RuntimeException: Memory leak detected: 'com.intellij.openapi.editor.impl.view.EditorView@601dc681' (class com.intellij.openapi.editor.impl.view.EditorView) was registered in Disposer as a child of 'ROOT_DISPOSABLE' (class com.intellij.openapi.util.Disposer$2) but wasn't disposed.
             // Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.
@@ -94,25 +94,31 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
             // The corresponding Disposer.register() stacktrace is shown as the cause:
             .createViewer(DocumentImpl(" ", true), toolWindow.project) as EditorEx
         // val editor = editorTextField.getEditor(true)!!
-        with(editor.settings) {
-            isRightMarginShown = false
-            isLineNumbersShown = false
-            isLineMarkerAreaShown = false
-            isRefrainFromScrolling = true
-            isCaretRowShown = false
-            isUseSoftWraps = true
-            setGutterIconsShown(false)
-            additionalLinesCount = 0
-            additionalColumnsCount = 1
-            isFoldingOutlineShown = false
-            isVirtualSpace = false
-            isFoldingOutlineShown = true
+        with (editor) {
+            with (settings) {
+                isRightMarginShown = false
+                isLineNumbersShown = false
+                isLineMarkerAreaShown = false
+                isRefrainFromScrolling = true
+                isCaretRowShown = true
+                isUseSoftWraps = true
+                setGutterIconsShown(false)
+                additionalLinesCount = 0
+                additionalColumnsCount = 1
+                isVirtualSpace = false
+                if (isPopupDoc) {
+                    // for popup doc of inline infoview, the folding outline should not be shown
+                    isFoldingOutlineShown = false
+                } else {
+                    isFoldingOutlineShown = true
+                }
+            }
+            headerComponent = null
+            setCaretEnabled(true)
+            setHorizontalScrollbarVisible(false)
+            setVerticalScrollbarVisible(true)
+            isRendererMode = true
         }
-        editor.headerComponent = null
-        editor.setCaretEnabled(false)
-        editor.setHorizontalScrollbarVisible(false)
-        editor.setVerticalScrollbarVisible(true)
-        editor.isRendererMode = true
         return editor
     }
 

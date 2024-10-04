@@ -38,6 +38,7 @@ enum class TextAttributesKeys(val style: String, private val fallbackKey: TextAt
     SwingInfoviewCurrentPosition("swing-infoview-current-position", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE, AttrSelect.ALL),
     SwingInfoviewExpectedType("swing-infoview-expected-type", DefaultLanguageHighlighterColors.CLASS_NAME, AttrSelect.ALL),
     SwingInfoviewGoalSymbol("swing-infoview-goal-symbol", DefaultLanguageHighlighterColors.STRING, AttrSelect.ALL),
+    SwingInfoviewCasePos("swing-infoview-case-pos", DefaultLanguageHighlighterColors.HIGHLIGHTED_REFERENCE, AttrSelect.ALL),
     SwingInfoviewAllMessagePos("swing-infoview-all-message-pos", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, AttrSelect.ALL),
     SwingInfoviewAllMessageSorryPos("swing-infoview-all-message-sorry-pos", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE, AttrSelect.ALL),
     SwingInfoviewAllMessageUnsupportedPos("swing-infoview-all-message-unsupported-pos", HighlighterColors.BAD_CHARACTER, AttrSelect.ALL),

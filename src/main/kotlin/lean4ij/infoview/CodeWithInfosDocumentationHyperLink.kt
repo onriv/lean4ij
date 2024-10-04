@@ -1,6 +1,7 @@
 package lean4ij.infoview// TODO removed for using internal api:
 
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -26,11 +27,7 @@ import lean4ij.lsp.data.Position
 import lean4ij.project.LeanProjectService
 import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
-import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.markdown.parser.MarkdownParser
 import java.awt.Dimension
-import java.awt.Font
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -70,14 +67,21 @@ class CodeWithInfosDocumentationHyperLink(
             var htmlDoc : String? = null
             if (infoToInteractive.doc != null) {
                 val markdownDoc: String = infoToInteractive.doc
-                val flavour = CommonMarkFlavourDescriptor()
-                val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
-                htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
+                // val flavour = CommonMarkFlavourDescriptor()
+                // var flavour = GFMFlavourDescriptor()
+                // val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownDoc)
+                // htmlDoc = HtmlGenerator(markdownDoc, parsedTree, flavour).generateHtml()
+                // TODO no language for lean yet
+                htmlDoc = DocMarkdownToHtmlConverter.convert(project, markdownDoc, null)
                 if (htmlDoc.startsWith("<body>") && htmlDoc.endsWith("</body>")) {
                     htmlDoc = htmlDoc.substring("<body>".length, htmlDoc.length - "</body>".length)
                 }
                 if (htmlDoc.startsWith("<p>") && htmlDoc.endsWith("</p>")) {
                     htmlDoc = htmlDoc.substring("<p>".length, htmlDoc.length - "</p>".length)
+                }
+                if (htmlDoc.startsWith("<p>")) {
+                    // try fixing some empty line
+                    htmlDoc = htmlDoc.substring("<p>".length)
                 }
                 // TODO maybe some css for this?
                 htmlDoc = "<body>${htmlDoc}</body>"
@@ -125,12 +129,13 @@ class CodeWithInfosDocumentationHyperLink(
         val toolWindowSize = toolWindow.toolWindow.component.size
 
         val maxWidth = toolWindowSize.width * 8 / 10
-        // TODO this uses internal ai
+        // TODO this uses internal api
         // val width = Math.min(getPreferredContentWidth(doc.length), maxWidth)
         val width = maxWidth
         editor.component.size = Dimension(width, Short.MAX_VALUE.toInt())
         val result = editor.component.preferredSize
         editor.component.preferredSize = Dimension(width, result.height)
+        editor.setBorder(null)
         return editor
     }
 

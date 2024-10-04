@@ -33,7 +33,8 @@ class InteractiveGoal(
         val header = "case $userName"
         val start = sb.length
         if (userName != null) {
-            sb.append("${header}\n")
+            sb.append(header, TextAttributesKeys.SwingInfoviewCasePos)
+            sb.append('\n')
         }
         // TODO deduplicate DRY DRY DRY
         for (hyp in hyps) {

@@ -128,9 +128,10 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 buildWindowService.endBuild(file)
             }
         }
-        scope.launch {
-            getAllMessages()
-        }
+        // it seems facing some initialization order problem
+        // scope.launch {
+        //     getAllMessages()
+        // }
     }
 
     /**
@@ -407,16 +408,25 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
 
     /**
      * TODO can this be replaced with flow?
+     * TODO this form is changed from a initialization order error
+     *      that getAllMessages run before it init
      */
-    private val diagnosticsChannel = Channel<Diagnostic>()
+    private val diagnosticsChannel = run {
+        val channel = Channel<Diagnostic>()
+        leanProjectService.scope.launch {
+            this@LeanFile.getAllMessages(channel)
+        }
+        channel
+    }
+
     private var allMessage : List<InteractiveDiagnostics>? = null
 
-    private suspend fun getAllMessages() {
+    private suspend fun getAllMessages(channel: Channel<Diagnostic>) {
         var maxLine = -1
          while (true) {
              try {
                  val diagnostic = withTimeout(1*1000) {
-                      diagnosticsChannel.receive()
+                      channel.receive()
                  }
                  maxLine = max(maxLine, diagnostic.range.end.line)
              } catch (ex: TimeoutCancellationException) {

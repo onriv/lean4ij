@@ -124,7 +124,19 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     } else {
                         // TODO for TaggedTextAppend there is also case for not supported trace
                         val content = i.message.toInfoViewString(infoviewRender, null)
-                        infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessagePos)
+                        // TODO remove this magic number and define some enum for it
+                        //      instance : ToJson DiagnosticSeverity := ⟨fun
+                        //      | DiagnosticSeverity.error       => 1
+                        //      | DiagnosticSeverity.warning     => 2
+                        //      | DiagnosticSeverity.information => 3
+                        //      | DiagnosticSeverity.hint        => 4⟩
+                        //  check src/Lean/Data/Lsp/Diagnostics.lean
+                        var key = if (i.severity == 1) {
+                            TextAttributesKeys.SwingInfoviewAllMessageErrorPos
+                        } else {
+                            TextAttributesKeys.SwingInfoviewAllMessagePos
+                        }
+                        infoviewRender.highlight(start, end1, key)
                     }
                     val end2 = infoviewRender.length
                     infoviewRender.addFoldingOperation(start, end2, header)

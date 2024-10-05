@@ -3,6 +3,7 @@ package lean4ij.infoview
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
+import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
@@ -40,6 +41,7 @@ enum class TextAttributesKeys(val style: String, private val fallbackKey: TextAt
     SwingInfoviewGoalSymbol("swing-infoview-goal-symbol", DefaultLanguageHighlighterColors.STRING, AttrSelect.ALL),
     SwingInfoviewCasePos("swing-infoview-case-pos", DefaultLanguageHighlighterColors.HIGHLIGHTED_REFERENCE, AttrSelect.ALL),
     SwingInfoviewAllMessagePos("swing-infoview-all-message-pos", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, AttrSelect.ALL),
+    SwingInfoviewAllMessageErrorPos("swing-infoview-all-message-error-pos", CodeInsightColors.RUNTIME_ERROR, AttrSelect.ALL),
     SwingInfoviewAllMessageSorryPos("swing-infoview-all-message-sorry-pos", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE, AttrSelect.ALL),
     SwingInfoviewAllMessageUnsupportedPos("swing-infoview-all-message-unsupported-pos", HighlighterColors.BAD_CHARACTER, AttrSelect.ALL),
 }

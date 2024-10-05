@@ -40,3 +40,21 @@
 - [ ] unify jcef/browser/external/vscode infoview font name...
 - [ ] jcef infoview popup link should be opened in external web browser
 - [ ] setting page
+  - [x] added a setting page
+  - [ ] add some other settings
+- [ ] line comment and block comment
+- [ ] weird, is it just me or any other reason making only word autocompletion not working? In comment it works but in normal pos it does not. It seems it's superseded by 
+  some semantic autocompletion. --- yeah it's because semantic autocompletion is too slow. Can it be done in two step? first show alphabet autocompletion and then add more semantic 
+  autocompletion 
+- [ ] quick fix for field missing
+- [ ] color for error message
+- [ ] code completion seems slow and requires manually press ctrl+space
+- [ ] TODO is not highlight
+
+# Maybe some improvements
+
+it is not automatically indent:
+```lean
+structure Submonoid₁ (M : Type) [Monoid M] where<ENTER HERE DOES NOT INTENT>
+  carrior : Set M
+```

@@ -251,7 +251,8 @@ class PlaceHolderInlayHintsCollector(editor: Editor, project: Project?) : InlayH
             val position = org.eclipse.lsp4j.Position(lineColumn.line, lineColumn.column)
             val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))
             val hover = languageServer.hover(HoverParams(textDocument, position)).await()
-            if (hover.contents.isRight) {
+            // TODO there are cases here that here hover is null
+            if (hover != null && hover.contents.isRight) {
                 val value = hover.contents.right.value
                 if (value.contains("placeholder")) {
                     // TODO assume that only one line..., this maybe wrong

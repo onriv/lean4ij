@@ -51,10 +51,4 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
     override fun getServerInterface(): Class<out LanguageServer> {
         return InternalLeanLanguageServer::class.java
     }
-
-    override fun createClientFeatures(): LSPClientFeatures {
-        return LSPClientFeatures().apply {
-            completionFeature = LeanLSPCompletionFeature()
-        }
-    }
 }

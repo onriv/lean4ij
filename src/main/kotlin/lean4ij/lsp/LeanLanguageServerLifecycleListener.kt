@@ -52,9 +52,7 @@ class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServer
             leanProjectService.emitServerEvent(message)
             if (it.method == "textDocument/publishDiagnostics") {
                 val diagnostic = it.params as PublishDiagnosticsParams
-                if (diagnostic.diagnostics.isNotEmpty()) {
-                    leanProjectService.file(diagnostic.uri).publishDiagnostics(diagnostic)
-                }
+                leanProjectService.file(diagnostic.uri).publishDiagnostics(diagnostic)
             }
         }
     }

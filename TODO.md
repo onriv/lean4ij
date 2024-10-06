@@ -42,14 +42,31 @@
 - [ ] setting page
   - [x] added a setting page
   - [ ] add some other settings
+  - [ ] lsp autocompletion disable setting
+  - [ ] setting for getAllMessages
 - [ ] line comment and block comment
-- [ ] weird, is it just me or any other reason making only word autocompletion not working? In comment it works but in normal pos it does not. It seems it's superseded by 
-  some semantic autocompletion. --- yeah it's because semantic autocompletion is too slow. Can it be done in two step? first show alphabet autocompletion and then add more semantic 
+- [ ] weird, is it just me or any other reason making only word autocompletion not working? In comment, it works but in normal pos it does not. It seems it's superseded by 
+  some semantic autocompletion. --- yeah it's because semantic autocompletion is too slow. Can it be done in two steps? first show alphabet autocompletion and then add more semantic 
   autocompletion 
 - [ ] quick fix for field missing
-- [ ] color for error message
+- [x] color for error message
 - [ ] code completion seems slow and requires manually press ctrl+space
 - [ ] TODO is not highlight
+– [ ] Autocomplete is slow... like in vscode. Maybe disable it or improve the lean server end
+– [x] all messages logic is still wrong maybe it's flushed by new diagnostics
+– [x] two cases still exists for all messages: this should already be fixed
+  1. it's not shown
+  2. it's outdated
+– [x] some snippets to things like \<>
+– [ ] TODO weird brackets does not complete
+– [ ] maybe it's still better define some lang-like feature using parser/lexer, although it cannot be full parsed, but for the level like textmate it should be OK
+– [ ] is it possible do something like pygments/ctags/gtags completion?
+– [ ] option to skip library or backend files
+– [ ] error seems quite delay vanish... it shows errors event it has been fixed.
+– [ ] comment auto comment like /-- trigger block comment
+– [ ] bock/line comment command
+– [ ] impl simp? which replace the code
+- [ ] settings for getAllMessages, both internal/external infoview
 
 # Maybe some improvements
 

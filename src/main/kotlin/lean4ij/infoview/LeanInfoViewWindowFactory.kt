@@ -146,8 +146,14 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 val end = infoviewRender.length
                 infoviewRender.addFoldingOperation(FoldingData(start, end, header, expandAllMessage, isAllMessages = true))
                 infoviewRender.append("\n")
+            } else {
+                val header = "All Messages (0)"
+                val start = infoviewRender.length
+                infoviewRender.append("$header\n")
+                infoviewRender.append("No messages")
+                infoviewRender.addFoldingOperation(start, infoviewRender.length, header)
+                infoviewRender.append('\n')
             }
-
             // TODO render message
             // TODO this seems kind of should be put inside rendering, check how to do this
             // TODO maybe it's too broad, maybe only createEditor in EDT

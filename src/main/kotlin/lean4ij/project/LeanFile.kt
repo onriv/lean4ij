@@ -412,7 +412,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      *      that getAllMessages run before it init
      */
     private val diagnosticsChannel = run {
-        val channel = Channel<Diagnostic>()
+        val channel = Channel<List<Diagnostic>>()
         leanProjectService.scope.launch {
             this@LeanFile.getAllMessages(channel)
         }
@@ -421,36 +421,59 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
 
     private var allMessage : List<InteractiveDiagnostics>? = null
 
-    private suspend fun getAllMessages(channel: Channel<Diagnostic>) {
+    private suspend fun getAllMessages(channel: Channel<List<Diagnostic>>) {
+        var lastMaxLine = -1
         var maxLine = -1
-         while (true) {
-             try {
-                 val diagnostic = withTimeout(1*1000) {
-                      channel.receive()
-                 }
-                 maxLine = max(maxLine, diagnostic.range.end.line)
-             } catch (ex: TimeoutCancellationException) {
+        while (true) {
+            try {
+                val diagnostics = withTimeout(1 * 1000) {
+                    channel.receive()
+                }
+                // if it's empty, trigger a getAllMessage
+                if (diagnostics.isEmpty()) {
+                    maxLine = lastMaxLine
+                }
+                for (diagnostic in diagnostics) {
+                    maxLine = max(maxLine, diagnostic.range.end.line)
+                }
+            } catch (ex: TimeoutCancellationException) {
                 if (maxLine > -1) {
                     // TODO here do get all messages
                     // TODO not sure this maxLine logic is correct or necessary
                     //      it seems it quite often just quite almost the end of the file
+                    // TODO if triggered all messages, should intermediately render the infoview like invoke updateCaret?
                     thisLogger().info("get all messages for $file, maxLine: $maxLine")
                     val session = getSession()
                     val position = Position(0, 0)
                     val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
-                    val diagnosticsParams = InteractiveDiagnosticsParams(session, LineRangeParam(LineRange(0, maxLine+1)), textDocument, position)
+                    val diagnosticsParams = InteractiveDiagnosticsParams(
+                        session,
+                        LineRangeParam(LineRange(0, maxLine + 1)),
+                        textDocument,
+                        position
+                    )
                     allMessage = getInteractiveDiagnostics(diagnosticsParams)
+                    lastMaxLine = maxLine
                     maxLine = -1
                 }
-             }
-         }
+            }
+        }
     }
 
+    /**
+     * checking a bug for all messages not updated correctly. It shows that there is a cases like:
+     * [Trace - 10:59:11] Received notification 'textDocument/publishDiagnostics'
+     * Params: {
+     *   "uri": "....",
+     *   "diagnostics": [],
+     *   "version": 30
+     * }
+     * this simply may be a notification for triggering all message, and hence we pass it to the specific file
+     * even diagnostics is empty
+     */
     fun publishDiagnostics(diagnostics: PublishDiagnosticsParams) {
         scope.launch {
-            for (d in diagnostics.diagnostics) {
-                diagnosticsChannel.send(d)
-            }
+            diagnosticsChannel.send(diagnostics.diagnostics)
         }
         for (d in diagnostics.diagnostics) {
             buildWindowService.addBuildEvent(file, d.message)

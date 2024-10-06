@@ -3,5 +3,10 @@
 # lean4ij Changelog
 
 ## [Unreleased]
-### Added
-- Message implemented with internal infoview (a reimplementation using a more Jetbrains style)
+
+- More content on the internal infoview
+- Fix [issue#15](https://github.com/onriv/lean4ij/issues/15)
+- Some inlay hints with [@enigmurl](https://github.com/enigmurl)'s great efforts!
+- Some more snippets involving the cursor
+- A setting page
+

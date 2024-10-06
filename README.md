@@ -74,7 +74,6 @@ The following projects give great help for developing the plugin:
 - [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij)
 
 Plugin based on the [IntelliJ Platform Plugin Template][template].
-- For linux:
 
 [template]: https://github.com/JetBrains/intellij-platform-plugin-template
 [docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation

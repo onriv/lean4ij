@@ -71,6 +71,9 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
 // TODO this in fact can be different to implement the immutable state directly rather than using an
 //      extra class
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
+
+    var enableLspCompletion = true
+
     var enableNativeInfoview = true
     var hoveringTimeBeforePopupNativeInfoviewDoc = 200
     var disableNativeInfoviewUpdateAtWindowClosed = false
@@ -101,6 +104,8 @@ data class Lean4SettingsState(
 
 class Lean4SettingsView {
     private val lean4Settings = service<Lean4Settings>()
+
+    private val enableLspCompletion = JBCheckBox("Enable lsp completion", lean4Settings.enableLspCompletion)
 
     // Infoview settings
     private val enableNativeInfoview = JBCheckBox("Enable the native infoview", lean4Settings.enableNativeInfoview)
@@ -151,8 +156,10 @@ class Lean4SettingsView {
         val enableExtraCssForVscodeInfoviewChanged = enableExtraCssForVscodeInfoview.isSelected != lean4Settings.enableExtraCssForVscodeInfoview
         val extraCssForVscodeInfoviewChanged = extraCssForVscodeInfoview.text != lean4Settings.extraCssForVscodeInfoview
         val hoveringTimeBeforePopupNativeInfoviewDocChanged = hoveringTimeBeforePopupNativeInfoviewDoc.number != lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc
+        var enableLspCompletionChanged = enableLspCompletion.isSelected != lean4Settings.enableLspCompletion
         return enableNativeInfoviewChanged || enableVscodeInfoviewChanged || enableExtraCssForVscodeInfoviewChanged ||
-                extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged
+                extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged || enableLspCompletionChanged
+
     }
 
     fun apply() {
@@ -161,6 +168,7 @@ class Lean4SettingsView {
         lean4Settings.enableExtraCssForVscodeInfoview = enableExtraCssForVscodeInfoview.isSelected
         lean4Settings.extraCssForVscodeInfoview = extraCssForVscodeInfoview.text
         lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc = hoveringTimeBeforePopupNativeInfoviewDoc.number
+        lean4Settings.enableLspCompletion = enableLspCompletion.isSelected
         // TODO is it OK here runBlocking?
         // TODO full state
         runBlocking {
@@ -179,9 +187,13 @@ class Lean4SettingsView {
         enableExtraCssForVscodeInfoview.isSelected = lean4Settings.enableExtraCssForVscodeInfoview
         extraCssForVscodeInfoview.text = lean4Settings.extraCssForVscodeInfoview
         hoveringTimeBeforePopupNativeInfoviewDoc.number = lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc
+        enableLspCompletion.isSelected = lean4Settings.enableLspCompletion
     }
 
     fun createComponent() = panel {
+        group("Language Server Settings") {
+            row { cell(enableLspCompletion) }
+        }
         group("Infoview Settings") {
             row { cell(enableNativeInfoview) }
             labeled("Time limit for popping up native infoview doc (millis): ", hoveringTimeBeforePopupNativeInfoviewDoc).enabledIf(enableNativeInfoview.selected)

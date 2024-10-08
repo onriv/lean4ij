@@ -40,6 +40,7 @@ import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.lsp.data.InteractiveTermGoalParams
 import lean4ij.lsp.data.LineRange
 import lean4ij.lsp.data.LineRangeParam
+import lean4ij.lsp.data.PlainGoal
 import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
 import lean4ij.lsp.data.RpcCallParams
@@ -294,7 +295,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    private suspend fun getInteractiveGoals(params: InteractiveGoalsParams): InteractiveGoals? {
+    suspend fun getInteractiveGoals(params: InteractiveGoalsParams): InteractiveGoals? {
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().getInteractiveGoals(it)
         }

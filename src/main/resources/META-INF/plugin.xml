@@ -54,6 +54,16 @@
         />
         <codeInsight.declarativeInlayProvider
                 language="textmate"
+                implementationClass="lean4ij.language.GoalInlayHintsProvider"
+                isEnabledByDefault="true"
+                group="OTHER_GROUP"
+                providerId="lean.placeholder.value"
+                bundle="messages.MyBundle"
+                nameKey="settings.lean.goal.hints.value.name"
+                descriptionKey="settings.lean.goal.hints.value.name"
+        />
+        <codeInsight.declarativeInlayProvider
+                language="textmate"
                 implementationClass="lean4ij.language.PlaceHolderInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"

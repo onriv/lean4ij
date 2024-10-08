@@ -1,5 +1,6 @@
 package lean4ij.language
 
+import ai.grazie.text.range
 import com.google.common.base.MoreObjects
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.io.await
 import kotlinx.coroutines.launch
 import lean4ij.lsp.data.InfoviewRender
+import lean4ij.lsp.data.InteractiveGoalsParams
 import lean4ij.lsp.data.InteractiveTermGoalParams
 import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
@@ -174,6 +176,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             val session = file.getSession()
             // This +2 is awkward, there maybe bad case for it
             val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last + 2)
+//            val position = Position(line = lineColumn.line, character = lineColumn.column)
             val position = Position(line = lineColumn.line, character = lineColumn.column)
             val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))
             val params = PlainGoalParams(textDocument, position)
@@ -228,6 +231,53 @@ class OmitTypeInlayHintsProvider : InlayHintsProvider {
     override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
         return providers.computeIfAbsent(file.virtualFile.path) {
             OmitTypeInlayHintsCollector(editor, editor.project)
+        }
+    }
+}
+
+class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
+
+    companion object {
+        val GOAL_REGEX = Regex("""(\n\s*-- :)\s*?\n\s*\S""")
+    }
+
+    override suspend fun computeFor(file: LeanFile, content: String): HintSet {
+        val hints = HintSet()
+
+        for (m in GOAL_REGEX.findAll(content)) {
+            val session = file.getSession()
+
+            val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last)
+            val position = Position(line = lineColumn.line, character = lineColumn.column)
+            val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))
+            val params = PlainGoalParams(textDocument, position)
+            val interactiveTermGoalParams =
+                InteractiveGoalsParams(session, params, textDocument, position)
+            // TODO what if the server not start?
+            //      will it hang and leak?
+            val termGoal = file.getInteractiveGoals(interactiveTermGoalParams) ?: continue
+            if (termGoal.goals.isEmpty()) {
+                continue
+            }
+
+            val inlayHintType = termGoal.goals[0].type.toInfoViewString(InfoviewRender(), null);
+            var hintPos = m.range.first + m.groupValues[1].length;
+            hints.add(Hint(hintPos, "⊢$inlayHintType"))
+        }
+
+        return hints
+    }
+}
+
+class GoalInlayHintsProvider : InlayHintsProvider {
+
+    companion object {
+        val providers = ConcurrentHashMap<String, GoalInlayHintsCollector>()
+    }
+
+    override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
+        return providers.computeIfAbsent(file.virtualFile.path) {
+            GoalInlayHintsCollector(editor, editor.project)
         }
     }
 }

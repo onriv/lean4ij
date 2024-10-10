@@ -144,6 +144,9 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         val editorEx: EditorEx = editor.await()
         editorEx.markupModel.removeAllHighlighters()
         editorEx.document.setText(interactiveInfo.toString())
+        // always move to the beginning while update goal, to avoid losing focus while all message expanded
+        // TODO nevertheless there maybe some better way
+        editorEx.caretModel.moveToOffset(0)
         editorEx.foldingModel.runBatchFoldingOperation {
             editorEx.foldingModel.clearFoldRegions()
             var allMessagesFoldRegion : FoldRegion? = null

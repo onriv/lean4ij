@@ -45,6 +45,21 @@ Messages and logs about the lean lsp server can be found in the language server 
 | RestartCurrentLeanFile | Lean4 : Restart Current Lean File | restart current file        |
 | RestartJcefInfoview    | Lean4 : Restart Jcef Infoview     | restart the jcef infoview   |
 
+## Settings
+
+Since version 0.0.17 there are some settings available:
+- General setting is under `Settings/Preferences` > `Leanguages & Frameworks` > `Lean4`. Available settings are:
+  - (TODO) Enable Lsp Completion: Currently not support, waiting lsp4ij's new release. This is for currently discovering that sometimes lsp completion is slow. But it's enable by default.
+- Enable the native infoview, and timeout for popping the doc
+- Enable the external infoview
+- Extra css for external infoview. The most relevant I found is changing font-size
+
+The inlay hints related settings are under `Settings/Preferences` > `Inlay Hints` > `textmate`:
+- `Show inlay hint for omit type`
+- `Show value for placeholder _`
+
+Some color settings are under `Settings/Preferences` > `Editor` > `Color Scheme` >  `Lean Infoview`. It contains color settings for both the external and internal infoview.
+
 <!-- Plugin description end -->
 
 ## Development
@@ -56,13 +71,15 @@ Please check [DEVELOP.md](./DEVELOP.md).
 The plugin is still on an early stage, check [ISSUES.md](./ISSUES.md) for known and logged issues, and [TODO.md](./TODO.md)
 
 ## Troubleshooting
+- Currently, the plugin seems capable to open the same project with vscode in the same time (Although it may consume twice the cpu and memory resources). Try open the project simultaneously in VSC and JB-IDE while troubleshooting.
 - Currently, some log is printed in the build window for the progressing file and the url to the external/jcef infoview, if something does not work normally, some log there may help.
 - There are also detailed logs for the lsp server supported by LSP4IJ via the "language servers" tool window after setting the debug/trace level to verbose.
 - Some logs are also sent in the standard log file like `idea.log`. For different systems the path of it's the following paths, it can also be opened via `Help/Show log in ...` in the menu.
   - (Linux) `$HOME.cache/JetBrains/<Product>/log/idea.log`
   - (Windows) `$HOME\AppData\Local\JetBrains\<Product>\log\idea.log`
   - (Macos) `~/Library/Caches/<Product>/log/idea.log`
-
+- If the IDE is freezing, try check also the `threadDumps-freeze-***` files under the log folder.
+ 
 ## Acknowledgments
 
 The following projects give great help for developing the plugin:

@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,10 +29,46 @@ import java.awt.Dimension
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
-
+import kotlin.math.min
 
 /**
- * TODO remove the internal api used here: DocumentationHtmlUtil.getDocPopupPreferredMinWidth()
+ * Since currently we don't have a language implementation for the infoview, we cannot hover the content directly. Hence, we here implement a custom
+ * hovering logic for the infoview on infoview. Other reason is the vscode version infoview can hover on doc again and recursively. This is not supported by
+ * intellij idea (although intellij idea can open multiple docs in the documentation tool window, but ti's some kind not the same)
+ * TODO this is still very wrong, check [com.intellij.codeInsight.documentation.DocumentationScrollPane.setViewportView]
+ */
+class InfoviewPopupEditorPane(text: String, maxWidth: Int, maxHeight: Int) : JEditorPane() {
+
+    init {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        val schemeFont = scheme.getFont(EditorFontType.PLAIN)
+        contentType = "text/html"
+        // must add this, ref: https://stackoverflow.com/questions/12542733/setting-default-font-in-jeditorpane
+        putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
+        // TODO maybe some setting for this, font/size etc
+        font = schemeFont
+        this.text = text
+
+        // TODO this is still very wrong...
+        // It took me lots of time to handle the size...
+        // it turns out that the preferredSize should not be overridden or set at the beginning
+        // it should be called first to get some internal logic (quite complicated seems)
+        maximumSize = Dimension(maxWidth, Short.MAX_VALUE.toInt())
+        // // val width = Math.min(getPreferredContentWidth(doc.length), maxWidth)
+        // val width = maxWidth
+        // exprPane.size = Dimension(width, Short.MAX_VALUE.toInt())
+        val result = preferredSize
+        if (result.width > maxWidth) {
+            preferredSize = Dimension(maxWidth, min(maxHeight, result.height*(result.width/maxWidth+1)))
+        } else {
+            preferredSize = Dimension(result.width, result.height)
+        }
+
+    }
+}
+
+/**
+ * TODO this class absolutely need some refactor and a better implementation
  */
 class CodeWithInfosDocumentationHyperLink(
     val scope: CoroutineScope,
@@ -104,26 +139,9 @@ class CodeWithInfosDocumentationHyperLink(
 
     fun createDocPanel(doc: String): JEditorPane {
         val toolWindowSize = toolWindow.toolWindow.component.size
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        val schemeFont = scheme.getFont(EditorFontType.PLAIN)
-        val docPanel = JEditorPane().apply {
-            contentType = "text/html"
-            // must add this, ref: https://stackoverflow.com/questions/12542733/setting-default-font-in-jeditorpane
-            putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
-            // TODO maybe some setting for this, font/size etc
-            font = JBFont.regular()
-            text = doc
-        }
-        // It took me lots of time to handle the size...
-        // it turns out that the preferredSize should not be overridden or set at the beginning
-        // it should be called first to get some internal logic (quite complicated seems)
         val maxWidth = toolWindowSize.width * 8 / 10
-        // TODO this uses internal ai
-        // val width = Math.min(getPreferredContentWidth(doc.length), maxWidth)
-        val width = maxWidth
-        docPanel.size = Dimension(width, Short.MAX_VALUE.toInt())
-        val result = docPanel.preferredSize
-        docPanel.preferredSize = Dimension(width, result.height)
+        val maxHeight = toolWindowSize.height * 8 / 10
+        val docPanel = InfoviewPopupEditorPane(doc, maxWidth, maxHeight)
         return docPanel
     }
 
@@ -133,31 +151,10 @@ class CodeWithInfosDocumentationHyperLink(
      * or use document directly
      */
     fun createExprPanel(typeAndExpr: String): JEditorPane {
-        // val editor = toolWindow.popupEditor.await()
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        val schemeFont = scheme.getFont(EditorFontType.PLAIN)
-        var exprPane = JEditorPane().apply {
-            contentType = "text/html"
-            // must add this, ref: https://stackoverflow.com/questions/12542733/setting-default-font-in-jeditorpane
-            putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
-            // TODO maybe some setting for this, font/size etc
-            font = schemeFont
-            text = typeAndExpr
-        }
-
         val toolWindowSize = toolWindow.toolWindow.component.size
-        // It took me lots of time to handle the size...
-        // it turns out that the preferredSize should not be overridden or set at the beginning
-        // it should be called first to get some internal logic (quite complicated seems)
         val maxWidth = toolWindowSize.width * 8 / 10
-        exprPane.maximumSize = Dimension(maxWidth, Short.MAX_VALUE.toInt())
-        // // TODO this uses internal api
-        // // val width = Math.min(getPreferredContentWidth(doc.length), maxWidth)
-        // val width = maxWidth
-        // exprPane.size = Dimension(width, Short.MAX_VALUE.toInt())
-        // val result = exprPane.preferredSize
-        // exprPane.preferredSize = Dimension(width, result.height)
-
+        val maxHeight = toolWindowSize.height * 8 / 10
+        var exprPane = InfoviewPopupEditorPane(typeAndExpr, maxWidth, maxHeight)
         return exprPane
     }
 

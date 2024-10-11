@@ -21,7 +21,7 @@ This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connec
   `Install`
 
 - Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually using
-  `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...`
+  `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...` For nightly builds go to [Actions/build](https://github.com/onriv/lean4ij/actions/workflows/build.yml) and download from the buttom of eachsuccess run.
 
 The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
 ## Usage

@@ -3,7 +3,7 @@
 # lean4ij Changelog
 
 ## [Unreleased]
-
+- fix caret of internal infoview at first line first col while refreshing
 ## [0.0.17] - 2024-10-06
 
 Depend on the latest approved nightly build of LSP4IJ: 0.7.0-20241006-013203

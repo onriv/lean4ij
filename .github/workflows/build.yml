@@ -19,7 +19,8 @@ on:
     branches:
       - main
       # also on feat branches
-      - feat/.+
+      # this does not work
+      # - feat/.+
   # Trigger the workflow on any pull request
   pull_request:
 

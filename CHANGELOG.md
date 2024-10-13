@@ -3,6 +3,9 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+- fix caret of internal infoview at first line first col while refreshing
+- tuning size for internal infoview popup window
+- remove click in internal infoview, some optimization for popup up doc
 
 ## [0.0.17] - 2024-10-06
 

@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.io.await
 import kotlinx.coroutines.launch
+import lean4ij.Lean4Settings
 import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveGoalsParams
 import lean4ij.lsp.data.InteractiveTermGoalParams
@@ -230,13 +231,13 @@ class OmitTypeInlayHintsProvider : InlayHintsProvider {
 class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
 
     companion object {
-        val GOAL_REGEX = Regex("""(\n\s*---)\s*?\n\s*\S""")
+        val lean4Settings = service<Lean4Settings>()
     }
 
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
         val hints = HintSet()
 
-        for (m in GOAL_REGEX.findAll(content)) {
+        for (m in lean4Settings.commentPrefixForGoalHintRegex.findAll(content)) {
             val session = file.getSession()
 
             val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last)
@@ -254,7 +255,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
 
             val inlayHintType = termGoal.goals[0].type.toInfoViewString(InfoviewRender(), null);
             var hintPos = m.range.first + m.groupValues[1].length;
-            hints.add(Hint(hintPos, inlayHintType))
+            hints.add(Hint(hintPos, "⊢$inlayHintType"))
         }
 
         return hints

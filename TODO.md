@@ -48,6 +48,7 @@
 - [ ] weird, is it just me or any other reason making only word autocompletion not working? In comment, it works but in normal pos it does not. It seems it's superseded by 
   some semantic autocompletion. --- yeah it's because semantic autocompletion is too slow. Can it be done in two steps? first show alphabet autocompletion and then add more semantic 
   autocompletion 
+- [ ] after bump lsp4ij to 0.7.0, make autocompletion configurable
 - [ ] quick fix for field missing
 - [x] color for error message
 - [ ] code completion seems slow and requires manually press ctrl+space
@@ -57,16 +58,24 @@
 – [x] two cases still exists for all messages: this should already be fixed
   1. it's not shown
   2. it's outdated
-– [x] some snippets to things like \<>
+– [x] some snippets to things like `\<>`
+- [ ] for some snippets maybe it's better to add a space, like `\to`, now for triggering it, it requires a space. But most case it will continue with a space.
+  - But not sure for the design, some absolutely don't want a auto created space
 – [ ] TODO weird brackets does not complete
 – [ ] maybe it's still better define some lang-like feature using parser/lexer, although it cannot be full parsed, but for the level like textmate it should be OK
 – [ ] is it possible do something like pygments/ctags/gtags completion?
 – [ ] option to skip library or backend files
 – [ ] error seems quite delay vanish... it shows errors event it has been fixed.
+- [ ] the internal infoview some case also delay (especially using ideavim one does not move caret)
 – [ ] comment auto comment like /-- trigger block comment
 – [ ] bock/line comment command
 – [ ] impl simp? which replace the code
 - [ ] settings for getAllMessages, both internal/external infoview
+- [ ] maybe it's just me with my idea settings, the gap between first column and line number is a little width
+- [ ] autogenerate missing fields
+- [ ] internal infoview when expanding all messages it seems jumping
+- [ ] check if live templates can dynamically define or not, in this way we can control if suffix space add automatically or not
+- [ ] internal infoview will automatically scroll to the end, kind of disturbing
 
 # Maybe some improvements
 

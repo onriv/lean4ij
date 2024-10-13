@@ -15,10 +15,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.JBFont
+import com.intellij.ui.scale.JBUIScale.scale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import lean4ij.Lean4Settings
 import lean4ij.lsp.data.ContextInfo
 import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveInfoParams
@@ -29,13 +30,75 @@ import org.eclipse.lsp4j.TextDocumentIdentifier
 import java.awt.Dimension
 import javax.swing.JEditorPane
 import javax.swing.JPanel
+import javax.swing.JTextPane
 import javax.swing.ScrollPaneConstants
 
+/**
+ * Since currently we don't have a language implementation for the infoview, we cannot hover the content directly. Hence, we here implement a custom
+ * hovering logic for the infoview on infoview. Other reason is the vscode version infoview can hover on doc again and recursively. This is not supported by
+ * intellij idea (although intellij idea can open multiple docs in the documentation tool window, but ti's some kind not the same)
+ * TODO this is still very wrong, check [com.intellij.codeInsight.documentation.DocumentationScrollPane.setViewportView]
+ */
+class InfoviewPopupEditorPane(text: String, maxWidth: Int, maxHeight: Int) : JTextPane() {
+
+    private val lean4Settings = service<Lean4Settings>()
+
+    init {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        val schemeFont = scheme.getFont(EditorFontType.PLAIN)
+        contentType = "text/html"
+        // must add this, ref: https://stackoverflow.com/questions/12542733/setting-default-font-in-jeditorpane
+        putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
+        // TODO maybe some setting for this, font/size etc
+        font = schemeFont
+        this.text = text
+        val width = getPreferredContentWidth(text.length, preferredSize)
+        val height = getPreferredHeightByWidth(width)
+        preferredSize = Dimension(width, height)
+    }
+
+    /**
+     * code copied from [com.intellij.codeInsight.documentation.DocumentationEditorPane.getPreferredContentWidth]
+     */
+    private fun getPreferredContentWidth(textLength: Int, preferredSize: Dimension): Int {
+        // Heuristics to calculate popup width based on the amount of the content.
+        // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
+        // 200 chars and less is 300px, 1000 chars and more is 500px.
+        // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
+        val width1 = lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound
+        val width2 = lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound
+        val minWidth = lean4Settings.nativeInfoviewPopupPreferredMinWidth
+        val maxWidth = lean4Settings.nativeInfoviewPopupPreferredMaxWidth
+        val contentLengthPreferredSize = if (textLength < width1) {
+            minWidth
+        } else if (textLength in (width1 + 1) until width2) {
+            minWidth + (textLength - width1) * (maxWidth - minWidth) / (width2 - width1)
+        } else {
+            maxWidth
+        }
+        return scale(contentLengthPreferredSize)
+    }
+
+    private var myCachedPreferredSize: Dimension? = null
+
+    /**
+     * code copied from [com.intellij.codeInsight.documentation.DocumentationEditorPane.getPreferredHeightByWidth]
+     */
+    private fun getPreferredHeightByWidth(width: Int): Int {
+        if (myCachedPreferredSize != null && myCachedPreferredSize!!.width == width) {
+            return myCachedPreferredSize!!.height
+        }
+        setSize(width, Short.MAX_VALUE.toInt())
+        val result = preferredSize
+        myCachedPreferredSize = Dimension(width, result.height)
+        return myCachedPreferredSize!!.height
+    }
+}
 
 /**
- * TODO remove the internal api used here: DocumentationHtmlUtil.getDocPopupPreferredMinWidth()
+ * TODO this class absolutely need some refactor and a better implementation
  */
-class CodeWithInfosDocumentationHyperLink(
+class InfoviewPopupDocumentation(
     val scope: CoroutineScope,
     val toolWindow: LeanInfoViewWindow,
     val file: VirtualFile,
@@ -50,10 +113,11 @@ class CodeWithInfosDocumentationHyperLink(
          */
         private var height: Int? = null
     }
+
     private var popupPanel: JBPopup? = null
 
     override fun navigate(project: Project) {
-        val leanProjectService : LeanProjectService = project.service()
+        val leanProjectService: LeanProjectService = project.service()
         leanProjectService.scope.launch {
             val session = leanProjectService.file(file).getSession()
             // file.url has format file://I:/.. whereas file.path has format "I:/..." in windows
@@ -69,7 +133,10 @@ class CodeWithInfosDocumentationHyperLink(
             )
             val infoToInteractive = leanProjectService.languageServer.await()
                 .infoToInteractive(rpcParams)
-            var htmlDoc : String? = null
+            val sb = InfoviewRender()
+            val typeStr = infoToInteractive.type?.toInfoViewString(sb, null) ?: ""
+            val exprStr = infoToInteractive.exprExplicit?.toInfoViewString(sb, null) ?: ""
+            var htmlDoc: String? = null
             if (infoToInteractive.doc != null) {
                 val markdownDoc: String = infoToInteractive.doc
                 // val flavour = CommonMarkFlavourDescriptor()
@@ -89,41 +156,27 @@ class CodeWithInfosDocumentationHyperLink(
                     htmlDoc = htmlDoc.substring("<p>".length)
                 }
                 // TODO maybe some css for this?
-                htmlDoc = "<body>${htmlDoc}</body>"
+                val toolWindowSize = toolWindow.toolWindow.component.size
+                // htmlDoc = "<body style='width: 10px'>${htmlDoc}</body>"
             }
-            val sb = InfoviewRender()
-            val typeStr = infoToInteractive.type?.toInfoViewString(sb, null) ?: ""
-            val exprStr = infoToInteractive.exprExplicit?.toInfoViewString(sb, null) ?: ""
             // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html
             // TODO here must limit the range in EDT
+            val doc = if (htmlDoc == null) {
+                "$exprStr : $typeStr"
+            } else {
+                "$exprStr : $typeStr<hr>${htmlDoc}"
+            }
             launch(Dispatchers.EDT) {
-                createPopupPanel("$exprStr : $typeStr", htmlDoc)
+                createPopupPanel(doc)
             }
         }
     }
 
-    fun createDocPanel(doc: String): JEditorPane {
+    fun createDocPanel(doc: String, i: Int): JEditorPane {
         val toolWindowSize = toolWindow.toolWindow.component.size
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        val schemeFont = scheme.getFont(EditorFontType.PLAIN)
-        val docPanel = JEditorPane().apply {
-            contentType = "text/html"
-            // must add this, ref: https://stackoverflow.com/questions/12542733/setting-default-font-in-jeditorpane
-            putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
-            // TODO maybe some setting for this, font/size etc
-            font = JBFont.regular()
-            text = doc
-        }
-        // It took me lots of time to handle the size...
-        // it turns out that the preferredSize should not be overridden or set at the beginning
-        // it should be called first to get some internal logic (quite complicated seems)
         val maxWidth = toolWindowSize.width * 8 / 10
-        // TODO this uses internal ai
-        // val width = Math.min(getPreferredContentWidth(doc.length), maxWidth)
-        val width = maxWidth
-        docPanel.size = Dimension(width, Short.MAX_VALUE.toInt())
-        val result = docPanel.preferredSize
-        docPanel.preferredSize = Dimension(width, result.height)
+        val maxHeight = toolWindowSize.height * 8 / 10
+        val docPanel = InfoviewPopupEditorPane(doc, maxWidth, maxHeight)
         return docPanel
     }
 
@@ -133,46 +186,25 @@ class CodeWithInfosDocumentationHyperLink(
      * or use document directly
      */
     fun createExprPanel(typeAndExpr: String): JEditorPane {
-        // val editor = toolWindow.popupEditor.await()
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        val schemeFont = scheme.getFont(EditorFontType.PLAIN)
-        var exprPane = JEditorPane().apply {
-            contentType = "text/html"
-            // must add this, ref: https://stackoverflow.com/questions/12542733/setting-default-font-in-jeditorpane
-            putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
-            // TODO maybe some setting for this, font/size etc
-            font = schemeFont
-            text = typeAndExpr
-        }
-
         val toolWindowSize = toolWindow.toolWindow.component.size
-        // It took me lots of time to handle the size...
-        // it turns out that the preferredSize should not be overridden or set at the beginning
-        // it should be called first to get some internal logic (quite complicated seems)
         val maxWidth = toolWindowSize.width * 8 / 10
-        exprPane.maximumSize = Dimension(maxWidth, Short.MAX_VALUE.toInt())
-        // // TODO this uses internal api
-        // // val width = Math.min(getPreferredContentWidth(doc.length), maxWidth)
-        // val width = maxWidth
-        // exprPane.size = Dimension(width, Short.MAX_VALUE.toInt())
-        // val result = exprPane.preferredSize
-        // exprPane.preferredSize = Dimension(width, result.height)
-
+        val maxHeight = toolWindowSize.height * 8 / 10
+        var exprPane = InfoviewPopupEditorPane(typeAndExpr, maxWidth, maxHeight)
         return exprPane
     }
 
-     fun createPopupPanel(typeAndExpr: String, doc: String?) {
+    /**
+     * TODO check [com.intellij.codeInsight.documentation.DocumentationScrollPane.setViewportView]
+     */
+    fun createPopupPanel(doc: String) {
         val factory = JBPopupFactory.getInstance()
-        val typeAndExprPanel = createExprPanel(typeAndExpr)
+        val toolWindowSize = toolWindow.toolWindow.component.size
+        val docPanel = createDocPanel(doc, toolWindowSize.width * 8 / 10)
         val jPanel = JPanel(VerticalLayout(1))
-        jPanel.add(typeAndExprPanel)
-        if (doc != null) {
-            val docPanel = createDocPanel(doc)
-            jPanel.add(docPanel)
-        }
+        jPanel.add(docPanel)
         val popup = JBScrollPane(jPanel)
         popup.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-        popup.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        popup.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 
         popupPanel = factory.createComponentPopupBuilder(popup, popup)
             // .setTitle(title)
@@ -180,11 +212,11 @@ class CodeWithInfosDocumentationHyperLink(
             .setMovable(true)
             .setRequestFocus(true)
             .createPopup()
-            // .showInScreenCoordinates(toolWindow.toolWindow.component, point)
-            // .showInBestPositionFor(editor)
-            // .showInCenterOf(toolWindow.component)
-            // .showInFocusCenter()
-            // .show(factory.guessBestPopupLocation(toolWindow.toolWindow.component))
+        // .showInScreenCoordinates(toolWindow.toolWindow.component, point)
+        // .showInBestPositionFor(editor)
+        // .showInCenterOf(toolWindow.component)
+        // .showInFocusCenter()
+        // .show(factory.guessBestPopupLocation(toolWindow.toolWindow.component))
         popupPanel?.show(point)
 
     }

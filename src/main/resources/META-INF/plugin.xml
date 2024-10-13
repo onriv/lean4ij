@@ -75,8 +75,6 @@
         <applicationService serviceImplementation="lean4ij.Lean4Settings"/>
         <!-- <lang.foldingBuilder language="textmate" implementationClass="lean4ij.language.PlaceholderFolding"/> -->
         <applicationConfigurable groupId="language" displayName="Lean4" id="preferences.language.Lean4" instance="lean4ij.Lean4Configurable"/>
-        <!-- it messes up with the normal font settings, hence commented out -->
-        <!-- <colorAndFontPanelFactory implementation="lean4ij.BrowserInfoviewColorAndFontPanelFactory" /> -->
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="lean"

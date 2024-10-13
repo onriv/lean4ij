@@ -17,6 +17,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Cell
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.runBlocking
 import lean4ij.infoview.external.createThemeCss
+import org.ini4j.Reg
 import java.awt.Component
 import java.util.function.Supplier
 import javax.swing.AbstractButton
@@ -55,7 +57,13 @@ fun <T : JComponent> Panel.checked(checkBox: AbstractButton, component: T, init:
 
 
 class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListCellRenderer() {
-    override fun getListCellRendererComponent(list: JList<*>, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
+    override fun getListCellRendererComponent(
+        list: JList<*>,
+        value: Any?,
+        index: Int,
+        isSelected: Boolean,
+        cellHasFocus: Boolean
+    ): Component {
         val comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
         if (index >= 0 && index < toolTips.size) {
             list.toolTipText = toolTips[index]
@@ -72,14 +80,22 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
 //      extra class
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
+    var commentPrefixForGoalHint : String = "---"
+    var commentPrefixForGoalHintRegex = Regex("""(\n\s*${commentPrefixForGoalHint})\s*?\n\s*\S""")
     var enableLspCompletion = true
 
     var enableNativeInfoview = true
     var hoveringTimeBeforePopupNativeInfoviewDoc = 200
+    var nativeInfoviewPopupMinWidthTextLengthUpperBound = 200
+    var nativeInfoviewPopupMaxWidthTextLengthLowerBound = 1000
+    var nativeInfoviewPopupPreferredMinWidth = 500
+    var nativeInfoviewPopupPreferredMaxWidth = 800
+
     var disableNativeInfoviewUpdateAtWindowClosed = false
     var enableVscodeInfoview = true
     var disableVscodeInfoviewUpdateAtWindowClosed = false
     var enableExtraCssForVscodeInfoview = false
+
     // TODO this function should not be ref here, but move it to here and ref it from the infoview package maybe
     var extraCssForVscodeInfoview = createThemeCss(EditorColorsManager.getInstance().globalScheme)
 
@@ -89,6 +105,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
     override fun loadState(state: Lean4Settings) {
         XmlSerializerUtil.copyBean(state, this)
+        commentPrefixForGoalHintRegex = Regex("""(\n\s*${commentPrefixForGoalHint})\s*?\n\s*\S""")
     }
 }
 
@@ -102,21 +119,45 @@ data class Lean4SettingsState(
     val extraCssForVscodeInfoview: String,
 )
 
+/**
+ * TODO adding setting is cumbersome, check if it's any better way to do it
+ */
 class Lean4SettingsView {
     private val lean4Settings = service<Lean4Settings>()
+    
+    private val commentPrefixForGoalHint = JBTextField(lean4Settings.commentPrefixForGoalHint)
 
     private val enableLspCompletion = JBCheckBox("Enable lsp completion", lean4Settings.enableLspCompletion)
 
     // Infoview settings
     private val enableNativeInfoview = JBCheckBox("Enable the native infoview", lean4Settings.enableNativeInfoview)
-    private val hoveringTimeBeforePopupNativeInfoviewDoc = JBIntSpinner(lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc, 50, 3000)
+    private val hoveringTimeBeforePopupNativeInfoviewDoc =
+        JBIntSpinner(lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc, 50, 3000)
+    private val nativeInfoviewPopupMinWidthTextLengthUpperBound =
+        JBIntSpinner(lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound, 0, 3000)
+    private val nativeInfoviewPopupMaxWidthTextLengthLowerBound =
+        JBIntSpinner(lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound, 0, 3000)
+    private val nativeInfoviewPopupPreferredMinWidth =
+        JBIntSpinner(lean4Settings.nativeInfoviewPopupPreferredMinWidth, 0, 3000)
+    private val nativeInfoviewPopupPreferredMaxWidth =
+        JBIntSpinner(lean4Settings.nativeInfoviewPopupPreferredMaxWidth, 0, 3000)
+
     // TODO
-    private val disableNativeInfoviewUpdateAtWindowClosed = JBCheckBox("Disable native infoview update at tool window closed", lean4Settings.disableNativeInfoviewUpdateAtWindowClosed)
+    private val disableNativeInfoviewUpdateAtWindowClosed = JBCheckBox(
+        "Disable native infoview update at tool window closed",
+        lean4Settings.disableNativeInfoviewUpdateAtWindowClosed
+    )
+
     // TODO
     private val enableVscodeInfoview = JBCheckBox("Enable the vscode infoview", lean4Settings.enableVscodeInfoview)
+
     // TODO
-    private val disableVscodeInfoviewUpdateAtWindowClosed = JBCheckBox("Disable vscode infoview update at tool window closed", lean4Settings.disableVscodeInfoviewUpdateAtWindowClosed)
-    private val enableExtraCssForVscodeInfoview = JBCheckBox("Enable extra css for vscode infoview", lean4Settings.enableExtraCssForVscodeInfoview)
+    private val disableVscodeInfoviewUpdateAtWindowClosed = JBCheckBox(
+        "Disable vscode infoview update at tool window closed",
+        lean4Settings.disableVscodeInfoviewUpdateAtWindowClosed
+    )
+    private val enableExtraCssForVscodeInfoview =
+        JBCheckBox("Enable extra css for vscode infoview", lean4Settings.enableExtraCssForVscodeInfoview)
 
     /**
      * copy from [com.intellij.ui.dsl.builder.impl.RowImpl.textArea]
@@ -144,61 +185,120 @@ class Lean4SettingsView {
     private fun setExtraCssForTextAreaIsEditable(isEditable: Boolean) {
         extraCssForVscodeInfoview.isEditable = isEditable
         if (!isEditable) {
-            extraCssForVscodeInfoview.background = EditorColorsManager.getInstance().globalScheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT).backgroundColor
+            extraCssForVscodeInfoview.background =
+                EditorColorsManager.getInstance().globalScheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT).backgroundColor
         } else {
-            extraCssForVscodeInfoview.background = EditorColorsManager.getInstance().globalScheme.getAttributes(HighlighterColors.TEXT).backgroundColor
+            extraCssForVscodeInfoview.background =
+                EditorColorsManager.getInstance().globalScheme.getAttributes(HighlighterColors.TEXT).backgroundColor
         }
     }
 
-    val isModified: Boolean get() {
-        val enableNativeInfoviewChanged = enableNativeInfoview.isSelected != lean4Settings.enableNativeInfoview
-        val enableVscodeInfoviewChanged = enableVscodeInfoview.isSelected != lean4Settings.enableVscodeInfoview
-        val enableExtraCssForVscodeInfoviewChanged = enableExtraCssForVscodeInfoview.isSelected != lean4Settings.enableExtraCssForVscodeInfoview
-        val extraCssForVscodeInfoviewChanged = extraCssForVscodeInfoview.text != lean4Settings.extraCssForVscodeInfoview
-        val hoveringTimeBeforePopupNativeInfoviewDocChanged = hoveringTimeBeforePopupNativeInfoviewDoc.number != lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc
-        var enableLspCompletionChanged = enableLspCompletion.isSelected != lean4Settings.enableLspCompletion
-        return enableNativeInfoviewChanged || enableVscodeInfoviewChanged || enableExtraCssForVscodeInfoviewChanged ||
-                extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged || enableLspCompletionChanged
+    /**
+     * TODO one setting, 5 positions must be changed... [Lean4Settings], [Lean4SettingsView], here [isModified], [apply], [reset],
+     *      there must be some more clean way with declaration style
+     */
+    val isModified: Boolean
+        get() {
 
-    }
+            val commentPrefixForGoalHintChanged = commentPrefixForGoalHint.text != lean4Settings.commentPrefixForGoalHint
+
+            val enableNativeInfoviewChanged = enableNativeInfoview.isSelected != lean4Settings.enableNativeInfoview
+            val enableVscodeInfoviewChanged = enableVscodeInfoview.isSelected != lean4Settings.enableVscodeInfoview
+            val enableExtraCssForVscodeInfoviewChanged =
+                enableExtraCssForVscodeInfoview.isSelected != lean4Settings.enableExtraCssForVscodeInfoview
+            val extraCssForVscodeInfoviewChanged =
+                extraCssForVscodeInfoview.text != lean4Settings.extraCssForVscodeInfoview
+            val hoveringTimeBeforePopupNativeInfoviewDocChanged =
+                hoveringTimeBeforePopupNativeInfoviewDoc.number != lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc
+            val nativeInfoviewPopupTextWidth1Changed =
+                nativeInfoviewPopupMinWidthTextLengthUpperBound.number != lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound
+            val nativeInfoviewPopupTextWidth2Changed =
+                nativeInfoviewPopupMaxWidthTextLengthLowerBound.number != lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound
+            val nativeInfoviewPopupPreferredMinWidthChanged =
+                nativeInfoviewPopupPreferredMinWidth.number != lean4Settings.nativeInfoviewPopupPreferredMinWidth
+            val nativeInfoviewPopupPreferredMaxWidthChanged =
+                nativeInfoviewPopupPreferredMaxWidth.number != lean4Settings.nativeInfoviewPopupPreferredMaxWidth
+            val enableLspCompletionChanged = enableLspCompletion.isSelected != lean4Settings.enableLspCompletion
+            return enableNativeInfoviewChanged || enableVscodeInfoviewChanged || enableExtraCssForVscodeInfoviewChanged ||
+                    extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged || enableLspCompletionChanged ||
+                    nativeInfoviewPopupTextWidth1Changed || nativeInfoviewPopupTextWidth2Changed ||
+                    nativeInfoviewPopupPreferredMinWidthChanged || nativeInfoviewPopupPreferredMaxWidthChanged
+                    || commentPrefixForGoalHintChanged
+        }
 
     fun apply() {
+        lean4Settings.commentPrefixForGoalHint = commentPrefixForGoalHint.text
+        lean4Settings.commentPrefixForGoalHintRegex = Regex("""(\n\s*${lean4Settings.commentPrefixForGoalHint})\s*?\n\s*\S""")
+
         lean4Settings.enableNativeInfoview = enableNativeInfoview.isSelected
         lean4Settings.enableVscodeInfoview = enableVscodeInfoview.isSelected
         lean4Settings.enableExtraCssForVscodeInfoview = enableExtraCssForVscodeInfoview.isSelected
         lean4Settings.extraCssForVscodeInfoview = extraCssForVscodeInfoview.text
         lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc = hoveringTimeBeforePopupNativeInfoviewDoc.number
+        lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound = nativeInfoviewPopupMinWidthTextLengthUpperBound.number
+        lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound = nativeInfoviewPopupMaxWidthTextLengthLowerBound.number
+        lean4Settings.nativeInfoviewPopupPreferredMinWidth = nativeInfoviewPopupPreferredMinWidth.number
+        lean4Settings.nativeInfoviewPopupPreferredMaxWidth = nativeInfoviewPopupPreferredMaxWidth.number
         lean4Settings.enableLspCompletion = enableLspCompletion.isSelected
         // TODO is it OK here runBlocking?
         // TODO full state
         runBlocking {
-            _events.emit(Lean4SettingsState(
-                lean4Settings.enableNativeInfoview,
-                lean4Settings.enableVscodeInfoview,
-                lean4Settings.enableExtraCssForVscodeInfoview,
-                lean4Settings.extraCssForVscodeInfoview,
-            ))
+            _events.emit(
+                Lean4SettingsState(
+                    lean4Settings.enableNativeInfoview,
+                    lean4Settings.enableVscodeInfoview,
+                    lean4Settings.enableExtraCssForVscodeInfoview,
+                    lean4Settings.extraCssForVscodeInfoview,
+                )
+            )
         }
     }
 
     fun reset() {
+        commentPrefixForGoalHint.text = lean4Settings.commentPrefixForGoalHint
         enableNativeInfoview.isSelected = lean4Settings.enableNativeInfoview
         enableVscodeInfoview.isSelected = lean4Settings.enableVscodeInfoview
         enableExtraCssForVscodeInfoview.isSelected = lean4Settings.enableExtraCssForVscodeInfoview
         extraCssForVscodeInfoview.text = lean4Settings.extraCssForVscodeInfoview
         hoveringTimeBeforePopupNativeInfoviewDoc.number = lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc
+        nativeInfoviewPopupMinWidthTextLengthUpperBound.number = lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound
+        nativeInfoviewPopupMaxWidthTextLengthLowerBound.number = lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound
+        nativeInfoviewPopupPreferredMinWidth.number = lean4Settings.nativeInfoviewPopupPreferredMinWidth
+        nativeInfoviewPopupPreferredMaxWidth.number = lean4Settings.nativeInfoviewPopupPreferredMaxWidth
         enableLspCompletion.isSelected = lean4Settings.enableLspCompletion
     }
 
     fun createComponent() = panel {
+        group("Inlay Hints Settings ") {
+            labeled("Comment prefix for goal hints", commentPrefixForGoalHint)
+        }
         group("Language Server Settings") {
             row { cell(enableLspCompletion) }
         }
         group("Infoview Settings") {
             row { cell(enableNativeInfoview) }
-            labeled("Time limit for popping up native infoview doc (millis): ", hoveringTimeBeforePopupNativeInfoviewDoc).enabledIf(enableNativeInfoview.selected)
+            labeled(
+                "Time limit for popping up native infoview doc (millis): ",
+                hoveringTimeBeforePopupNativeInfoviewDoc
+            ).enabledIf(enableNativeInfoview.selected)
+            labeled(
+                "text length upper bound for using min width",
+                nativeInfoviewPopupMinWidthTextLengthUpperBound
+            ).enabledIf(enableNativeInfoview.selected)
+            labeled(
+                "text length lower bound for using max width",
+                nativeInfoviewPopupMaxWidthTextLengthLowerBound
+            ).enabledIf(enableNativeInfoview.selected)
+            labeled(
+                "native infoview min width",
+                nativeInfoviewPopupPreferredMinWidth
+            ).enabledIf(enableNativeInfoview.selected)
+            labeled(
+                "native infoview max width",
+                nativeInfoviewPopupPreferredMaxWidth
+            ).enabledIf(enableNativeInfoview.selected)
             row { cell(enableVscodeInfoview) }
-            row { cell(enableExtraCssForVscodeInfoview)}
+            row { cell(enableExtraCssForVscodeInfoview) }
             row {
                 scrollCell(extraCssForVscodeInfoview).align(AlignX.FILL)
             }
@@ -207,6 +307,7 @@ class Lean4SettingsView {
 
     companion object {
         private val _events = MutableSharedFlow<Lean4SettingsState>()
+
         // TODO maybe the state also indicates the change detail
         val events: SharedFlow<Lean4SettingsState> = _events.asSharedFlow()
     }
@@ -234,38 +335,4 @@ class Lean4Configurable : SearchableConfigurable {
         settingsView = Lean4SettingsView()
         return settingsView?.createComponent()
     }
-}
-
-/**
- * The class is mainly from [com.intellij.application.options.colors.ColorAndFontOptions.ConsoleFontConfigurableFactory]
- */
-class BrowserInfoviewColorAndFontPanelFactory : ColorAndFontPanelFactory {
-    override fun createPanel(options: ColorAndFontOptions): NewColorAndFontPanel {
-        val previewPanel: FontEditorPreview = object : FontEditorPreview(Supplier {options.selectedScheme }, true) {
-            // override fun updateOptionsScheme(selectedScheme: EditorColorsScheme): EditorColorsScheme {
-            //     println("TODO")
-            //     return selectedScheme
-            // }
-        }
-        return object : NewColorAndFontPanel(SchemesPanel(options), BrowserInfoviewFontOptions(options), previewPanel, "BrowserInfoviewColorAndFontPanelFactoryTODO", null, null) {
-            override fun containsFontOptions(): Boolean {
-                return true
-            }
-        }
-    }
-
-    override fun getPanelDisplayName(): String {
-        return "Lean4 Browser Infoview Font"
-    }
-}
-
-/**
- * This class is mainly from [com.intellij.application.options.colors.ConsoleFontOptions]
- */
-class BrowserInfoviewFontOptions(options: ColorAndFontOptions) : FontOptions(options) {
-
-    override fun getOverwriteFontTitle(): String {
-        return "Use Browser infoview font instead of the"
-    }
-
 }

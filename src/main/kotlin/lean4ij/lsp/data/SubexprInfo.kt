@@ -24,6 +24,9 @@ data class SubexprInfo (val subexprPos: String, val info: ContextInfo, val diffS
             "willChange" -> {
                 sb.highlight(startOffset, endOffset, TextAttributesKeys.RemovedText)
             }
+            "willDelete" -> {
+                sb.highlight(startOffset, endOffset, TextAttributesKeys.RemovedText)
+            }
             else -> {
                 // should not be here
                 TODO("diffStatus: $diffStatus for infoview change not defined")

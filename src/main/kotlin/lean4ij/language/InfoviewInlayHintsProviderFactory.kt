@@ -160,17 +160,13 @@ abstract class InlayHintBase(private val editor: Editor, protected val project: 
 class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
 
     companion object {
-        /**
-         * It's very awkward doing this with regex pattern for this...
-         * But we don't have a parser for lean currently
-         */
         val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s)(.*?)(\s*:=[\n\s]+)""")
     }
 
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
         val hints = HintSet()
         for (m in DEF_REGEX.findAll(content)) {
-            if (hasTypeNotation(m.groupValues[2], m.range.first + m.groupValues[1].length, file)) {
+            if (hasTypeNotation(m.groupValues[2])) {
                 continue
             }
             val session = file.getSession()
@@ -197,11 +193,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
         return hints
     }
 
-    /**
-     * A poor and wrong way to check it... since we don't have an ast parser
-     * The parser for this part should not be hard though
-     */
-    private fun hasTypeNotation(s: String, offset: Int, leanFile: LeanFile): Boolean {
+    private fun hasTypeNotation(s: String): Boolean {
         // if there exists a balanced :, return true
         var openBracket = 0
         var openFlower = 0
@@ -238,7 +230,7 @@ class OmitTypeInlayHintsProvider : InlayHintsProvider {
 class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
 
     companion object {
-        val GOAL_REGEX = Regex("""(\n\s*-- :)\s*?\n\s*\S""")
+        val GOAL_REGEX = Regex("""(\n\s*---)\s*?\n\s*\S""")
     }
 
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
@@ -262,7 +254,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
 
             val inlayHintType = termGoal.goals[0].type.toInfoViewString(InfoviewRender(), null);
             var hintPos = m.range.first + m.groupValues[1].length;
-            hints.add(Hint(hintPos, "⊢$inlayHintType"))
+            hints.add(Hint(hintPos, inlayHintType))
         }
 
         return hints

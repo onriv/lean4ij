@@ -98,7 +98,7 @@ class InfoviewPopupEditorPane(text: String, maxWidth: Int, maxHeight: Int) : JTe
 /**
  * TODO this class absolutely need some refactor and a better implementation
  */
-class CodeWithInfosDocumentationHyperLink(
+class InfoviewPopupDocumentation(
     val scope: CoroutineScope,
     val toolWindow: LeanInfoViewWindow,
     val file: VirtualFile,

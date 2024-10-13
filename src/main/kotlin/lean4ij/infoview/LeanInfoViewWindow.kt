@@ -1,13 +1,12 @@
 package lean4ij.infoview
 
-import com.intellij.codeInsight.codeVision.ui.mousePoint
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
@@ -144,9 +143,13 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         val editorEx: EditorEx = editor.await()
         editorEx.markupModel.removeAllHighlighters()
         editorEx.document.setText(interactiveInfo.toString())
+
+        // TODO maybe a configuration for this
         // always move to the beginning while update goal, to avoid losing focus while all message expanded
         // TODO nevertheless there maybe some better way
         editorEx.caretModel.moveToOffset(0)
+        editorEx.scrollingModel.scrollToCaret(ScrollType.CENTER)
+
         editorEx.foldingModel.runBatchFoldingOperation {
             editorEx.foldingModel.clearFoldRegions()
             var allMessagesFoldRegion : FoldRegion? = null
@@ -182,7 +185,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         if (mouseMotionListener != null) {
             editorEx.removeEditorMouseMotionListener(mouseMotionListener!!)
         }
-        mouseMotionListener = InfoviewMouseMotionListener(leanProject, this, support, file, logicalPosition,
+        mouseMotionListener = InfoviewMouseMotionListener(leanProject, this, editorEx, file, logicalPosition,
             interactiveGoals, interactiveTermGoal, interactiveDiagnostics, interactiveDiagnosticsAllMessages)
         editorEx.addEditorMouseMotionListener(mouseMotionListener!!)
     }

@@ -5,7 +5,6 @@ import com.redhat.devtools.lsp4ij.LanguageServerEnablementSupport
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
-import com.redhat.devtools.lsp4ij.client.features.LSPCompletionFeature
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.atomic.AtomicBoolean
@@ -51,4 +50,11 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
     override fun getServerInterface(): Class<out LanguageServer> {
         return InternalLeanLanguageServer::class.java
     }
+
+    override fun createClientFeatures(): LSPClientFeatures {
+        return LSPClientFeatures().apply {
+            completionFeature = LeanLSPCompletionFeature()
+        }
+    }
 }
+

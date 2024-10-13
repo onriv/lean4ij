@@ -255,7 +255,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
 
             val inlayHintType = termGoal.goals[0].type.toInfoViewString(InfoviewRender(), null);
             var hintPos = m.range.first + m.groupValues[1].length;
-            hints.add(Hint(hintPos, "⊢$inlayHintType"))
+            hints.add(Hint(hintPos, inlayHintType))
         }
 
         return hints

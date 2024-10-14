@@ -81,7 +81,7 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
     var commentPrefixForGoalHint : String = "---"
-    var commentPrefixForGoalHintRegex = Regex("""(\n\s*${commentPrefixForGoalHint})\s*?\n\s*\S""")
+    var commentPrefixForGoalHintRegex = updateCommentPrefixForGoalHintRegex()
     var enableLspCompletion = true
 
     var enableNativeInfoview = true
@@ -105,8 +105,11 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
     override fun loadState(state: Lean4Settings) {
         XmlSerializerUtil.copyBean(state, this)
-        commentPrefixForGoalHintRegex = Regex("""(\n\s*${commentPrefixForGoalHint})\s*?\n\s*\S""")
+        commentPrefixForGoalHintRegex = updateCommentPrefixForGoalHintRegex()
     }
+
+    private fun updateCommentPrefixForGoalHintRegex() =
+        Regex("""(\n\s*${Regex.escape(commentPrefixForGoalHint)})\s*?\n\s*\S""")
 }
 
 /**

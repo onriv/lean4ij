@@ -104,6 +104,20 @@
         <action id="RestartJcefInfoview" class="lean4ij.actions.RestartJcefInfoview" text="Lean4: Restart Jcef Infoview" description="Dump Coroutine">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+        <action id="AddInlayGoalHint" class="lean4ij.actions.AddInlayGoalHint" text="Lean4: Add Inlay Goal Hint" description="Add goal hint">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut
+                    keymap="$default"
+                    first-keystroke="control I"
+                    />
+        </action>
+        <action id="DelInlayGoalHint" class="lean4ij.actions.DelInlayGoalHint" text="Lean4: Delete Inlay Goal Hint" description="Delete goal hint">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut
+                    keymap="$default"
+                    first-keystroke="control shift I"
+            />
+        </action>
 
     </actions>
 

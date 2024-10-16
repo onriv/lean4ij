@@ -241,21 +241,31 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
             val session = file.getSession()
 
             val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last)
+
             val position = Position(line = lineColumn.line, character = lineColumn.column)
             val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))
+
+            val typeHint: String
+            // assume tactic mode call
             val params = PlainGoalParams(textDocument, position)
-            val interactiveTermGoalParams =
+            val interactiveGoalParams =
                 InteractiveGoalsParams(session, params, textDocument, position)
-            // TODO what if the server not start?
-            //      will it hang and leak?
-            val termGoal = file.getInteractiveGoals(interactiveTermGoalParams) ?: continue
-            if (termGoal.goals.isEmpty()) {
-                continue
+
+            val termGoals = file.getInteractiveGoals(interactiveGoalParams)
+            if (termGoals != null && !termGoals.goals.isEmpty()) {
+                typeHint = termGoals.goals[0].type.toInfoViewString(InfoviewRender(), null);
+            }
+            else {
+                // non tactic mode
+                val params = PlainGoalParams(textDocument, position)
+                val interactiveTermGoalParams =
+                    InteractiveTermGoalParams(session, params, textDocument, position)
+                val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams)
+                typeHint = termGoal?.type?.toInfoViewString(InfoviewRender(), null) ?: continue
             }
 
-            val inlayHintType = termGoal.goals[0].type.toInfoViewString(InfoviewRender(), null);
             var hintPos = m.range.first + m.groupValues[1].length;
-            hints.add(Hint(hintPos, inlayHintType))
+            hints.add(Hint(hintPos, typeHint))
         }
 
         return hints

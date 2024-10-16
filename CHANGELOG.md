@@ -12,7 +12,7 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.1-20241016-013210@ni
 - fix caret of internal infoview at first line first col while refreshing
 - tuning size for internal infoview popup window
 - remove click in internal infoview, some optimization for popup up doc
-- goal hints with @enigmurl' great efforts
+- goal hints with @enigmurl's great efforts
 - bump with LSP4IJ to 0.7.0
 - A setting for enable/disable lsp completion (for faster simple word completion)
 

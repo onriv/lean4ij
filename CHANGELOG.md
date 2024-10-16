@@ -3,9 +3,18 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+
+## [0.0.18] - 2024-10-16
+
+Depend on the latest approved nightly build of LSP4IJ: 0.7.1-20241016-013210
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.1-20241016-013210@nightly, org.jetbrains.plugins.textmate]
+
 - fix caret of internal infoview at first line first col while refreshing
 - tuning size for internal infoview popup window
 - remove click in internal infoview, some optimization for popup up doc
+- goal hints with @enigmurl' great efforts
+- bump with LSP4IJ to 0.7.0
+- A setting for enable/disable lsp completion (for faster simple word completion)
 
 ## [0.0.17] - 2024-10-06
 
@@ -18,5 +27,6 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.0.17...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.0.18...HEAD
+[0.0.18]: https://github.com/onriv/lean4ij/compare/v0.0.17...v0.0.18
 [0.0.17]: https://github.com/onriv/lean4ij/commits/v0.0.17

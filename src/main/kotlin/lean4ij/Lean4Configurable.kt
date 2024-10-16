@@ -17,6 +17,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Cell
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.runBlocking
 import lean4ij.infoview.external.createThemeCss
+import org.ini4j.Reg
 import java.awt.Component
 import java.util.function.Supplier
 import javax.swing.AbstractButton
@@ -78,6 +80,8 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
 //      extra class
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
+    var commentPrefixForGoalHint : String = "---"
+    var commentPrefixForGoalHintRegex = updateCommentPrefixForGoalHintRegex()
     var enableLspCompletion = true
 
     var enableNativeInfoview = true
@@ -101,7 +105,11 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
     override fun loadState(state: Lean4Settings) {
         XmlSerializerUtil.copyBean(state, this)
+        commentPrefixForGoalHintRegex = updateCommentPrefixForGoalHintRegex()
     }
+
+    private fun updateCommentPrefixForGoalHintRegex() =
+        Regex("""(\n\s*${Regex.escape(commentPrefixForGoalHint)})\s*?\n\s*\S""")
 }
 
 /**
@@ -119,6 +127,8 @@ data class Lean4SettingsState(
  */
 class Lean4SettingsView {
     private val lean4Settings = service<Lean4Settings>()
+    
+    private val commentPrefixForGoalHint = JBTextField(lean4Settings.commentPrefixForGoalHint)
 
     private val enableLspCompletion = JBCheckBox("Enable lsp completion", lean4Settings.enableLspCompletion)
 
@@ -186,8 +196,15 @@ class Lean4SettingsView {
         }
     }
 
+    /**
+     * TODO one setting, 5 positions must be changed... [Lean4Settings], [Lean4SettingsView], here [isModified], [apply], [reset],
+     *      there must be some more clean way with declaration style
+     */
     val isModified: Boolean
         get() {
+
+            val commentPrefixForGoalHintChanged = commentPrefixForGoalHint.text != lean4Settings.commentPrefixForGoalHint
+
             val enableNativeInfoviewChanged = enableNativeInfoview.isSelected != lean4Settings.enableNativeInfoview
             val enableVscodeInfoviewChanged = enableVscodeInfoview.isSelected != lean4Settings.enableVscodeInfoview
             val enableExtraCssForVscodeInfoviewChanged =
@@ -209,9 +226,13 @@ class Lean4SettingsView {
                     extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged || enableLspCompletionChanged ||
                     nativeInfoviewPopupTextWidth1Changed || nativeInfoviewPopupTextWidth2Changed ||
                     nativeInfoviewPopupPreferredMinWidthChanged || nativeInfoviewPopupPreferredMaxWidthChanged
+                    || commentPrefixForGoalHintChanged
         }
 
     fun apply() {
+        lean4Settings.commentPrefixForGoalHint = commentPrefixForGoalHint.text
+        lean4Settings.commentPrefixForGoalHintRegex = Regex("""(\n\s*${lean4Settings.commentPrefixForGoalHint})\s*?\n\s*\S""")
+
         lean4Settings.enableNativeInfoview = enableNativeInfoview.isSelected
         lean4Settings.enableVscodeInfoview = enableVscodeInfoview.isSelected
         lean4Settings.enableExtraCssForVscodeInfoview = enableExtraCssForVscodeInfoview.isSelected
@@ -237,6 +258,7 @@ class Lean4SettingsView {
     }
 
     fun reset() {
+        commentPrefixForGoalHint.text = lean4Settings.commentPrefixForGoalHint
         enableNativeInfoview.isSelected = lean4Settings.enableNativeInfoview
         enableVscodeInfoview.isSelected = lean4Settings.enableVscodeInfoview
         enableExtraCssForVscodeInfoview.isSelected = lean4Settings.enableExtraCssForVscodeInfoview
@@ -250,6 +272,9 @@ class Lean4SettingsView {
     }
 
     fun createComponent() = panel {
+        group("Inlay Hints Settings ") {
+            labeled("Comment prefix for goal hints", commentPrefixForGoalHint)
+        }
         group("Language Server Settings") {
             row { cell(enableLspCompletion) }
         }

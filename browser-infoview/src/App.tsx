@@ -6,11 +6,8 @@ import './App.css'
 import './vscode.css'
 import './infoview.css'
 import './Editor.css'
-// TODO switch to loader
-// import { loadRenderInfoview } from '@leanprover/infoview/loader'
-import {renderInfoview} from '@leanprover/infoview'
 import {EditorApi, InfoviewApi} from '@leanprover/infoview-api'
-import {Rpc} from "./rpc.ts";
+import {loadRenderInfoview} from "@leanprover/infoview/loader";
 
 class WebSocketClient {
     private socket: WebSocket;
@@ -62,11 +59,16 @@ class WebSocketClient {
     }
 }
 
-export class DummyEditorApi implements EditorApi {
+/**
+ * An editor api communicating to the editor via websocket
+ */
+export class WebSocketEditorApi implements EditorApi {
     private socket: WebSocketClient;
 
-    constructor(socket: WebSocketClient) {
-        this.socket = socket
+    registerInfoApi(api: InfoviewApi) {
+        const socketClient = new WebSocketClient('ws://' + location.host + '/ws')
+        socketClient.infoViewApi = api
+        this.socket = socketClient
     }
 
     async sendClientRequest(uri: string, method: string, params: any): Promise<any> {
@@ -166,154 +168,32 @@ export class DummyEditorApi implements EditorApi {
     }
 }
 
+/**
+ * The imports are documented in
+ * https://github.com/leanprover/vscode-lean4/blob/master/lean4-infoview/src/loader.ts
+ * and the code used in vscode also give some hints:
+ * https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/webview/index.ts
+ * old version of lean4web also has it, but currently it's gone, weird
+ * check https://github.com/leanprover-community/lean4web/blob/1ed09cf5521421b7f2107220770c35d44db58ef8/client/src/Editor.tsx#L137
+ * for the usage in lean4web
+ */
+function loadInfoview(div : HTMLDivElement) {
+    // log
+    console.log('loading infoview')
+
+    const imports = {
+        '@leanprover/infoview': 'imports/index.production.min.js',
+        'react': 'imports/react.production.min.js',
+        'react/jsx-runtime': 'imports/react-jsx-runtime.production.min.js',
+        'react-dom': 'imports/react-dom.production.min.js',
+    }
+    const editorApi = new WebSocketEditorApi();
+    loadRenderInfoview(imports, [editorApi, div], (api: InfoviewApi)=> editorApi.registerInfoApi(api))
+}
 
 function App() {
     const div = useRef<HTMLDivElement>(null);
-    const rpc = new Rpc((m: any) => {
-        if (m.kind === 'initialize') {
-
-        } else {
-           console.log("send Message:" + m)
-        }
-    })
-    useEffect(() => {
-        // log
-        console.log('loading infoview')
-        // const imports = {
-        //     '@leanprover/infoview': 'https://unpkg.com/@leanprover/infoview/dist/index.production.min.js',
-        //     'react': 'https://unpkg.com/@leanprover/infoview/dist/react.production.min.js',
-        //     'react/jsx-runtime': 'https://unpkg.com/@leanprover/infoview/dist/react-jsx-runtime.production.min.js',
-        //     'react-dom': 'https://unpkg.com/@leanprover/infoview/dist/react-dom.production.min.js',
-        // }
-        // console.log(imports)
-        // loadRenderInfoview(imports, [new DummyEditorApi(), div], ()=>{})
-        window.addEventListener('message', e => rpc.messageReceived(e.data))
-        // window.postMessage({hello: "world"}, '*')
-        //
-        // infoViewApi.serverRestarted()
-        // I dont understand sse, hence this very poor impl...
-        // const intervalId = setInterval(async () => {
-        //     const res = await fetch('/api/serverInitialized');
-        //     if (!res.ok) {
-        //         throw new Error('Network response was not ok');
-        //     }
-        //     const result = await res.json();
-        //     infoViewApi.serverRestarted(result)
-        //     clearInterval(intervalId)
-        //     // Handle the response here
-        // }, 2000); // Sends the API request every 2 seconds
-        // Create a new WebSocket connection
-
-        const socketClient = new WebSocketClient('ws://' + location.host + '/ws')
-        const infoViewApi: InfoviewApi = renderInfoview(new DummyEditorApi(socketClient), div.current!)
-        socketClient.infoViewApi = infoViewApi
-
-        // Connection opened
-        // socket.addEventListener('open', (event) => {
-        //     console.log('Connected to the WebSocket server');
-        // });
-        //
-        // // Listen for messages
-        // socket.addEventListener('message', (event) => {
-        //     const resp  = JSON.parse(event.data)
-        //     if (resp.method == 'serverRestarted') {
-        //         infoViewApi.serverRestarted(resp.data)
-        //         return
-        //     }
-        //     if (resp.method == 'changedCursorLocation') {
-        //         infoViewApi.changedCursorLocation(resp.data)
-        //         return
-        //     }
-        //     console.log('Message from server:', event.data);
-        // });
-        //
-        // // Connection closed
-        // socket.addEventListener('close', (event) => {
-        //     console.log('Disconnected from the WebSocket server');
-        // });
-        //
-        // // Handle errors
-        // socket.addEventListener('error', (event) => {
-        //     console.error('WebSocket error:', event);
-        // });
-        rpc.register(infoViewApi)
-
-        //
-        // // TODO this is temporally for sse bug
-        // const serverRestarted = async () => {
-        //     const res = await fetch('/api/serverRestarted');
-        //     if (!res.ok) {
-        //         throw new Error('Network response was not ok');
-        //     }
-        //     const result = await res.json();
-        //     infoViewApi.serverRestarted(result)
-        // }
-        // const cursorEvent = async () => {
-        //     while (true) {
-        //         const res = await fetch('/api/poll');
-        //         if (!res.ok) {
-        //             throw new Error('Network response was not ok');
-        //         }
-        //         const resp = await res.json()
-        //         const result = resp.data.data
-        //         if (result.uri == undefined) {
-        //             throw new Error('Network response was not ok: no uri in result');
-        //         }
-        //         infoViewApi.changedCursorLocation(result)
-        //         // Handle the response here
-        //     }
-        // }
-        // serverRestarted().then(r => {
-        //     cursorEvent()
-        // })
-
-
-        // TODO temporally sse has bug
-        // const source = new EventSource('/api/sse');
-        // function logEvent(text) {
-        //     console.log(text)
-        // }
-        // source.addEventListener('message', function(e) {
-        //     logEvent('message:' + e.data);
-        //     const data = JSON.parse(e.data)
-        //     if (data.method == "serverInitialized") {
-        //         (infoViewApi as any).serverRestarted(data.data)
-        //         return
-        //     }
-        //     (infoViewApi as any).changedCursorLocation(data.data)
-        // }, false);
-        //
-        // source.addEventListener('open', function(e) {
-        //     logEvent('open');
-        // }, false);
-        //
-        // source.addEventListener('error', function(e) {
-        //     if ((e as any).readyState == EventSource.CLOSED) {
-        //         logEvent('closed');
-        //     } else {
-        //         logEvent('error');
-        //         console.log(e);
-        //     }
-        //     const res = e.srcElement
-        // }, false);
-
-        // I dont understand sse, hence this very poor impl...
-        // const intervalId1 = setInterval(async () => {
-        //     const res = await fetch('/api/changedCursorLocation');
-        //     if (!res.ok) {
-        //         throw new Error('Network response was not ok');
-        //     }
-        //     const result = await res.json();
-        //     if (result.uri == undefined) {
-        //         return
-        //     }
-        //     infoViewApi.changedCursorLocation(result)
-        //     // Handle the response here
-        // }, 1000); // Sends the API request every 2 seconds
-    }, []);
-
-
-
+    useEffect(() => loadInfoview(div.current), []);
     return <div ref={div} id="infoview"></div>;
 }
 

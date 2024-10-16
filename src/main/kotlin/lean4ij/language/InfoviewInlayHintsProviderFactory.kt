@@ -3,6 +3,7 @@ package lean4ij.language
 import ai.grazie.text.range
 import com.google.common.base.MoreObjects
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
@@ -51,7 +52,6 @@ class HintSet {
     fun dumpHints(sink: InlayTreeSink) {
         this.hints.forEach { hint ->
             hint.content.chunked(50).forEach {
-                // TODO what is relatedToPrevious for?
                 sink.addPresentation(InlineInlayPosition(hint.location, false), hasBackground = true) {
                     text(it)
                 }
@@ -96,7 +96,6 @@ abstract class InlayHintBase(private val editor: Editor, protected val project: 
         if (project == null || element !is TextMateFile) {
             return
         }
-        // TODO weird, here editor.virtualFile could be null
         val file = MoreObjects.firstNonNull(editor.virtualFile, element.virtualFile)
         if (file.extension != "lean") {
             return

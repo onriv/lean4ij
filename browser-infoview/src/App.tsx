@@ -182,10 +182,10 @@ function loadInfoview(div : HTMLDivElement) {
     console.log('loading infoview')
 
     const imports = {
-        '@leanprover/infoview': 'imports/index.production.min.js',
-        'react': 'imports/react.production.min.js',
-        'react/jsx-runtime': 'imports/react-jsx-runtime.production.min.js',
-        'react-dom': 'imports/react-dom.production.min.js',
+        '@leanprover/infoview': 'http://'+location.host+'/imports/index.production.min.js',
+        'react': 'http://'+location.host+'/imports/react.production.min.js',
+        'react/jsx-runtime': 'http://'+location.host+'/imports/react-jsx-runtime.production.min.js',
+        'react-dom': 'http://'+location.host+'/imports/react-dom.production.min.js',
     }
     const editorApi = new WebSocketEditorApi();
     loadRenderInfoview(imports, [editorApi, div], (api: InfoviewApi)=> editorApi.registerInfoApi(api))

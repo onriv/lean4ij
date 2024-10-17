@@ -54,6 +54,9 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
             if (path.startsWith("/fonts")) {
                 return@ignoreFiles false
             }
+            if (path.startsWith("/imports")) {
+                return@ignoreFiles false
+            }
             if (path == "/index.html") {
                 return@ignoreFiles false
             }

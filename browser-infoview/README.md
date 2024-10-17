@@ -9,3 +9,7 @@ The contract correctly is (TODO)
 - received sever notification with TODO
 
 The reason using websocket rather than sse is because there is a limit for a browser connecting to a same server, see: https://stackoverflow.com/questions/18584525/server-sent-events-and-browser-limits
+
+# Development
+For frontend proxy, create a raw `host-config.json` content, and run `runIDE`, the file will be replaced to the real proxy port (TODO some part should move out here) and, 
+this should be more general usage.

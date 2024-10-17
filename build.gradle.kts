@@ -188,46 +188,6 @@ tasks {
         channels = properties("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
     }
 
-    val tempPackage = "browser-infoview/node_modules/@leanprover/"
-    val targetPath = tempPackage + "infoview"
-    val tempPath = tempPackage + "infoview-temp"
-    val tempFixCopyToTemp = "tempFixCopyToTemp"
-    register<Copy>(tempFixCopyToTemp) {
-        dependsOn(npmInstall)
-        from(targetPath) {
-            include("package.json")
-        }
-        into(tempPath)
-        filter { line ->
-            if (line.contains(""""files":""")) {
-                // TODO this will duplicated if rerun
-                //      TODO check why need this
-                """
-                    "main": "dist/index",
-                    "types": "dist/index",
-                    $line
-                """.trimIndent()
-            } else {
-                line.replace("./dist/index.development.js", "./dist/index.production.min.js")
-            }
-        }
-    }
-
-    val tempFixCopyBack = "tempFixCopyBack"
-    register<Copy>(tempFixCopyBack) {
-        dependsOn(tempFixCopyToTemp)
-        from(tempPath) {
-            include("package.json")
-        }
-        into(targetPath)
-    }
-
-    val tempFixDelete = "tempFixDelete"
-    register<Delete>(tempFixDelete) {
-        dependsOn(tempFixCopyBack)
-        delete(tempPath)
-    }
-
     register<NpmTask>("npmPackageInstall") {
         dependsOn(npmInstall)
         args.set(listOf("install"))
@@ -235,7 +195,6 @@ tasks {
 
     register<NpmTask>("buildBrowserInfoview") {
         dependsOn("npmPackageInstall")
-        dependsOn(tempFixDelete)
         args.set(listOf("run", "build"))
     }
 

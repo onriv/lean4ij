@@ -41,7 +41,7 @@ plugins {
     // this is for using nodejs in gradle
     // TODO maybe later we can do kotlin-multiplatform
     //      see: https://stackoverflow.com/questions/78493876/kotlin-gradle-multiplatform-not-producing-nodejs-artifact
-    id("com.github.node-gradle.node") version "7.0.2"
+    id("com.github.node-gradle.node") version "7.1.0"
 
 }
 

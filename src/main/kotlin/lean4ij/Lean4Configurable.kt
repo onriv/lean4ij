@@ -277,7 +277,7 @@ class Lean4SettingsView {
 
     fun createComponent() = panel {
         group("Inlay Hints Settings ") {
-            enableDiagnosticLens
+            row { cell(enableDiagnosticLens) }
             labeled("Comment prefix for goal hints", commentPrefixForGoalHint)
         }
         group("Language Server Settings") {

@@ -62,6 +62,7 @@
 - [ ] for some snippets maybe it's better to add a space, like `\to`, now for triggering it, it requires a space. But most case it will continue with a space.
   - But not sure for the design, some absolutely don't want a auto created space
 – [ ] TODO weird brackets does not complete
+  - [here](https://github.com/intellij-rust/intellij-rust/issues/1076) maybe related
 – [ ] maybe it's still better define some lang-like feature using parser/lexer, although it cannot be full parsed, but for the level like textmate it should be OK
 – [ ] is it possible do something like pygments/ctags/gtags completion?
 – [ ] option to skip library or backend files

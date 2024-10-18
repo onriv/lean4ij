@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
-import com.jetbrains.rd.util.string.println
+import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.request.*
@@ -289,6 +289,8 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
         }
         // themeSb.append("\n")
     }
+    // check https://plugins.jetbrains.com/docs/intellij/jcef.html?from=jetbrains.org#disposing-resources
+    val scrollbarStyle = JBCefScrollbarsHelper.buildScrollbarsStyle()
     return """:root {
 ${themeSb}    --header-foreground-color: ${scheme.getAttributes(TextAttributesKeys.Header.key).foregroundColor.toHexRgba()};
     --vscode-editor-background: $background;
@@ -297,7 +299,9 @@ ${themeSb}    --header-foreground-color: ${scheme.getAttributes(TextAttributesKe
     font-size: ${scheme.editorFontSize}px;
     --vscode-editor-font-family: '${scheme.editorFontName}', 'JuliaMono', 'Source Code Pro', 'STIX Two Math', monospace;
     --vscode-editor-font-size: ${scheme.editorFontSize}px;
+    
 }
+$scrollbarStyle
 """//.trimIndent()
     // --vscode-diffEditor-insertedTextBackground: ${TextAttributesKeys.hexOf(scheme, TextAttributesKeys.InsertedText)};
     // --vscode-diffEditor-removedTextBackground: ${TextAttributesKeys.RemovedText.hexOf(scheme)};

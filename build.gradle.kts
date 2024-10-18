@@ -253,8 +253,7 @@ node {
 
     // Version of node to download and install (only used if download is true)
     // It will be unpacked in the workDir
-    version = "18.17.1"
-
+    version = "18.18.1"
     // Version of npm to use
     // If specified, installs it in the npmWorkDir
     // If empty, the plugin will use the npm command bundled with Node.js

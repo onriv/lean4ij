@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
+import com.jetbrains.rd.util.string.println
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.request.*
@@ -23,6 +24,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import lean4ij.Lean4SettingsView
 import lean4ij.infoview.TextAttributesKeys
+import lean4ij.infoview.external.data.ApplyEditParam
 import lean4ij.infoview.external.data.InfoviewEvent
 import lean4ij.lsp.LeanLanguageServer
 import lean4ij.lsp.data.RpcCallParamsRaw
@@ -191,6 +193,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                                 sendWithLog(Gson().toJson(resp))
                             }
                         }
+                        // TODO better route than using string match
                         if (method == "sendClientRequest") {
                             launch {
                                 try {
@@ -205,6 +208,14 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                                     e.cause?.cause?.printStackTrace()
                                     thisLogger().error(e)
                                 }
+                            }
+                        }
+                        if (method == "applyEdit") {
+                            launch {
+                                val params : ApplyEditParam = fromJson(data)
+                                val ret = service.applyEdit(params)
+                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
+                                sendWithLog(Gson().toJson(resp))
                             }
                         }
                     }

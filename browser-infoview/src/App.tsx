@@ -94,51 +94,61 @@ export class WebSocketEditorApi implements EditorApi {
         console.log(`Sending client notification: ${method} for URI: ${uri}`);
         // Implement your logic here for sending notifications to the LSP server.
         // For example, log the notification or perform other actions.
+        debugger
     }
 
     async subscribeServerNotifications(method: string): Promise<void> {
         console.log(`Subscribing to server notifications: ${method}`);
         // Implement your logic here for subscribing to server notifications.
+        debugger
     }
 
     async unsubscribeServerNotifications(method: string): Promise<void> {
         console.log(`Unsubscribing from server notifications: ${method}`);
         // Implement your logic here for unsubscribing from server notifications.
+        debugger
     }
 
     async subscribeClientNotifications(method: string): Promise<void> {
         console.log(`Subscribing to client notifications: ${method}`);
         // Implement your logic here for subscribing to client notifications.
+        debugger
     }
 
     async unsubscribeClientNotifications(method: string): Promise<void> {
         console.log(`Unsubscribing from client notifications: ${method}`);
         // Implement your logic here for unsubscribing from client notifications.
+        debugger
     }
 
     async copyToClipboard(text: string): Promise<void> {
         console.log(`Copying text to clipboard: ${text}`);
         // Implement your logic here for copying text to the clipboard.
+        debugger
     }
 
     async insertText(text: string, kind: any/*TextInsertKind*/, pos?: any/*TextDocumentPositionParams*/): Promise<void> {
         console.log(`Inserting text: ${text} (kind: ${kind}) at position: ${JSON.stringify(pos)}`);
         // Implement your logic here for inserting text into a document.
+        debugger
     }
 
     async applyEdit(te: any/*WorkspaceEdit*/): Promise<void> {
         console.log(`Applying WorkspaceEdit: ${JSON.stringify(te)}`);
         // Implement your logic here for applying a WorkspaceEdit to the workspace.
+        return await this.socket.sendMessage('applyEdit', JSON.stringify(te))
     }
 
     async showDocument(show: /*ShowDocumentParams*/any): Promise<void> {
         console.log(`Showing document: ${JSON.stringify(show)}`);
         // Implement your logic here for showing a document in the editor.
+        debugger
     }
 
     async restartFile(uri: string): Promise<void> {
         console.log(`Restarting file: ${uri}`);
         // Implement your logic here for restarting a file.
+        debugger
     }
 
     async createRpcSession(uri: /*DocumentUri*/any): Promise<string> {
@@ -147,24 +157,12 @@ export class WebSocketEditorApi implements EditorApi {
             uri: uri
         }))
         return resp
-        // const res = await fetch('/api/createRpcSession', {
-        //         method: "POST",
-        //         headers: {
-        //             "Content-Type": "application/json"
-        //         },
-        //         body: JSON.stringify({uri: uri})
-        //     }
-        // );
-        // if (!res.ok) {
-        //     throw new Error('Network response was not ok');
-        // }
-        // const result = await res.json();
-        // return result.sessionId;
     }
 
     async closeRpcSession(sessionId: string): Promise<void> {
         console.log(`Closing RPC session: ${sessionId}`);
         // Implement your logic here for closing an RPC session.
+        debugger
     }
 }
 
@@ -180,12 +178,12 @@ export class WebSocketEditorApi implements EditorApi {
 function loadInfoview(div : HTMLDivElement) {
     // log
     console.log('loading infoview')
-
+    const host = `http://${location.host}/imports`
     const imports = {
-        '@leanprover/infoview': 'http://'+location.host+'/imports/index.production.min.js',
-        'react': 'http://'+location.host+'/imports/react.production.min.js',
-        'react/jsx-runtime': 'http://'+location.host+'/imports/react-jsx-runtime.production.min.js',
-        'react-dom': 'http://'+location.host+'/imports/react-dom.production.min.js',
+        '@leanprover/infoview': `${host}/index.production.min.js`,
+        'react': `${host}/react.production.min.js`,
+        'react/jsx-runtime': `${host}/react-jsx-runtime.production.min.js`,
+        'react-dom': `${host}/react-dom.production.min.js`,
     }
     const editorApi = new WebSocketEditorApi();
     loadRenderInfoview(imports, [editorApi, div], (api: InfoviewApi)=> editorApi.registerInfoApi(api))

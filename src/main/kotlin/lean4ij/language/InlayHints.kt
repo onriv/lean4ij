@@ -1,8 +1,9 @@
 package lean4ij.language
 
-import ai.grazie.text.range
 import com.google.common.base.MoreObjects
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
@@ -11,17 +12,34 @@ import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.lang.ASTNode
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.editor.markup.UnmodifiableTextAttributes
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.createLifetime
+import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.util.io.await
+import com.jetbrains.rd.util.lifetime.intersect
 import kotlinx.coroutines.launch
 import lean4ij.Lean4Settings
 import lean4ij.lsp.data.InfoviewRender
@@ -35,12 +53,16 @@ import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.jetbrains.plugins.textmate.psi.TextMateFile
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-class Hint(val location: Int, val content: String)
+// location is either line or absolute pos, depending on the type of hint
+class Hint(val isEol: Boolean, val location: Int, val content: String)
 
 class HintSet {
     private var hints: ArrayList<Hint> = ArrayList()
@@ -51,9 +73,16 @@ class HintSet {
 
     fun dumpHints(sink: InlayTreeSink) {
         this.hints.forEach { hint ->
-            hint.content.chunked(50).forEach {
-                sink.addPresentation(InlineInlayPosition(hint.location, false), hasBackground = true) {
-                    text(it)
+            if (hint.isEol) {
+                sink.addPresentation(EndOfLinePosition(hint.location), hasBackground = false) {
+                    text(hint.content)
+                }
+            }
+            else {
+                hint.content.chunked(30).forEach {
+                    sink.addPresentation(InlineInlayPosition(hint.location, false), hasBackground = true) {
+                        text(it)
+                    }
                 }
             }
         }
@@ -84,7 +113,7 @@ class HintCache {
 }
 
 // Base functionality
-abstract class InlayHintBase(private val editor: Editor, protected val project: Project?) : SharedBypassCollector {
+abstract class InlayHintBase(protected val editor: Editor, protected val project: Project?) : SharedBypassCollector {
     var hintCache = HintCache()
 
     companion object {
@@ -187,7 +216,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
                 hintPos += 1;
             }
-            hints.add(Hint(hintPos, inlayHintType))
+            hints.add(Hint(false, hintPos, inlayHintType))
         }
 
         return hints
@@ -264,7 +293,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
             }
 
             var hintPos = m.range.first + m.groupValues[1].length;
-            hints.add(Hint(hintPos, typeHint))
+            hints.add(Hint(false, hintPos, typeHint))
         }
 
         return hints
@@ -315,7 +344,7 @@ class PlaceHolderInlayHintsCollector(editor: Editor, project: Project?) : InlayH
                         continue
                     }
                     val inlayHint = split[1]
-                    hints.add(Hint(m.range.last+1, inlayHint))
+                    hints.add(Hint(false, m.range.last+1, inlayHint))
                 }
             }
         }
@@ -336,7 +365,128 @@ class PlaceHolderInlayHintsProvider : InlayHintsProvider {
             PlaceHolderInlayHintsCollector(editor, editor.project)
         }
     }
+}
 
+
+class InlayTextAttributes: UnmodifiableTextAttributes() {
+    override fun getBackgroundColor(): Color? {
+        return null
+    }
+
+    override fun getForegroundColor(): Color? {
+        return JBColor.BLUE
+    }
+}
+
+class InlayRenderer(info: HighlightInfo): HintRenderer(info.description) {
+    override fun getTextAttributes(editor: Editor): TextAttributes? {
+        return InlayTextAttributes()
+    }
+}
+
+// https://github.com/chylex/IntelliJ-Inspection-Lens/blob/main/src/main/kotlin/com/chylex/intellij/inspectionlens/editor/LensMarkupModelListener.kt
+class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
+    var currentHints: HashMap<HighlightInfo, Inlay<InlayRenderer>> = HashMap()
+
+    init {
+        val model = model()
+
+        val pluginLifetime = ApplicationManager.getApplication().service<lean4ij.services.MyProjectDisposableService>().createLifetime();
+        val editorLifetime = editor.createLifetime();
+
+        model?.addMarkupModelListener(pluginLifetime.intersect (editorLifetime).createNestedDisposable("lean4ijDiagEditorLifetime"), this)
+
+        refresh()
+    }
+
+    fun model() : MarkupModelEx? {
+        return DocumentMarkupModel.forDocument(editor.editor.document, editor.editor.project, false) as? MarkupModelEx
+    }
+
+    override fun afterAdded(highlighter: RangeHighlighterEx) {
+        val hi = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
+        this.showHint(hi)
+    }
+
+    override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
+        val hi = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
+        this.hideHint(hi)
+        this.showHint(hi)
+    }
+
+    override fun beforeRemoved(highlighter: RangeHighlighterEx) {
+        val hi = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
+        this.hideHint(hi)
+    }
+
+    fun hideHint(info: HighlightInfo) {
+        val inlay = this.currentHints[info] ?: return
+
+        this.currentHints.remove(info)
+        ApplicationManager.getApplication().invokeLater {
+            inlay.dispose()
+        }
+    }
+
+    fun showHint(info: HighlightInfo) {
+        // seems that it's always marked as weak warning
+        if (info.description == null || info.severity != HighlightSeverity.WEAK_WARNING) {
+            return
+        }
+
+        val renderer = InlayRenderer(info)
+        val properties = InlayProperties()
+            .relatesToPrecedingText(true)
+
+        ApplicationManager.getApplication().invokeLater {
+            info.endOffset
+            val hint = editor.editor.inlayModel.addAfterLineEndElement(info.actualEndOffset - 1, properties, renderer) ?: return@invokeLater
+
+            this.currentHints[info] = hint
+        }
+    }
+
+    fun refresh() {
+        // hide old ones
+        for (hint in currentHints) {
+            hint.value.dispose()
+        }
+        currentHints.clear();
+
+        // create new ones
+        val highlighters = model()?.allHighlighters ?: return
+        for (highlighter in highlighters) {
+            val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: continue;
+            this.showHint(info);
+        }
+    }
+
+    companion object {
+
+        fun register(editor: TextEditor) {
+            val settings = service<Lean4Settings>()
+            if (settings.enableDiagnosticsLens) {
+                DiagInlayManager(editor)
+            }
+        }
+    }
+}
+
+class DiagInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
+
+    override suspend fun computeFor(file: LeanFile, content: String): HintSet {
+        if (project == null) {
+            return HintSet()
+        }
+
+        // reference https://github.com/JetBrains/intellij-community/blob/b4e6a7dc1c9adb1a0b622a75ebaec5a3d4a3475e/platform/lang-impl/src/com/intellij/codeInsight/daemon/impl/TrafficLightRenderer.java#L209
+
+
+        val hints = HintSet()
+        val leanProject = project.service<LeanProjectService>()
+
+        return hints
+    }
 }
 
 

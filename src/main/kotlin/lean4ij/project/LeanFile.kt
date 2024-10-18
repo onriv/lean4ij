@@ -1,6 +1,8 @@
 package lean4ij.project
 
 import com.google.gson.JsonElement
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
@@ -18,6 +20,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
+import io.ktor.server.application.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,8 +32,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import kotlinx.html.ThScope
 import lean4ij.Lean4Settings
 import lean4ij.infoview.LeanInfoViewWindowFactory
+import lean4ij.infoview.external.data.ApplyEditChange
 import lean4ij.lsp.data.FileProgressProcessingInfo
 import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveDiagnosticsParams
@@ -478,6 +483,42 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
         for (d in diagnostics.diagnostics) {
             buildWindowService.addBuildEvent(file, d.message)
+        }
+    }
+
+    fun applyEdit(changes: List<ApplyEditChange>) {
+        if (virtualFile == null) {
+            return
+        }
+        if (changes.isEmpty()) {
+            return
+        }
+        // TODO this is kind of duplicated with tryAddLineMarker?
+        //      maybe the logic for getting editor can be abstract and unify
+        FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
+            if (editor.virtualFile.path == unquotedFile) {
+                val document = editor.document
+                var text = document.text
+                changes.map { change ->
+                    val start = change.range.start
+                    val end = change.range.end
+                    val startPos = StringUtil.lineColToOffset(text, start.line, start.character)
+                    val endPos = StringUtil.lineColToOffset(text, end.line, end.character)
+                    Triple(startPos, endPos, change)
+                }.sortedBy { p ->
+                    // sort the changes from the end to the start so that the offset does not change for replacing the range
+                    -p.first
+                }.forEach { p ->
+                    text = text.replaceRange(p.first, p.second, p.third.newText)
+                }
+                val application = ApplicationManager.getApplication()
+                // TODO tested and it seems
+                application.invokeLater {
+                    application.runWriteAction {
+                        document.setText(text)
+                    }
+                }
+            }
         }
     }
 

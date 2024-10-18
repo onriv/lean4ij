@@ -3,6 +3,12 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+- update some dependencies
+- change imports of infoview-app to [dynamic loading](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview#loading-the-infoview), hence
+- adapt external infoview [widget](https://lean-lang.org/lean4/doc/examples/widgets.lean.html)
+- adapt apply edit like `simp?`
+- add filetype/language support
+- an icon temporally from [here](https://intellij-icons.jetbrains.design/#AllIcons-expui-breakpoints-breakpointLambda), create a PR or ISSUE if you find some better!
 
 ## [0.0.18] - 2024-10-16
 

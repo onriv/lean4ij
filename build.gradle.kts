@@ -188,46 +188,6 @@ tasks {
         channels = properties("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
     }
 
-    val tempPackage = "browser-infoview/node_modules/@leanprover/"
-    val targetPath = tempPackage + "infoview"
-    val tempPath = tempPackage + "infoview-temp"
-    val tempFixCopyToTemp = "tempFixCopyToTemp"
-    register<Copy>(tempFixCopyToTemp) {
-        dependsOn(npmInstall)
-        from(targetPath) {
-            include("package.json")
-        }
-        into(tempPath)
-        filter { line ->
-            if (line.contains(""""files":""")) {
-                // TODO this will duplicated if rerun
-                //      TODO check why need this
-                """
-                    "main": "dist/index",
-                    "types": "dist/index",
-                    $line
-                """.trimIndent()
-            } else {
-                line.replace("./dist/index.development.js", "./dist/index.production.min.js")
-            }
-        }
-    }
-
-    val tempFixCopyBack = "tempFixCopyBack"
-    register<Copy>(tempFixCopyBack) {
-        dependsOn(tempFixCopyToTemp)
-        from(tempPath) {
-            include("package.json")
-        }
-        into(targetPath)
-    }
-
-    val tempFixDelete = "tempFixDelete"
-    register<Delete>(tempFixDelete) {
-        dependsOn(tempFixCopyBack)
-        delete(tempPath)
-    }
-
     register<NpmTask>("npmPackageInstall") {
         dependsOn(npmInstall)
         args.set(listOf("install"))
@@ -235,7 +195,6 @@ tasks {
 
     register<NpmTask>("buildBrowserInfoview") {
         dependsOn("npmPackageInstall")
-        dependsOn(tempFixDelete)
         args.set(listOf("run", "build"))
     }
 
@@ -294,8 +253,7 @@ node {
 
     // Version of node to download and install (only used if download is true)
     // It will be unpacked in the workDir
-    version = "18.17.1"
-
+    version = "18.18.1"
     // Version of npm to use
     // If specified, installs it in the npmWorkDir
     // If empty, the plugin will use the npm command bundled with Node.js

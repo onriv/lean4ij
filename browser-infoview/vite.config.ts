@@ -43,6 +43,13 @@ export default defineConfig({
         // check https://github.com/vitejs/vite/issues/12157
         // timeout: 0, // here
       },
+      '/imports': {
+        target: 'http://'+host,
+        changeOrigin: true,
+        secure: false,
+        // check https://github.com/vitejs/vite/issues/12157
+        // timeout: 0, // here
+      },
       '/api': {
         target: 'http://'+host,
         changeOrigin: true,

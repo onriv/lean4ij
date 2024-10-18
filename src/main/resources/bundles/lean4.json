@@ -1,7 +1,7 @@
 {
   "name": "Lean 4",
   "scopeName": "source.lean4",
-  "fileTypes": [],
+  "fileTypes": ["lean4"],
   "patterns": [
     { "include": "#comments" },
     { "match": "\\b(Prop|Type|Sort)\\b", "name": "storage.type.lean4" },

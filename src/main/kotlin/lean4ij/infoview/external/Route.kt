@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
+import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.request.*
@@ -23,6 +24,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import lean4ij.Lean4SettingsView
 import lean4ij.infoview.TextAttributesKeys
+import lean4ij.infoview.external.data.ApplyEditParam
 import lean4ij.infoview.external.data.InfoviewEvent
 import lean4ij.lsp.LeanLanguageServer
 import lean4ij.lsp.data.RpcCallParamsRaw
@@ -52,6 +54,9 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                 return@ignoreFiles false
             }
             if (path.startsWith("/fonts")) {
+                return@ignoreFiles false
+            }
+            if (path.startsWith("/imports")) {
                 return@ignoreFiles false
             }
             if (path == "/index.html") {
@@ -188,6 +193,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                                 sendWithLog(Gson().toJson(resp))
                             }
                         }
+                        // TODO better route than using string match
                         if (method == "sendClientRequest") {
                             launch {
                                 try {
@@ -202,6 +208,14 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                                     e.cause?.cause?.printStackTrace()
                                     thisLogger().error(e)
                                 }
+                            }
+                        }
+                        if (method == "applyEdit") {
+                            launch {
+                                val params : ApplyEditParam = fromJson(data)
+                                val ret = service.applyEdit(params)
+                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
+                                sendWithLog(Gson().toJson(resp))
                             }
                         }
                     }
@@ -275,6 +289,8 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
         }
         // themeSb.append("\n")
     }
+    // check https://plugins.jetbrains.com/docs/intellij/jcef.html?from=jetbrains.org#disposing-resources
+    val scrollbarStyle = JBCefScrollbarsHelper.buildScrollbarsStyle()
     return """:root {
 ${themeSb}    --header-foreground-color: ${scheme.getAttributes(TextAttributesKeys.Header.key).foregroundColor.toHexRgba()};
     --vscode-editor-background: $background;
@@ -283,7 +299,9 @@ ${themeSb}    --header-foreground-color: ${scheme.getAttributes(TextAttributesKe
     font-size: ${scheme.editorFontSize}px;
     --vscode-editor-font-family: '${scheme.editorFontName}', 'JuliaMono', 'Source Code Pro', 'STIX Two Math', monospace;
     --vscode-editor-font-size: ${scheme.editorFontSize}px;
+    
 }
+$scrollbarStyle
 """//.trimIndent()
     // --vscode-diffEditor-insertedTextBackground: ${TextAttributesKeys.hexOf(scheme, TextAttributesKeys.InsertedText)};
     // --vscode-diffEditor-removedTextBackground: ${TextAttributesKeys.RemovedText.hexOf(scheme)};

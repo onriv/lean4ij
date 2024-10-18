@@ -20,6 +20,7 @@ class TextMateBundleProvider : TextMateBundleProvider {
         "lean4-markdown.json"
     )
 
+    // TODO should temp dir be cleaned?
     override fun getBundles(): List<TextMateBundleProvider.PluginBundle> {
         val tempPath = Path.of(PathManager.getTempPath())
         // This is for test, for running it seems OK

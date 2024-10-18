@@ -1,12 +1,13 @@
 package lean4ij.language
 
+import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.util.IconLoader.getIcon
 import javax.swing.Icon
 
 
-class Lean4Language : Language("Lean4") {
+class Lean4Language : Language("lean4") {
 
     companion object {
         val INSTANCE = Lean4Language();
@@ -20,9 +21,9 @@ class Lean4Icons {
     }
 }
 
-class Lean4FileType private constructor() : LanguageFileType(Lean4Language.INSTANCE) {
+object Lean4FileType : LanguageFileType(Lean4Language.INSTANCE) {
     override fun getName(): String {
-        return "Lean4 File"
+        return "lean4"
     }
 
     override fun getDescription(): String {
@@ -34,10 +35,7 @@ class Lean4FileType private constructor() : LanguageFileType(Lean4Language.INSTA
     }
 
     override fun getIcon(): Icon {
-        return Lean4Icons.FILE
-    }
-
-    companion object {
-        val INSTANCE = Lean4FileType()
+        // return Lean4Icons.FILE
+        return AllIcons.Debugger.LambdaBreakpoint
     }
 }

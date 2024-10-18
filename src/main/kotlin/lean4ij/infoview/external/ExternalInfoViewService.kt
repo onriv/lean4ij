@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import lean4ij.infoview.external.data.ApplyEditParam
 import lean4ij.util.notify
 import org.eclipse.lsp4j.InitializeResult
 import java.io.File
@@ -92,6 +93,9 @@ class ExternalInfoViewService(val project: Project) {
             install(WebSockets)
             routing(externalInfoViewRoute(project, this@ExternalInfoViewService))
         }
+        // TODO maybe fixed port or making it a configuration
+        //      It became randomly chosen for while developing the port
+        //      is occasionally not freed by the earlier starts
         val port = OsUtil.findAvailableTcpPort()
         // val port = 19090
 
@@ -164,6 +168,16 @@ class ExternalInfoViewService(val project: Project) {
 
     suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
         return leanProjectService.rpcCallRaw(params)
+    }
+
+    /**
+     * TODO determine the return type
+     */
+    suspend fun applyEdit(params: ApplyEditParam): JsonElement? {
+        for (change in params.changes) {
+            leanProjectService.file(change.key).applyEdit(change.value)
+        }
+        return null
     }
 }
 

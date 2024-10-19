@@ -61,7 +61,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 // location is either line or absolute pos, depending on the type of hint
-class Hint(val isEol: Boolean, val location: Int, val content: String, val collapseSize: Int)
+class Hint(val isEol: Boolean, val location: Int, val content: String, val collapseSize: Int, val collapsedText: String)
 
 class HintSet {
     companion object {
@@ -93,7 +93,7 @@ class HintSet {
                 }
             }) {
                 toggleButton {
-                    text("...")
+                    text(hint.collapsedText)
                 }
             }
         }
@@ -242,7 +242,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
                 hintPos += 1
             }
-            hints.add(Hint(false, hintPos, inlayHintType, 45))
+            hints.add(Hint(false, hintPos, inlayHintType, 45, ": ..."))
         }
 
         return hints
@@ -320,7 +320,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
             }
 
             var hintPos = m.range.first + m.groupValues[1].length
-            hints.add(Hint(false, hintPos, typeHint, 100))
+            hints.add(Hint(false, hintPos, typeHint, 100, "..."))
 //            hints.add(Hint(true, lineColumn.line - 1, typeHint))
         }
 
@@ -372,7 +372,7 @@ class PlaceHolderInlayHintsCollector(editor: Editor, project: Project?) : InlayH
                         continue
                     }
                     val inlayHint = split[1]
-                    hints.add(Hint(false, m.range.last+1, inlayHint, 20))
+                    hints.add(Hint(false, m.range.last+1, inlayHint, 20, "..."))
                 }
             }
         }

@@ -10,6 +10,12 @@
 - add filetype/language support
 - an icon temporally from [here](https://intellij-icons.jetbrains.design/#AllIcons-expui-breakpoints-breakpointLambda), create a PR or ISSUE if you find some better!
 
+## [0.0.19] - 2024-10-21
+
+- add support for goal hints in regular (i.e. non tactic) mode
+- add diagnostic hints
+- allow for collapsing of all inlay hints
+
 ## [0.0.18] - 2024-10-16
 
 Depend on the latest approved nightly build of LSP4IJ: 0.7.1-20241016-013210

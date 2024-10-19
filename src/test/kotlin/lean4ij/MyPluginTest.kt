@@ -6,6 +6,7 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.PsiErrorElementUtil
+import junit.framework.TestCase
 import lean4ij.services.MyProjectService
 
 @TestDataPath("\$CONTENT_ROOT/src/test/testData")
@@ -31,8 +32,7 @@ class MyPluginTest : BasePlatformTestCase() {
 
     fun testProjectService() {
         val projectService = project.service<MyProjectService>()
-
-//        assertNotSame(projectService.getRandomNumber(), projectService.getRandomNumber())
+        assertNotNull(projectService)
     }
 
     override fun getTestDataPath() = "src/test/testData/rename"

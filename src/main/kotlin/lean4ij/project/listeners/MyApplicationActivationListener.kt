@@ -1,4 +1,4 @@
-package lean4ij.listeners
+package lean4ij.project.listeners
 
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.diagnostic.thisLogger

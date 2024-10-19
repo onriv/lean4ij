@@ -1,12 +1,10 @@
-package lean4ij.listeners
+package lean4ij.project.listeners
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileOpenedSyncListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.vfs.VirtualFile
-import lean4ij.Lean4Settings
 import lean4ij.language.DiagInlayManager
 
 class LeanFileOpenedListener: FileOpenedSyncListener {

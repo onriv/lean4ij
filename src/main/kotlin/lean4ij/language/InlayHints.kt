@@ -13,6 +13,7 @@ import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.lang.ASTNode
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.documentation.QuickDocSyntaxHighlightingHandler
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.application.ApplicationManager
@@ -56,6 +57,7 @@ import org.jetbrains.plugins.textmate.psi.TextMateFile
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
+import java.util.IdentityHashMap
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -376,17 +378,22 @@ class InlayTextAttributes: UnmodifiableTextAttributes() {
     override fun getForegroundColor(): Color? {
         return JBColor.BLUE
     }
+
 }
 
 class InlayRenderer(info: HighlightInfo): HintRenderer(info.description) {
     override fun getTextAttributes(editor: Editor): TextAttributes? {
         return InlayTextAttributes()
     }
+
+    override fun useEditorFont(): Boolean {
+        return true
+    }
 }
 
 // https://github.com/chylex/IntelliJ-Inspection-Lens/blob/main/src/main/kotlin/com/chylex/intellij/inspectionlens/editor/LensMarkupModelListener.kt
 class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
-    var currentHints: HashMap<HighlightInfo, Inlay<InlayRenderer>> = HashMap()
+    var currentHints: IdentityHashMap<RangeHighlighterEx, Inlay<InlayRenderer>> = IdentityHashMap()
 
     init {
         val model = model()
@@ -404,31 +411,44 @@ class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
     }
 
     override fun afterAdded(highlighter: RangeHighlighterEx) {
-        val hi = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
-        this.showHint(hi)
+        this.showHint(highlighter)
     }
 
     override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
-        val hi = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
-        this.hideHint(hi)
-        this.showHint(hi)
+        this.updateHint(highlighter)
     }
 
     override fun beforeRemoved(highlighter: RangeHighlighterEx) {
-        val hi = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
-        this.hideHint(hi)
+        this.hideHint(highlighter)
     }
 
-    fun hideHint(info: HighlightInfo) {
-        val inlay = this.currentHints[info] ?: return
+    fun hideHint(range: RangeHighlighterEx) {
+        val inlay = this.currentHints[range] ?: return
 
-        this.currentHints.remove(info)
+        this.currentHints.remove(range)
         ApplicationManager.getApplication().invokeLater {
             inlay.dispose()
         }
     }
 
-    fun showHint(info: HighlightInfo) {
+    fun updateHint(range: RangeHighlighterEx) {
+        val info = HighlightInfo.fromRangeHighlighter(range) ?: return
+
+        val inlay = this.currentHints[range] ?: return
+
+        ApplicationManager.getApplication().invokeLater {
+            if (info.description == null) {
+                inlay.dispose()
+            }
+            else {
+                inlay.renderer.text = info.description
+            }
+        }
+    }
+
+    fun showHint(range: RangeHighlighterEx) {
+        val info = HighlightInfo.fromRangeHighlighter(range) ?: return
+
         // seems that it's always marked as weak warning
         if (info.description == null || info.severity != HighlightSeverity.WEAK_WARNING) {
             return
@@ -442,22 +462,23 @@ class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
             info.endOffset
             val hint = editor.editor.inlayModel.addAfterLineEndElement(info.actualEndOffset - 1, properties, renderer) ?: return@invokeLater
 
-            this.currentHints[info] = hint
+            this.currentHints[range] = hint
         }
     }
 
     fun refresh() {
+
         // hide old ones
         for (hint in currentHints) {
             hint.value.dispose()
         }
-        currentHints.clear();
+        currentHints.clear()
 
         // create new ones
         val highlighters = model()?.allHighlighters ?: return
         for (highlighter in highlighters) {
-            val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: continue;
-            this.showHint(info);
+            val highlighter = highlighter as? RangeHighlighterEx ?: continue
+            this.showHint(highlighter)
         }
     }
 

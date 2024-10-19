@@ -31,7 +31,7 @@ fun environment(key: String) = providers.environmentVariable(key)
 plugins {
     id("java") // Java support
     // from https://github.com/ktorio/ktor-samples/blob/main/sse/build.gradle.kts
-    id("io.ktor.plugin") version "2.3.12"
+    id("io.ktor.plugin") version "3.0.0"
     alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
@@ -41,7 +41,7 @@ plugins {
     // this is for using nodejs in gradle
     // TODO maybe later we can do kotlin-multiplatform
     //      see: https://stackoverflow.com/questions/78493876/kotlin-gradle-multiplatform-not-producing-nodejs-artifact
-    id("com.github.node-gradle.node") version "7.0.2"
+    id("com.github.node-gradle.node") version "7.1.0"
 
 }
 
@@ -254,6 +254,7 @@ node {
     // Version of node to download and install (only used if download is true)
     // It will be unpacked in the workDir
     version = "18.18.1"
+
     // Version of npm to use
     // If specified, installs it in the npmWorkDir
     // If empty, the plugin will use the npm command bundled with Node.js

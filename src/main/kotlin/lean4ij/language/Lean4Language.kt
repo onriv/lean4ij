@@ -35,7 +35,7 @@ object Lean4FileType : LanguageFileType(Lean4Language.INSTANCE) {
     }
 
     override fun getIcon(): Icon {
-        // return Lean4Icons.FILE
-        return AllIcons.Debugger.LambdaBreakpoint
+        return Lean4Icons.FILE
+        // return AllIcons.Debugger.LambdaBreakpoint
     }
 }

@@ -57,7 +57,7 @@
                 implementationClass="lean4ij.language.GoalInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
-                providerId="lean.placeholder.value"
+                providerId="lean.goal.hint.value"
                 bundle="messages.MyBundle"
                 nameKey="settings.lean.goal.hints.value.name"
                 descriptionKey="settings.lean.goal.hints.value.name"

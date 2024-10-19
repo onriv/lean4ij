@@ -32,9 +32,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.runBlocking
 import lean4ij.infoview.external.createThemeCss
-import org.ini4j.Reg
 import java.awt.Component
-import java.util.function.Supplier
 import javax.swing.AbstractButton
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
@@ -82,6 +80,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
     var commentPrefixForGoalHint : String = "---"
     var commentPrefixForGoalHintRegex = updateCommentPrefixForGoalHintRegex()
+    var enableDiagnosticsLens = true
     var enableLspCompletion = true
 
     var enableNativeInfoview = true
@@ -129,6 +128,7 @@ class Lean4SettingsView {
     private val lean4Settings = service<Lean4Settings>()
     
     private val commentPrefixForGoalHint = JBTextField(lean4Settings.commentPrefixForGoalHint)
+    private val enableDiagnosticLens = JBCheckBox("Enable diagnostics lens for #check, #print, etc", lean4Settings.enableLspCompletion)
 
     private val enableLspCompletion = JBCheckBox("Enable lsp completion", lean4Settings.enableLspCompletion)
 
@@ -222,16 +222,19 @@ class Lean4SettingsView {
             val nativeInfoviewPopupPreferredMaxWidthChanged =
                 nativeInfoviewPopupPreferredMaxWidth.number != lean4Settings.nativeInfoviewPopupPreferredMaxWidth
             val enableLspCompletionChanged = enableLspCompletion.isSelected != lean4Settings.enableLspCompletion
+            val enableDiagnosticLensChanged = enableDiagnosticLens.isSelected != lean4Settings.enableDiagnosticsLens
             return enableNativeInfoviewChanged || enableVscodeInfoviewChanged || enableExtraCssForVscodeInfoviewChanged ||
                     extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged || enableLspCompletionChanged ||
                     nativeInfoviewPopupTextWidth1Changed || nativeInfoviewPopupTextWidth2Changed ||
                     nativeInfoviewPopupPreferredMinWidthChanged || nativeInfoviewPopupPreferredMaxWidthChanged
                     || commentPrefixForGoalHintChanged
+                    || enableDiagnosticLensChanged
         }
 
     fun apply() {
         lean4Settings.commentPrefixForGoalHint = commentPrefixForGoalHint.text
         lean4Settings.commentPrefixForGoalHintRegex = Regex("""(\n\s*${lean4Settings.commentPrefixForGoalHint})\s*?\n\s*\S""")
+        lean4Settings.enableDiagnosticsLens = enableDiagnosticLens.isSelected
 
         lean4Settings.enableNativeInfoview = enableNativeInfoview.isSelected
         lean4Settings.enableVscodeInfoview = enableVscodeInfoview.isSelected
@@ -258,6 +261,7 @@ class Lean4SettingsView {
     }
 
     fun reset() {
+        enableDiagnosticLens.isSelected = lean4Settings.enableDiagnosticsLens
         commentPrefixForGoalHint.text = lean4Settings.commentPrefixForGoalHint
         enableNativeInfoview.isSelected = lean4Settings.enableNativeInfoview
         enableVscodeInfoview.isSelected = lean4Settings.enableVscodeInfoview
@@ -273,6 +277,7 @@ class Lean4SettingsView {
 
     fun createComponent() = panel {
         group("Inlay Hints Settings ") {
+            row { cell(enableDiagnosticLens) }
             labeled("Comment prefix for goal hints", commentPrefixForGoalHint)
         }
         group("Language Server Settings") {

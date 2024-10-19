@@ -57,7 +57,7 @@
                 implementationClass="lean4ij.language.GoalInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
-                providerId="lean.placeholder.value"
+                providerId="lean.goal.hint.value"
                 bundle="messages.MyBundle"
                 nameKey="settings.lean.goal.hints.value.name"
                 descriptionKey="settings.lean.goal.hints.value.name"
@@ -104,11 +104,27 @@
         <action id="RestartJcefInfoview" class="lean4ij.actions.RestartJcefInfoview" text="Lean4: Restart Jcef Infoview" description="Dump Coroutine">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+        <action id="AddInlayGoalHint" class="lean4ij.actions.AddInlayGoalHint" text="Lean4: Add Inlay Goal Hint" description="Add goal hint">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut
+                    keymap="$default"
+                    first-keystroke="control I"
+                    />
+        </action>
+        <action id="DelInlayGoalHint" class="lean4ij.actions.DelInlayGoalHint" text="Lean4: Delete Inlay Goal Hint" description="Delete goal hint">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut
+                    keymap="$default"
+                    first-keystroke="control shift I"
+            />
+        </action>
 
     </actions>
 
     <applicationListeners>
-        <listener class="lean4ij.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+        <listener class="lean4ij.project.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+        
+        <listener class="lean4ij.project.listeners.LeanFileOpenedListener" topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" />
     </applicationListeners>
 
     <projectListeners>

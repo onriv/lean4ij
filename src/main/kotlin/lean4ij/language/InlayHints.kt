@@ -76,8 +76,9 @@ class HintSet {
     fun dumpHints(sink: InlayTreeSink) {
         this.hints.forEach { hint ->
             if (hint.isEol) {
-                sink.addPresentation(EndOfLinePosition(hint.location), hasBackground = false) {
+                sink.addPresentation(EndOfLinePosition(hint.location), hasBackground = true) {
                     text(hint.content)
+
                 }
             }
             else {
@@ -94,15 +95,15 @@ class HintSet {
 class HintCache {
     var cache = ConcurrentHashMap<LeanFile, Pair<Long, CompletableFuture<HintSet>>>()
 
-    /* returns (need recomputation, displaySet) */
+    /* returns (need re-computation, displaySet) */
     fun query(file: LeanFile, time: Long): CompletableFuture<HintSet>? {
         val cur = cache[file] ?: return null
 
         // we do not have a run scheduled for this version
         if (cur.first != time) {
-            cur.second.cancel(true);
+            cur.second.cancel(true)
 
-            return null;
+            return null
         }
         else {
             return cur.second
@@ -110,7 +111,7 @@ class HintCache {
     }
 
     fun insert(file: LeanFile, time: Long, hints: CompletableFuture<HintSet>) {
-        cache[file] = Pair(time, hints);
+        cache[file] = Pair(time, hints)
     }
 }
 
@@ -120,7 +121,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
 
     companion object {
         const val TIMEOUT_STEP_MILLIS: Long = 25
-        const val TIMEOUT_MAX_ITS = 10;
+        const val TIMEOUT_MAX_ITS = 10
     }
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
@@ -294,8 +295,9 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
                 typeHint = termGoal?.type?.toInfoViewString(InfoviewRender(), null) ?: continue
             }
 
-            var hintPos = m.range.first + m.groupValues[1].length;
+            var hintPos = m.range.first + m.groupValues[1].length
             hints.add(Hint(false, hintPos, typeHint))
+//            hints.add(Hint(true, lineColumn.line - 1, typeHint))
         }
 
         return hints

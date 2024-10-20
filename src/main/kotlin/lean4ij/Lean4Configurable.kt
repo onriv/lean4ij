@@ -128,7 +128,7 @@ class Lean4SettingsView {
     private val lean4Settings = service<Lean4Settings>()
     
     private val commentPrefixForGoalHint = JBTextField(lean4Settings.commentPrefixForGoalHint)
-    private val enableDiagnosticLens = JBCheckBox("Enable diagnostics lens for #check, #print, etc", lean4Settings.enableLspCompletion)
+    private val enableDiagnosticLens = JBCheckBox("Enable diagnostics lens for #check, #print, etc (restart to take effect)", lean4Settings.enableDiagnosticsLens)
 
     private val enableLspCompletion = JBCheckBox("Enable lsp completion", lean4Settings.enableLspCompletion)
 

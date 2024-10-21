@@ -410,7 +410,17 @@ class InlayTextAttributes: UnmodifiableTextAttributes() {
 
 }
 
-class InlayRenderer(info: HighlightInfo): HintRenderer(info.description) {
+class InlayRenderer(info: HighlightInfo): HintRenderer(clipDescription(info.description)) {
+    companion object {
+        const val MAX_LEN = 140;
+        fun clipDescription(desc: String): String {
+            return if (desc.length < MAX_LEN) {
+                desc
+            } else {
+                desc.substring(0, MAX_LEN - 3) + "..."
+            }
+        }
+    }
     override fun getTextAttributes(editor: Editor): TextAttributes? {
         return InlayTextAttributes()
     }

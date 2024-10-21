@@ -3,6 +3,8 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+- Register file type "lean4"
+- restricting scope for live templates
 
 ## [0.0.19] - 2024-10-21
 

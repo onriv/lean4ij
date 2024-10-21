@@ -21,24 +21,24 @@
         <textmate.bundleProvider implementation="lean4ij.language.TextMateBundleProvider"/>
         <colorSettingsPage implementation="lean4ij.infoview.LeanInfoviewColorSettingPage"/>
 
-        <!-- &lt;!&ndash; lsp4ij says:&ndash;&gt; -->
-        <!-- &lt;!&ndash; Indeed, when you manually define a File type for some file name patterns, you loose the TextMate syntax coloration.&ndash;&gt; -->
-        <!-- &lt;!&ndash; see: https://github.com/redhat-developer/lsp4ij/blob/main/docs/DeveloperGuide.md#declare-file-mappings&ndash;&gt; -->
-        <!-- &lt;!&ndash; indeed, this cannot use&ndash;&gt; -->
-        <!-- <fileType -->
-        <!--         name="lean4" -->
-        <!--         implementationClass="lean4ij.language.Lean4FileType" -->
-        <!--         fieldName="INSTANCE" -->
-        <!--         language="lean4" -->
-        <!--         extensions="lean"/> -->
-        <!-- &lt;!&ndash; ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008202719-Syntax-Highlighting-for-Custom-Filetype-conflicts-with-Textmate-bundle &ndash;&gt; -->
-        <!-- <editorHighlighterProvider -->
-        <!--         filetype="lean4" -->
-        <!--         implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider" -->
-        <!-- /> -->
-        <!-- <lang.syntaxHighlighterFactory -->
-        <!--         language="lean4" -->
-        <!--         implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/> -->
+        <!-- lsp4ij says:-->
+        <!-- Indeed, when you manually define a File type for some file name patterns, you loose the TextMate syntax coloration.-->
+        <!-- see: https://github.com/redhat-developer/lsp4ij/blob/main/docs/DeveloperGuide.md#declare-file-mappings-->
+        <!-- indeed, this cannot use-->
+        <fileType
+                name="lean4"
+                implementationClass="lean4ij.language.Lean4FileType"
+                fieldName="INSTANCE"
+                language="lean4"
+                extensions="lean"/>
+        <!-- ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008202719-Syntax-Highlighting-for-Custom-Filetype-conflicts-with-Textmate-bundle -->
+        <editorHighlighterProvider
+                filetype="lean4"
+                implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider"
+        />
+        <lang.syntaxHighlighterFactory
+                language="lean4"
+                implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/>
 
         <toolWindow factoryClass="lean4ij.infoview.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
         <toolWindow factoryClass="lean4ij.infoview.external.JcefInfoviewTooWindowFactory" id="LeanInfoviewJcef"/>
@@ -50,8 +50,10 @@
                            displayType="BALLOON"
                            key="notification.group.name"/>
 
+        <!-- For the following declarativeInlayProvider, currently the language is TEXT, it should change to lean4 -->
+        <!-- after we finish a simple parser (maybe just tokens/lexer) for lean4 -->
         <codeInsight.declarativeInlayProvider
-                language="textmate"
+                language="TEXT"
                 implementationClass="lean4ij.language.OmitTypeInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
@@ -61,7 +63,7 @@
                 descriptionKey="settings.lean.def.omit.type.name"
         />
         <codeInsight.declarativeInlayProvider
-                language="textmate"
+                language="TEXT"
                 implementationClass="lean4ij.language.GoalInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
@@ -71,7 +73,7 @@
                 descriptionKey="settings.lean.goal.hints.value.name"
         />
         <codeInsight.declarativeInlayProvider
-                language="textmate"
+                language="TEXT"
                 implementationClass="lean4ij.language.PlaceHolderInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
@@ -91,13 +93,13 @@
             <description><![CDATA[programming language and theorem prover]]> </description>
         </server>
 
-        <fileNamePatternMapping patterns="*.lean4;*.lean"
-                                serverId="lean"
-                                languageId="lean"/>
+        <!-- <fileNamePatternMapping patterns="*.lean4;*.lean" -->
+        <!--                         serverId="lean" -->
+        <!--                         languageId="lean"/> -->
 
-        <!-- <languageMapping language="lean4" -->
-        <!--                  serverId="lean" -->
-        <!--                  languageId="lean"/> -->
+        <languageMapping language="lean4"
+                         serverId="lean"
+                         languageId="lean"/>
 
     </extensions>
 

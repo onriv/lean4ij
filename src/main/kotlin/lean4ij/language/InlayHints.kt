@@ -37,6 +37,7 @@ import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiPlainText
 import com.intellij.ui.JBColor
 import com.intellij.util.io.await
 import com.jetbrains.rd.util.lifetime.intersect
@@ -148,10 +149,12 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
     }
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
-        if (project == null || element !is TextMateFile) {
+        // since here we check if it's a file, this is in fact collect on the file level rather then
+        // psi element
+        if (project == null || element !is PsiFile) {
             return
         }
-        val file = MoreObjects.firstNonNull(editor.virtualFile, element.virtualFile)
+        val file = MoreObjects.firstNonNull(editor.virtualFile, element.containingFile.virtualFile)
         if (file.extension != "lean") {
             return
         }

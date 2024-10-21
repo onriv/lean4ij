@@ -1,3 +1,7 @@
+"""
+generate the (static) live templates
+TODO this should be included in build.gradle.kts
+"""
 import json
 
 def escape(s):
@@ -14,7 +18,7 @@ if __name__ == "__main__":
         abbrev = json.load(f)
     tpl="""<template name="{k}" value="{v}" shortcut="SPACE" description="{d}" toReformat="false" toShortenFQNames="true">
         <context>
-          <option name="OTHER" value="true" />
+          <option name="Lean4" value="true" />
         </context>
       </template>
     """

@@ -3,6 +3,12 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+
+## [0.0.19] - 2024-10-21
+
+Depend on the latest approved nightly build of LSP4IJ: 0.7.1-20241017-013236
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.1-20241017-013236@nightly, org.jetbrains.plugins.textmate]
+
 - update some dependencies
 - change imports of infoview-app to [dynamic loading](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview#loading-the-infoview), hence
 - adapt external infoview [widget](https://lean-lang.org/lean4/doc/examples/widgets.lean.html)
@@ -34,6 +40,7 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.0.18...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.0.19...HEAD
+[0.0.19]: https://github.com/onriv/lean4ij/compare/v0.0.18...v0.0.19
 [0.0.18]: https://github.com/onriv/lean4ij/compare/v0.0.17...v0.0.18
 [0.0.17]: https://github.com/onriv/lean4ij/commits/v0.0.17

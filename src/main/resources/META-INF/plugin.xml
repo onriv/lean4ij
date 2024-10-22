@@ -32,7 +32,7 @@
                 language="lean4"
                 extensions="lean"/>
 
-        <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/>
+        <!-- <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/> -->
         <lang.commenter language="lean4" implementationClass="lean4ij.language.Lean4Commenter"/>
 
         <!-- ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008202719-Syntax-Highlighting-for-Custom-Filetype-conflicts-with-Textmate-bundle -->
@@ -57,7 +57,7 @@
         <!-- For the following declarativeInlayProvider, currently the language is TEXT, it should change to lean4 -->
         <!-- after we finish a simple parser (maybe just tokens/lexer) for lean4 -->
         <codeInsight.declarativeInlayProvider
-                language="lean4"
+                language="TEXT"
                 implementationClass="lean4ij.language.OmitTypeInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
@@ -67,7 +67,7 @@
                 descriptionKey="settings.lean.def.omit.type.name"
         />
         <codeInsight.declarativeInlayProvider
-                language="lean4"
+                language="TEXT"
                 implementationClass="lean4ij.language.GoalInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
@@ -77,7 +77,7 @@
                 descriptionKey="settings.lean.goal.hints.value.name"
         />
         <codeInsight.declarativeInlayProvider
-                language="lean4"
+                language="TEXT"
                 implementationClass="lean4ij.language.PlaceHolderInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"

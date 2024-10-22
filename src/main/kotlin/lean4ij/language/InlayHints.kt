@@ -151,7 +151,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
         // since here we check if it's a file, this is in fact collect on the file level rather then
         // psi element
-        if (project == null || element !is PsiFile) {
+        if (project == null || element !is Lean4PsiFile) {
             return
         }
         val file = MoreObjects.firstNonNull(editor.virtualFile, element.containingFile.virtualFile)

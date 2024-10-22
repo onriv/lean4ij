@@ -33,6 +33,7 @@
                 extensions="lean"/>
 
         <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/>
+        <lang.commenter language="lean4" implementationClass="lean4ij.language.Lean4Commenter"/>
 
         <!-- ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008202719-Syntax-Highlighting-for-Custom-Filetype-conflicts-with-Textmate-bundle -->
         <editorHighlighterProvider

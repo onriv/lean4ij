@@ -38,6 +38,26 @@ class InfoviewRender(val sb: StringBuilder) {
         sb.append(char)
     }
 
+    /**
+     * TODO exception here:
+     *      Exception in thread "DefaultDispatcher-worker-36 @lean4ij.project.LeanProjectService#29011" java.lang.StringIndexOutOfBoundsException: start 902, end 96, length 96
+     *      	at java.base/java.lang.AbstractStringBuilder.checkRangeSIOOBE(AbstractStringBuilder.java:1810)
+     *      	at java.base/java.lang.AbstractStringBuilder.substring(AbstractStringBuilder.java:1070)
+     *      	at java.base/java.lang.StringBuilder.substring(StringBuilder.java:91)
+     *      	at lean4ij.lsp.data.InfoviewRender.substring(InteractiveGoals.kt:42)
+     *      	at lean4ij.lsp.data.TaggedTextAppend.toInfoViewString(CodeWithInfos.kt:88)
+     *      	at lean4ij.lsp.data.MsgEmbedExpr.toInfoViewString(CodeWithInfos.kt:106)
+     *      	at lean4ij.lsp.data.TaggedTextTag.toInfoViewString(CodeWithInfos.kt:66)
+     *      	at lean4ij.infoview.LeanInfoViewWindowFactory$Companion.updateInteractiveGoal(LeanInfoViewWindowFactory.kt:116)
+     *      	at lean4ij.project.LeanFile$updateInternalInfoview$1.invokeSuspend(LeanFile.kt:249)
+     *      	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith$$$capture(ContinuationImpl.kt:33)
+     *      	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt)
+     *      	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
+     *      	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:584)
+     *      	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:793)
+     *      	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:697)
+     *      	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:684)
+     */
     fun substring(start: Int, end: Int) : String {
         return sb.substring(start, end)
     }

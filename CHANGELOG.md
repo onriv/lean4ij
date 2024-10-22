@@ -4,7 +4,8 @@
 
 ## [Unreleased]
 - Register file type "lean4"
-- restricting scope for live templates
+- restricting scope for live templates to lean4
+- add commenter (line commenter work but block comment/uncomment maybe problematic)
 
 ## [0.0.19] - 2024-10-21
 

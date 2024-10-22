@@ -11,6 +11,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 
+/**
+ * ref https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/openapi/fileTypes/PlainTextParserDefinition.java
+ */
 class Lean4ParserDefinition : ParserDefinition {
     override fun createLexer(project: Project?): Lexer {
         TODO("Not yet implemented")

@@ -85,6 +85,7 @@ class InfoviewMouseMotionListener(
             return
         }
 
+        // TODO maybe make this singleton?
         val attr = object : TextAttributes() {
             override fun getBackgroundColor(): Color {
                 // TODO document this
@@ -92,13 +93,17 @@ class InfoviewMouseMotionListener(
                 val scheme = EditorColorsManager.getInstance().globalScheme
                 // TODO customize attr? or would backgroundColor null?
                 //      indeed here it can be null, don't know why Kotlin does not mark it as error
-                // TODO there is cases here the background of identifier under current caret is null?
+                // TODO there is cases here the background of identifier under current caret is null
+                // TODO do this better in a way
                 var color = scheme.getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES).backgroundColor
                 if (color != null) {
                     return color
                 }
                 color = scheme.getColor(EditorColors.CARET_COLOR)
-                return color
+                if (color != null) {
+                    return color
+                }
+                return scheme.defaultBackground
             }
         }
         createPopup(c, attr)

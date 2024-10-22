@@ -92,7 +92,13 @@ class InfoviewMouseMotionListener(
                 val scheme = EditorColorsManager.getInstance().globalScheme
                 // TODO customize attr? or would backgroundColor null?
                 //      indeed here it can be null, don't know why Kotlin does not mark it as error
-                return scheme.getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES).backgroundColor
+                // TODO there is cases here the background of identifier under current caret is null?
+                var color = scheme.getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES).backgroundColor
+                if (color != null) {
+                    return color
+                }
+                color = scheme.getColor(EditorColors.CARET_COLOR)
+                return color
             }
         }
         createPopup(c, attr)

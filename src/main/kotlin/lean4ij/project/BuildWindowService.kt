@@ -105,7 +105,7 @@ class BuildWindowService(val project: Project) {
                                 // TODO better way for handling this
                                 fileProgress.cancel()
                                 builds.remove(s.file)
-                                project.notifyErr("Build failed, check build window for detail:\n${s.message}")
+                                // project.notifyErr("Build failed, check build window for detail:\n${s.message}")
                                 thisLogger().warn("${s.file} build failed with message:\n${s.message}")
                             } catch(ex : Exception) {
                                 throw ex

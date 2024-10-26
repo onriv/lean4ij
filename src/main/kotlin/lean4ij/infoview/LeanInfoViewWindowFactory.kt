@@ -28,6 +28,9 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
 
     companion object {
 
+        /**
+         * The id is from plugin.xml
+         */
         fun getLeanInfoview(project: Project): LeanInfoViewWindow? {
             val contents = ToolWindowManager.getInstance(project)
                 .getToolWindow("LeanInfoViewWindow")!!

@@ -19,10 +19,14 @@ import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
@@ -50,6 +54,7 @@ import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
 import lean4ij.project.LeanFile
 import lean4ij.project.LeanProjectService
+import lean4ij.util.LeanUtil
 import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
@@ -155,7 +160,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
             return
         }
         val file = MoreObjects.firstNonNull(editor.virtualFile, element.containingFile.virtualFile)
-        if (file.extension != "lean") {
+        if (LeanUtil.isLeanFile(file)) {
             return
         }
         val leanProject = project.service<LeanProjectService>()
@@ -399,13 +404,15 @@ class PlaceHolderInlayHintsProvider : InlayHintsProvider {
 }
 
 
-class InlayTextAttributes: UnmodifiableTextAttributes() {
+object InlayTextAttributes: UnmodifiableTextAttributes() {
     override fun getBackgroundColor(): Color? {
-        return null
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        return scheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).backgroundColor
     }
 
     override fun getForegroundColor(): Color? {
-        return JBColor.BLUE
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        return scheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).foregroundColor
     }
 
 }
@@ -422,7 +429,7 @@ class InlayRenderer(info: HighlightInfo): HintRenderer(clipDescription(info.desc
         }
     }
     override fun getTextAttributes(editor: Editor): TextAttributes? {
-        return InlayTextAttributes()
+        return InlayTextAttributes
     }
 
     override fun useEditorFont(): Boolean {

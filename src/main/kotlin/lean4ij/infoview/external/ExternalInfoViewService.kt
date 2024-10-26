@@ -1,18 +1,8 @@
 package lean4ij.infoview.external
 
 import com.google.gson.Gson
-import lean4ij.infoview.external.data.CursorLocation
-import lean4ij.infoview.external.data.InfoviewEvent
-import lean4ij.lsp.data.Range
-import lean4ij.lsp.data.RpcCallParamsRaw
-import lean4ij.project.BuildWindowService
-import lean4ij.project.LeanProjectService
-import lean4ij.util.Constants
-import lean4ij.util.OsUtil
 import com.google.gson.JsonElement
 import com.intellij.notification.BrowseNotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -30,6 +20,14 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import lean4ij.infoview.external.data.ApplyEditParam
+import lean4ij.infoview.external.data.CursorLocation
+import lean4ij.infoview.external.data.InfoviewEvent
+import lean4ij.lsp.data.Range
+import lean4ij.lsp.data.RpcCallParamsRaw
+import lean4ij.project.BuildWindowService
+import lean4ij.project.LeanProjectService
+import lean4ij.util.Constants
+import lean4ij.util.OsUtil
 import lean4ij.util.notify
 import org.eclipse.lsp4j.InitializeResult
 import java.io.File

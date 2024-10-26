@@ -4,6 +4,7 @@
 build
 .kotlin
 out
+src/gen
 # this is a host concifg for reading port of the external service
 # since the port is randomly choosed, we ignore this file
 browser-infoview/host-config.json

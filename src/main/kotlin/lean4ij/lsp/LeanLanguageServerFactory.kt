@@ -1,6 +1,8 @@
 package lean4ij.lsp
 
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.LanguageServerEnablementSupport
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
@@ -54,6 +56,7 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
     override fun createClientFeatures(): LSPClientFeatures {
         return LSPClientFeatures().apply {
             completionFeature = LeanLSPCompletionFeature()
+            lspFileFeature = LeanLspFileFeature()
         }
     }
 }

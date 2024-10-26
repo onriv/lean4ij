@@ -76,10 +76,12 @@
 - [ ] autogenerate missing fields
 - [ ] internal infoview when expanding all messages it seems jumping
 - [ ] check if live templates can dynamically define or not, in this way we can control if suffix space add automatically or not
-- [ ] internal infoview will automatically scroll to the end, kind of disturbing
+- [x] internal infoview will automatically scroll to the end, kind of disturbing
 - [ ] it's very hard to type the trigger for the snippet out like \a for α if there is some space following it. Some possible way is like type \ablablala<space> and then delete the unneeded part
       should this be considered?
 - [ ] maybe internal infoview should be soft wrap. If the text is too long, currently only making the toolwindow wider we can see it
+- [ ] internal infoview update is not instant (It may require some update of cursor)
+- [ ] if the project contains some failed to build event, the internal infoview totally failed to update
 
 # Some exceptions that should be tracked
 

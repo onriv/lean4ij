@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.vfs.VirtualFile
 import lean4ij.language.DiagInlayManager
+import lean4ij.util.LeanUtil
 
 class LeanFileOpenedListener: FileOpenedSyncListener {
     override fun fileOpenedSync(
@@ -14,6 +15,7 @@ class LeanFileOpenedListener: FileOpenedSyncListener {
         editorsWithProviders: List<FileEditorWithProvider>
     ) {
         super.fileOpenedSync(source, file, editorsWithProviders)
+        if (!LeanUtil.isLeanFile(file)) return
 
         // install diag hint listener to all opened files
         for (editorWrapper in editorsWithProviders) {

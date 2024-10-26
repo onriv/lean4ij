@@ -9,6 +9,9 @@ import java.util.regex.Pattern
 
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.grammarkit.tasks.GenerateLexerTask
+import org.jetbrains.grammarkit.tasks.GenerateParserTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -42,6 +45,7 @@ plugins {
     // TODO maybe later we can do kotlin-multiplatform
     //      see: https://stackoverflow.com/questions/78493876/kotlin-gradle-multiplatform-not-producing-nodejs-artifact
     id("com.github.node-gradle.node") version "7.1.0"
+    id("org.jetbrains.grammarkit") version "2022.3.2.2"
 
 }
 
@@ -127,6 +131,14 @@ kover {
     }
 }
 
+sourceSets {
+    main {
+        java.srcDirs("src/main/java", "src/gen/java")
+        kotlin.srcDirs("src/main/kotlin")
+    }
+}
+
+
 tasks {
     wrapper {
         gradleVersion = properties("gradleVersion").get()
@@ -201,6 +213,19 @@ tasks {
     buildPlugin {
         dependsOn("buildBrowserInfoview")
     }
+
+    val genLean4Lexer = register<GenerateLexerTask>("genLean4Lexer") {
+        description = "Generates lexer"
+        group = "build setup"
+        sourceFile.set(file("src/main/grammars/Lean4Lexer.flex"))
+        targetOutputDir.set(file("src/gen/java/lean4ij/language"))
+        purgeOldFiles.set(true)
+    }
+
+    withType<KotlinCompile>().configureEach {
+        dependsOn(genLean4Lexer)
+    }
+
 }
 
 tasks.test {

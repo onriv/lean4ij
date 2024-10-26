@@ -3,9 +3,13 @@
 # lean4ij Changelog
 
 ## [Unreleased]
-- Register file type "lean4"
+- register file type "lean4"
 - restricting scope for live templates to lean4
 - add commenter (line commenter work but block comment/uncomment maybe problematic)
+- actions for toggle infoview and open infoview in browser
+- fix wrongly lsp/inlay-hints for non-lean files
+- respect `#check` etc. inlay-hints to current scheme
+- actions for increase/decrease/reset zoom level for jcef infoview
 
 ## [0.0.19] - 2024-10-21
 

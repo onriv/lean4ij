@@ -2,7 +2,6 @@ package lean4ij.project
 
 import com.google.gson.JsonElement
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
@@ -20,7 +19,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
-import io.ktor.server.application.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +30,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import kotlinx.html.ThScope
 import lean4ij.Lean4Settings
 import lean4ij.infoview.LeanInfoViewWindowFactory
 import lean4ij.infoview.external.data.ApplyEditChange
@@ -45,7 +42,6 @@ import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.lsp.data.InteractiveTermGoalParams
 import lean4ij.lsp.data.LineRange
 import lean4ij.lsp.data.LineRangeParam
-import lean4ij.lsp.data.PlainGoal
 import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
 import lean4ij.lsp.data.RpcCallParams

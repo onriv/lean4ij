@@ -32,7 +32,8 @@
                 language="lean4"
                 extensions="lean"/>
 
-        <!-- <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/> -->
+        <!-- Lean4ParserDefinition is still problematic -->
+        <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/>
         <lang.commenter language="lean4" implementationClass="lean4ij.language.Lean4Commenter"/>
 
         <!-- ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008202719-Syntax-Highlighting-for-Custom-Filetype-conflicts-with-Textmate-bundle -->
@@ -57,7 +58,7 @@
         <!-- For the following declarativeInlayProvider, currently the language is TEXT, it should change to lean4 -->
         <!-- after we finish a simple parser (maybe just tokens/lexer) for lean4 -->
         <codeInsight.declarativeInlayProvider
-                language="TEXT"
+                language="lean4"
                 implementationClass="lean4ij.language.OmitTypeInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
@@ -67,7 +68,7 @@
                 descriptionKey="settings.lean.def.omit.type.name"
         />
         <codeInsight.declarativeInlayProvider
-                language="TEXT"
+                language="lean4"
                 implementationClass="lean4ij.language.GoalInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
@@ -77,7 +78,7 @@
                 descriptionKey="settings.lean.goal.hints.value.name"
         />
         <codeInsight.declarativeInlayProvider
-                language="TEXT"
+                language="lean4"
                 implementationClass="lean4ij.language.PlaceHolderInlayHintsProvider"
                 isEnabledByDefault="true"
                 group="OTHER_GROUP"
@@ -108,41 +109,41 @@
     </extensions>
 
     <actions>
-        <action id="OpenLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4: Toggle Infoview (internal)" description="Lean4: Toggle Infoview (internal)">
+        <action id="OpenLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4 Actions: Toggle Infoview (internal)" description="Lean4: Toggle Infoview (internal)">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="OpenLeanInfoViewJcef" class="lean4ij.actions.ToggleLeanInfoViewJcef" text="Lean4: Toggle Infoview (jcef)" description="Lean4: Toggle Infoview (jcef)">
+        <action id="OpenLeanInfoViewJcef" class="lean4ij.actions.ToggleLeanInfoViewJcef" text="Lean4 Actions: Toggle Infoview (jcef)" description="Lean4: Toggle Infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="IncreaseZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.IncreaseZoomLevelForLeanInfoViewJcef" text="Lean4: Increase zoom level for lean infoview (jcef)" description="Lean4: increase zoom level for lean infoview (jcef)">
+        <action id="IncreaseZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.IncreaseZoomLevelForLeanInfoViewJcef" text="Lean4 Actions: Increase zoom level for lean infoview (jcef)" description="Lean4: increase zoom level for lean infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="DecreaseZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.DecreaseZoomLevelForLeanInfoViewJcef" text="Lean4: Decrease zoom level for lean infoview (jcef)" description="Lean4: decrease zoom level for lean infoview (jcef)">
+        <action id="DecreaseZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.DecreaseZoomLevelForLeanInfoViewJcef" text="Lean4 Actions: Decrease zoom level for lean infoview (jcef)" description="Lean4: decrease zoom level for lean infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="ResetZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.ResetZoomLevelForLeanInfoViewJcef" text="Lean4: Reset zoom level for lean infoview (jcef)" description="Lean4: reset zoom level for lean infoview (jcef)">
+        <action id="ResetZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.ResetZoomLevelForLeanInfoViewJcef" text="Lean4 Actions: Reset zoom level for lean infoview (jcef)" description="Lean4: reset zoom level for lean infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="OpenExternalInfoviewInBrowser" class="lean4ij.actions.OpenExternalInfoviewInBrowser" text="Lean4: Open infoview in browser" description="Lean4: Open infoview in browser">
+        <action id="OpenExternalInfoviewInBrowser" class="lean4ij.actions.OpenExternalInfoviewInBrowser" text="Lean4 Actions: Open infoview in browser" description="Lean4: Open infoview in browser">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="RestartLeanLsp" class="lean4ij.actions.RestartLeanLsp" text="Lean4: Restart Lean Lsp Server" description="Restart Lean Lsp Server">
+        <action id="RestartLeanLsp" class="lean4ij.actions.RestartLeanLsp" text="Lean4 Actions: Restart Lean Lsp Server" description="Restart Lean Lsp Server">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="RestartCurrentLeanFile" class="lean4ij.actions.RestartCurrentFile" text="Lean4: Restart Current Lean File" description="Restart Current Lean File">
+        <action id="RestartCurrentLeanFile" class="lean4ij.actions.RestartCurrentFile" text="Lean4 Actions: Restart Current Lean File" description="Restart Current Lean File">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="RestartJcefInfoview" class="lean4ij.actions.RestartJcefInfoview" text="Lean4: Restart Jcef Infoview" description="Dump Coroutine">
+        <action id="RestartJcefInfoview" class="lean4ij.actions.RestartJcefInfoview" text="Lean4 Actions: Restart Jcef Infoview" description="Dump Coroutine">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="AddInlayGoalHint" class="lean4ij.actions.AddInlayGoalHint" text="Lean4: Add Inlay Goal Hint" description="Add goal hint">
+        <action id="AddInlayGoalHint" class="lean4ij.actions.AddInlayGoalHint" text="Lean4 Actions: Add Inlay Goal Hint" description="Add goal hint">
             <add-to-group group-id="CodeMenu" anchor="last"/>
             <keyboard-shortcut
                     keymap="$default"
                     first-keystroke="control I"
                     />
         </action>
-        <action id="DelInlayGoalHint" class="lean4ij.actions.DelInlayGoalHint" text="Lean4: Delete Inlay Goal Hint" description="Delete goal hint">
+        <action id="DelInlayGoalHint" class="lean4ij.actions.DelInlayGoalHint" text="Lean4 Actions: Delete Inlay Goal Hint" description="Delete goal hint">
             <add-to-group group-id="CodeMenu" anchor="last"/>
             <keyboard-shortcut
                     keymap="$default"

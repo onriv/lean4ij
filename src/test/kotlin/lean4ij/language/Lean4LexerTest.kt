@@ -9,20 +9,4 @@ import java.io.InputStreamReader
 
 class Lean4LexerTest {
 
-    @Test
-    fun testLexer() {
-
-        Resources.getResource("todo").openStream().use {
-            InputStreamReader(it).use {
-                BufferedReader(it).use {
-                    val lean4Lexer = Lean4Lexer(it)
-                    var advance = lean4Lexer.advance()
-                    advance.language
-                }
-            }
-        }
-
-
-    }
-
 }

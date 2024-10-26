@@ -3,11 +3,12 @@ package lean4ij.language
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.IconLoader.getIcon
 import javax.swing.Icon
 
 
-class Lean4Language : Language("lean4") {
+class Lean4Language : Language(ANY, "lean4") {
 
     companion object {
         val INSTANCE = Lean4Language();

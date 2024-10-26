@@ -17,7 +17,7 @@ class Lean4Commenter : Commenter {
     }
 
     override fun getBlockCommentPrefix(): String {
-        return "/-- "
+        return "/-"
     }
 
     override fun getBlockCommentSuffix(): String {
@@ -25,7 +25,7 @@ class Lean4Commenter : Commenter {
     }
 
     override fun getCommentedBlockCommentPrefix(): String {
-        return "/--"
+        return "/-"
     }
 
     override fun getCommentedBlockCommentSuffix(): String {

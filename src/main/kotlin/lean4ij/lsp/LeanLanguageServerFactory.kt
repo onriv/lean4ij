@@ -32,6 +32,8 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
      * TODO maybe require some refactor
      * check also [lean4ij.project.LeanProjectActivity.setupEditorFocusChangeEventListener]
      * TODO this seems making the lsp server start a little late
+     * Beware that this might make debug harder for it become disabled if not focusing on the editor
+     * set it to always true if no language server return while debugging
      */
     override fun isEnabled(project: Project): Boolean {
         return isEnable.get()
@@ -54,9 +56,16 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
     }
 
     override fun createClientFeatures(): LSPClientFeatures {
-        return LSPClientFeatures().apply {
-            completionFeature = LeanLSPCompletionFeature()
-            lspFileFeature = LeanLspFileFeature()
+        return object : LSPClientFeatures() {
+            init {
+                completionFeature = LeanLSPCompletionFeature()
+            }
+            // waiting for lsp4ij https://github.com/redhat-developer/lsp4ij/pull/586
+            /*override*/ fun isEnabled(file: VirtualFile): Boolean {
+                return FileEditorManager.getInstance(project).selectedTextEditor?.let {
+                    it.virtualFile == file
+                }?: false
+            }
         }
     }
 }

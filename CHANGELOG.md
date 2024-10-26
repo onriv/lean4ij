@@ -3,9 +3,9 @@
 # lean4ij Changelog
 
 ## [Unreleased]
-- register file type "lean4"
+- register file type "lean4", dummy lexer/parser, a temp icon
 - restricting scope for live templates to lean4
-- add commenter (line commenter work but block comment/uncomment maybe problematic)
+- add commenter
 - actions for toggle infoview and open infoview in browser
 - fix wrongly lsp/inlay-hints for non-lean files
 - respect `#check` etc. inlay-hints to current scheme

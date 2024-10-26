@@ -160,7 +160,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
             return
         }
         val file = MoreObjects.firstNonNull(editor.virtualFile, element.containingFile.virtualFile)
-        if (LeanUtil.isLeanFile(file)) {
+        if (!LeanUtil.isLeanFile(file)) {
             return
         }
         val leanProject = project.service<LeanProjectService>()

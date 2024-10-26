@@ -222,9 +222,27 @@ tasks {
         purgeOldFiles.set(true)
     }
 
+    val genLean4Parser = register<GenerateParserTask>("genLean4Parser") {
+        description = "Generates parser"
+        group = "build setup"
+        sourceFile.set(file("src/main/grammars/Lean4Parser.bnf"))
+        targetRootOutputDir.set(file("src/gen/java/"))
+        pathToParser.set("src/gen/java/lean4ij/language/Lean4Parser.java")
+        pathToPsiRoot.set("src/gen/java/lean4ij/language/")
+        purgeOldFiles.set(true)
+    }
+
+    val deleteGen = register<Delete>("deleteGen") {
+        delete("src/gen/java")
+    }
+
     withType<KotlinCompile>().configureEach {
+        dependsOn(deleteGen)
+        dependsOn(genLean4Parser)
         dependsOn(genLean4Lexer)
     }
+
+
 
 }
 

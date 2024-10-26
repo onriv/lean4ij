@@ -1,5 +1,7 @@
 package lean4ij.project.listeners
 
+import com.google.common.base.MoreObjects
+import com.google.common.base.MoreObjects.firstNonNull
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileOpenedSyncListener
 import com.intellij.openapi.fileEditor.TextEditor
@@ -20,6 +22,10 @@ class LeanFileOpenedListener: FileOpenedSyncListener {
         // install diag hint listener to all opened files
         for (editorWrapper in editorsWithProviders) {
             val editor = editorWrapper.fileEditor
+            if (!LeanUtil.isLeanFile(editor.file)) {
+                continue
+            }
+
             if (editor is TextEditor) {
                 DiagInlayManager.register(editor)
             }

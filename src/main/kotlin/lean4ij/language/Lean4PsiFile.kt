@@ -15,6 +15,6 @@ class Lean4PsiFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, L
     }
 
     override fun toString(): String {
-        return "Lean4 Psi File"
+        return "Lean4PsiFile($virtualFile)"
     }
 }

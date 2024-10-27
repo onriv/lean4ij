@@ -1,6 +1,5 @@
 package lean4ij.lsp.data
 
-import io.kinference.ndarray.extensions.inferType
 import lean4ij.util.Constants
 import org.eclipse.lsp4j.TextDocumentIdentifier
 

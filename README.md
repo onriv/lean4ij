@@ -79,6 +79,8 @@ The plugin is still on an early stage, check [ISSUES.md](./ISSUES.md) for known 
   - (Windows) `$HOME\AppData\Local\JetBrains\<Product>\log\idea.log`
   - (Macos) `~/Library/Caches/<Product>/log/idea.log`
 - If the IDE is freezing, try check also the `threadDumps-freeze-***` files under the log folder.
+
+For showing debug/trace log, add `lean4ij:all` in `MENU > Help > Diagnostic Tools > Debug Log Settings` and restart, see [How-to-enable-debug-logging-in-IntelliJ-IDEA](https://youtrack.jetbrains.com/articles/SUPPORT-A-43/How-to-enable-debug-logging-in-IntelliJ-IDEA) for more docs.
  
 ## Acknowledgments
 

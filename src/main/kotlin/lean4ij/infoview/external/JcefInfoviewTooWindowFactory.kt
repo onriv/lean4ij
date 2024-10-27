@@ -1,5 +1,6 @@
 package lean4ij.infoview.external
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -12,7 +13,20 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefClient
 import lean4ij.util.notify
+import org.cef.CefSettings
+import org.cef.browser.CefBrowser
+import org.cef.browser.CefFrame
+import org.cef.callback.CefAuthCallback
+import org.cef.callback.CefCallback
+import org.cef.handler.CefDisplayHandler
+import org.cef.handler.CefLoadHandler
+import org.cef.handler.CefRequestHandler
+import org.cef.handler.CefResourceRequestHandler
+import org.cef.misc.BoolRef
+import org.cef.network.CefRequest
+import org.cef.security.CefSSLInfo
 
 /**
  * TODO the name like infoview and infoView is inconsistent in the whole codebase...
@@ -62,6 +76,78 @@ class JcefInfoviewService(private val project: Project) {
     val browser: JBCefBrowser? = if (JBCefApp.isSupported()) {
         val browser = JBCefBrowser()
         defaultZoomLevel = browser.zoomLevel
+
+        // handle link clicks, which should be opened in real browser but not jcef
+
+        browser.jbCefClient
+            .addRequestHandler(object : CefRequestHandler {
+                override fun onBeforeBrowse(
+                    browser: CefBrowser?,
+                    frame: CefFrame?,
+                    request: CefRequest?,
+                    user_gesture: Boolean,
+                    is_redirect: Boolean
+                ): Boolean {
+                    if (request == null) return false
+                    val isInfoview = request.url.startsWith(_url!!)
+                    if (isInfoview) {
+                        return false
+                    } else {
+                        BrowserUtil.browse(request.url)
+                        return true
+                    }
+                }
+
+                override fun onOpenURLFromTab(
+                    browser: CefBrowser?,
+                    frame: CefFrame?,
+                    target_url: String?,
+                    user_gesture: Boolean
+                ): Boolean {
+                    return false
+                }
+
+                override fun getResourceRequestHandler(
+                    browser: CefBrowser?,
+                    frame: CefFrame?,
+                    request: CefRequest?,
+                    isNavigation: Boolean,
+                    isDownload: Boolean,
+                    requestInitiator: String?,
+                    disableDefaultHandling: BoolRef?
+                ): CefResourceRequestHandler? {
+                    return null
+                }
+
+                override fun getAuthCredentials(
+                    browser: CefBrowser?,
+                    origin_url: String?,
+                    isProxy: Boolean,
+                    host: String?,
+                    port: Int,
+                    realm: String?,
+                    scheme: String?,
+                    callback: CefAuthCallback?
+                ): Boolean {
+                    return false
+                }
+
+                override fun onCertificateError(
+                    browser: CefBrowser?,
+                    cert_error: CefLoadHandler.ErrorCode?,
+                    request_url: String?,
+                    sslInfo: CefSSLInfo?,
+                    callback: CefCallback?
+                ): Boolean {
+                    return false
+                }
+
+                override fun onRenderProcessTerminated(
+                    browser: CefBrowser?,
+                    status: CefRequestHandler.TerminationStatus?
+                ) {
+                }
+            }, browser.cefBrowser )
         browser
     } else {
         // TODO make this shorter

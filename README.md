@@ -38,12 +38,21 @@ in Jetbrains platform, it contains some basic functionally and for popup it requ
 Messages and logs about the lean lsp server can be found in the language server tool window after setting the level to message or trace, check more information about this in [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij).
 ### Actions
 
-| action id              | action text                       | meaning                     |
-|------------------------|-----------------------------------|-----------------------------|
-| OpenLeanInfoView       | Lean4 : Lean open info view       | open the infoview(swing)    |
-| RestartLeanLsp         | Lean4 : Restart Lean Lsp Server   | restart the  lsp server     |
-| RestartCurrentLeanFile | Lean4 : Restart Current Lean File | restart current file        |
-| RestartJcefInfoview    | Lean4 : Restart Jcef Infoview     | restart the jcef infoview   |
+Currently, the following actions are defined, mostly without default shortcut. Add one for them in `Keymap` (like `Control Shift Enter` for toggle infoview)
+
+| action id                            | action text                                                 | default shortcut |
+|--------------------------------------|-------------------------------------------------------------|------------------|
+| OpenLeanInfoViewInternal             | Lean4 Actions: Toggle Infoview (internal)                   |                  |  
+| OpenLeanInfoViewJcef                 | Lean4 Actions: Toggle Infoview (jcef)                       |                  |  
+| IncreaseZoomLevelForLeanInfoViewJcef | Lean4 Actions: Increase zoom level for lean infoview (jcef) |                  |  
+| DecreaseZoomLevelForLeanInfoViewJcef | Lean4 Actions: Decrease zoom level for lean infoview (jcef) |                  |  
+| ResetZoomLevelForLeanInfoViewJcef    | Lean4 Actions: Reset zoom level for lean infoview (jcef)    |                  |  
+| OpenExternalInfoviewInBrowser        | Lean4 Actions: Open infoview in browser                     |                  |  
+| RestartLeanLsp                       | Lean4 Actions: Restart Lean Lsp Server                      |                  |  
+| RestartCurrentLeanFile               | Lean4 Actions: Restart Current Lean File                    |                  |  
+| RestartJcefInfoview                  | Lean4 Actions: Restart Jcef Infoview                        |                  |  
+| AddInlayGoalHint                     | Lean4 Actions: Add Inlay Goal Hint                          | Control I        |  
+| DelInlayGoalHint                     | Lean4 Actions: Delete Inlay Goal Hint                       | Control Shift I  |  
 
 ## Settings
 
@@ -91,6 +100,15 @@ The following projects give great help for developing the plugin:
 - [Julian/lean.nvim](https://github.com/Julian/lean.nvim)
 - [leanprover-community/lean4-mode](https://github.com/leanprover-community/lean4-mode)
 - [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij)
+
+and many source codes with references to
+
+- [intellij-arend](https://github.com/JetBrains/intellij-arend)
+- [intellij-haskell](https://github.com/rikvdkleij/intellij-haskell.git)
+- [julia-intellij](https://github.com/JuliaEditorSupport/julia-intellij)
+- [intellij-quarkus](https://github.com/redhat-developer/intellij-quarkus/)
+- [intellij-rust](https://github.com/intellij-rust/intellij-rust.git)
+- [intellij-sdk-code-samples](https://github.com/JetBrains/intellij-sdk-code-samples)
 
 Plugin based on the [IntelliJ Platform Plugin Template][template].
 

@@ -286,6 +286,8 @@ class OmitTypeInlayHintsProvider : InlayHintsProvider {
     }
 
     override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
+        // TODO why here nullable?
+        if (file.virtualFile==null) return null
         return providers.computeIfAbsent(file.virtualFile.path) {
             OmitTypeInlayHintsCollector(editor, editor.project)
         }

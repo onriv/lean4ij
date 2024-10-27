@@ -118,6 +118,7 @@ class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
 
     override fun contextInfo(offset: Int, startOffset: Int, endOffset : Int) : Triple<ContextInfo, Int, Int>? {
         // TODO when does this happen?
+        //      This happened on MIL/C07/S03_Subojects.lean:148
         TODO("Not yet implemented")
     }
 }

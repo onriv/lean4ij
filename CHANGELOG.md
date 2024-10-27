@@ -3,7 +3,7 @@
 # lean4ij Changelog
 
 ## [Unreleased]
-- register file type "lean4", dummy lexer/parser, a temp icon
+- register file type "lean4", dummy lexer/parser, temp icons (with the author's poor design skill) for toolwindow and file 
 - restricting scope for live templates to lean4
 - add commenter
 - actions for toggle infoview and open infoview in browser

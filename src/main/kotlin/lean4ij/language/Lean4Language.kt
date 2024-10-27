@@ -1,6 +1,5 @@
 package lean4ij.language
 
-import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
@@ -18,7 +17,8 @@ class Lean4Language : Language(PlainTextLanguage.INSTANCE, "lean4") {
 
 class Lean4Icons {
     companion object {
-        val FILE = getIcon("/icons/lean_logo.svg", Lean4Icons::class.java);
+        // check https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries for making icons to respect theme
+        val FILE = getIcon("/icons/lean_icon.svg", Lean4Icons::class.java);
     }
 }
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.IconLoader.getIcon
 import javax.swing.Icon
 
 
-class Lean4Language : Language(ANY, "lean4") {
+class Lean4Language : Language(PlainTextLanguage.INSTANCE, "lean4") {
 
     companion object {
         val INSTANCE = Lean4Language();

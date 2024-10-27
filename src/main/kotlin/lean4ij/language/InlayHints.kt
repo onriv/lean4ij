@@ -38,6 +38,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
+import com.intellij.openapi.util.text.LineColumn
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -234,7 +235,8 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             }
             val session = file.getSession()
             // This +2 is awkward, there maybe bad case for it
-            val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last + 2)
+            // TODO weird taht there it can be null
+            val lineColumn : LineColumn = StringUtil.offsetToLineColumn(content, m.range.last + 2) ?: continue
 //            val position = Position(line = lineColumn.line, character = lineColumn.column)
             val position = Position(line = lineColumn.line, character = lineColumn.column)
             val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))

@@ -15,20 +15,21 @@ A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 
 # Installation
 
-This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 lsp server. Please install that first.
+This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 language server. Please install that first.
 
 - Using the IDE built-in plugin system: `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
   `Install`
 
 - Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually using
-  `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...` For nightly builds go to [Actions/build](https://github.com/onriv/lean4ij/actions/workflows/build.yml) and download from the buttom of eachsuccess run.
+  `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...` For nightly builds go to [Actions/build](https://github.com/onriv/lean4ij/actions/workflows/build.yml), click the latest success run and scroll to the buttom.
 
-The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
+The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api. (We are planning to remove the dependence of textmate. After it done the plugin can be compatible from 2023.2)
+
 ## Usage
 
 For currently there is no functionality of creating a project or setting up a project. Before open any lean project with it please first testing if the project has set up the toolchain correctly. Run any command like `elan which lake` or `lake exe cache get`, or `lake build` etc.
 
-The LSP server is start as any lean file is open in the Editor. If it not behaves correctly, try firing a restart action.
+The LSP server is start as any lean file is open in the Editor and the editor gets focus. If it not behaves correctly, try firing a restart action.
 
 Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.
 

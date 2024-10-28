@@ -1,6 +1,7 @@
 package lean4ij.infoview
 
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
@@ -123,8 +124,10 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
 
     suspend fun updateDirectText(text: String) {
         val editorEx: EditorEx = editor.await()
-        editorEx.document.setText(text)
-        editorEx.component.repaint()
+        ApplicationManager.getApplication().invokeLater {
+            editorEx.document.setText(text)
+            editorEx.component.repaint()
+        }
     }
 
     private var mouseMotionListener : EditorMouseMotionListener? = null

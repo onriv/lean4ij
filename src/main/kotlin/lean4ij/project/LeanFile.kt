@@ -97,6 +97,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     init {
         scope.launch {
             // TODO is it here also blocking a thread?
+            // TODO add a setting for this
             while (true) {
                 var info = processingInfoChannel.receive()
                 var highlighters = mutableListOf<RangeHighlighter>()
@@ -143,11 +144,10 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private val leanFileProgressEmptyTextAttributesKey = TextAttributesKey.createTextAttributesKey("LEAN_FILE_PROGRESS_EMPTY")
 
     /**
-     * TODO rather than one line highlight. Highlight it on range
-     *      for avoiding flashing, or performance issue
      */
     private fun tryAddLineMarker(info: FileProgressProcessingInfo, highlighters: MutableList<RangeHighlighter>): MutableList<RangeHighlighter> {
         val ret = mutableListOf<RangeHighlighter>()
+        if (!lean4Settings.enableFileProgressBar) return ret
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             if (editor.virtualFile.path == unquotedFile) {
                 val document = editor.document

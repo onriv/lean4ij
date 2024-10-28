@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+- setting for disable progress bar on the left of editor while file progressing
+- fix some errors
+
 ## [0.1.0] - 2024-10-27
 
 Depend on the latest approved nightly build of LSP4IJ: 0.7.1-20241027-013436

@@ -4,12 +4,15 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleManager
 import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
+import lean4ij.Lean4Settings
 import lean4ij.util.OsUtil
+import lean4ij.util.notify
 import lean4ij.util.notifyErr
 import java.io.File
 import java.io.IOException
@@ -21,6 +24,9 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamConnectionProvider() {
+
+    private val lean4Settings = service<Lean4Settings>()
+
     init {
         setServerCommand()
         addLanguageServerLifecycleListener()
@@ -144,8 +150,12 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
     private val tempLogDir = Files.createTempDirectory(Path.of(PathManager.getTempPath()), "lean-lsp").toString()
 
     override fun getUserEnvironmentVariables(): MutableMap<String, String> {
-        thisLogger().info("lean lsp log dir set to $tempLogDir")
-        return mutableMapOf("LEAN_SERVER_LOG_DIR" to tempLogDir)
+        if (lean4Settings.enableLeanServerLog) {
+            thisLogger().info("lean lsp log dir set to $tempLogDir")
+            project.notify("lean lsp log dir set to $tempLogDir")
+            return mutableMapOf("LEAN_SERVER_LOG_DIR" to tempLogDir)
+        }
+        return mutableMapOf()
     }
 
     private fun String.runCommand(workingDir: File): String {

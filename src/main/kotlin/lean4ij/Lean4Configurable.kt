@@ -77,7 +77,7 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
 // TODO this in fact can be different to implement the immutable state directly rather than using an
 //      extra class
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
-
+    var enableLeanServerLog = false
     var enableFileProgressBar = true
 
     var commentPrefixForGoalHint : String = "---"
@@ -132,6 +132,8 @@ class Lean4SettingsView {
     private val commentPrefixForGoalHint = JBTextField(lean4Settings.commentPrefixForGoalHint)
     private val enableDiagnosticLens = JBCheckBox("Enable diagnostics lens for #check, #print, etc (restart to take effect)", lean4Settings.enableDiagnosticsLens)
     private val enableFileProgressBar = JBCheckBox("Enable the vertical file progress bar on the left of editor", lean4Settings.enableFileProgressBar)
+    // it's almost will never enable
+    private val enableLeanServerLog = JBCheckBox("Enable the lean language server log (restart to take effect)", lean4Settings.enableLeanServerLog)
 
     private val enableLspCompletion = JBCheckBox("Enable lsp completion", lean4Settings.enableLspCompletion)
 
@@ -227,6 +229,7 @@ class Lean4SettingsView {
             val enableLspCompletionChanged = enableLspCompletion.isSelected != lean4Settings.enableLspCompletion
             val enableDiagnosticLensChanged = enableDiagnosticLens.isSelected != lean4Settings.enableDiagnosticsLens
             val enableFileProgressBarChanged = enableFileProgressBar.isSelected != lean4Settings.enableFileProgressBar
+            var enableLeanServerLogChanged = enableLeanServerLog.isSelected != lean4Settings.enableLeanServerLog
             return enableNativeInfoviewChanged || enableVscodeInfoviewChanged || enableExtraCssForVscodeInfoviewChanged ||
                     extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged || enableLspCompletionChanged ||
                     nativeInfoviewPopupTextWidth1Changed || nativeInfoviewPopupTextWidth2Changed ||
@@ -234,6 +237,7 @@ class Lean4SettingsView {
                     || commentPrefixForGoalHintChanged
                     || enableDiagnosticLensChanged
                     || enableFileProgressBarChanged
+                    || enableLeanServerLogChanged
         }
 
     fun apply() {
@@ -252,6 +256,7 @@ class Lean4SettingsView {
         lean4Settings.nativeInfoviewPopupPreferredMaxWidth = nativeInfoviewPopupPreferredMaxWidth.number
         lean4Settings.enableLspCompletion = enableLspCompletion.isSelected
         lean4Settings.enableFileProgressBar = enableFileProgressBar.isSelected
+        lean4Settings.enableLeanServerLog = enableLeanServerLog.isSelected
         // TODO is it OK here runBlocking?
         // TODO full state
         runBlocking {
@@ -280,6 +285,7 @@ class Lean4SettingsView {
         nativeInfoviewPopupPreferredMaxWidth.number = lean4Settings.nativeInfoviewPopupPreferredMaxWidth
         enableLspCompletion.isSelected = lean4Settings.enableLspCompletion
         enableFileProgressBar.isSelected = lean4Settings.enableFileProgressBar
+        enableLeanServerLog.isSelected = lean4Settings.enableLeanServerLog
     }
 
     fun createComponent() = panel {
@@ -291,6 +297,10 @@ class Lean4SettingsView {
             labeled("Comment prefix for goal hints", commentPrefixForGoalHint)
         }
         group("Language Server Settings") {
+            row {
+                cell(enableLeanServerLog)
+                text("<html><a href='https://github.com/leanprover/lean4/tree/master/src/Lean/Server#in-general'>ref</a></html>")
+            }
             row { cell(enableLspCompletion) }
         }
         group("Infoview Settings") {

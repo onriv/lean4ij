@@ -107,7 +107,7 @@
                 implementationClass="lean4ij.language.PlaceHolderInlayHintsProvider"
                 isEnabledByDefault="false"
                 group="OTHER_GROUP"
-                providerId="lean.placeholder.value"
+                providerId="lean.placeholder"
                 bundle="messages.MyBundle"
                 nameKey="settings.lean.placeholder.value.name"
                 descriptionKey="settings.lean.placeholder.value.name"

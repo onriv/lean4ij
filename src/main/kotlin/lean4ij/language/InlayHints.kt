@@ -223,6 +223,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
 class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
 
     companion object {
+        // TODO this currently does not support let <w, p> := Exists.intro ... type of statements
         val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s)([^⟨]*?)(\s*:=[\n\s])""")
     }
 

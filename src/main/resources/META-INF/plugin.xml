@@ -105,7 +105,7 @@
         <codeInsight.declarativeInlayProvider
                 language="lean4"
                 implementationClass="lean4ij.language.PlaceHolderInlayHintsProvider"
-                isEnabledByDefault="true"
+                isEnabledByDefault="false"
                 group="OTHER_GROUP"
                 providerId="lean.placeholder.value"
                 bundle="messages.MyBundle"

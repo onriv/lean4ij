@@ -503,6 +503,7 @@ class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
         val renderer = InlayRenderer(info)
         val properties = InlayProperties()
             .relatesToPrecedingText(true)
+            .disableSoftWrapping(true)
 
         ApplicationManager.getApplication().invokeLater {
             info.endOffset

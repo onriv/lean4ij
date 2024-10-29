@@ -61,7 +61,7 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
                 completionFeature = LeanLSPCompletionFeature()
             }
             // waiting for lsp4ij https://github.com/redhat-developer/lsp4ij/pull/586
-            /*override*/ fun isEnabled(file: VirtualFile): Boolean {
+            override fun isEnabled(file: VirtualFile): Boolean {
                 return FileEditorManager.getInstance(project).selectedTextEditor?.let {
                     it.virtualFile == file
                 }?: false

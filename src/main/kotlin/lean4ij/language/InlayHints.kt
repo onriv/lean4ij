@@ -223,7 +223,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
 class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
 
     companion object {
-        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s)(.*?)(\s*:=[\n\s]+)""")
+        val DEF_REGEX = Regex("""(\b(?:def|set|let|have)\s)([^⟨]*?)(\s*:=[\n\s])""")
     }
 
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
@@ -234,7 +234,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             }
             val session = file.getSession()
             // This +2 is awkward, there maybe bad case for it
-            val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last + 2)
+            val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last - m.groupValues[3].length + 1)
 //            val position = Position(line = lineColumn.line, character = lineColumn.column)
             val position = Position(line = lineColumn.line, character = lineColumn.column)
             val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))

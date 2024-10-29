@@ -38,6 +38,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
+import com.intellij.openapi.util.text.LineColumn
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -235,7 +236,8 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             }
             val session = file.getSession()
             // This +2 is awkward, there maybe bad case for it
-            val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last - m.groupValues[3].length + 1)
+            // TODO weird taht there it can be null
+            val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last - m.groupValues[3].length + 1) ?: continue
 //            val position = Position(line = lineColumn.line, character = lineColumn.column)
             val position = Position(line = lineColumn.line, character = lineColumn.column)
             val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))
@@ -285,6 +287,8 @@ class OmitTypeInlayHintsProvider : InlayHintsProvider {
     }
 
     override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
+        // TODO why here nullable?
+        if (file.virtualFile==null) return null
         return providers.computeIfAbsent(file.virtualFile.path) {
             OmitTypeInlayHintsCollector(editor, editor.project)
         }

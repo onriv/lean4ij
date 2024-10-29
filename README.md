@@ -15,20 +15,21 @@ A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
 
 # Installation
 
-This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 lsp server. Please install that first.
+This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 language server. Please install that first.
 
 - Using the IDE built-in plugin system: `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
   `Install`
 
 - Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually using
-  `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...` For nightly builds go to [Actions/build](https://github.com/onriv/lean4ij/actions/workflows/build.yml) and download from the buttom of eachsuccess run.
+  `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...` For nightly builds go to [Actions/build](https://github.com/onriv/lean4ij/actions/workflows/build.yml), click the latest success run and scroll to the buttom.
 
-The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api.
+The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending on textmate plugin's extension api. (We are planning to remove the dependence of textmate. After it done the plugin can be compatible from 2023.2)
+
 ## Usage
 
 For currently there is no functionality of creating a project or setting up a project. Before open any lean project with it please first testing if the project has set up the toolchain correctly. Run any command like `elan which lake` or `lake exe cache get`, or `lake build` etc.
 
-The LSP server is start as any lean file is open in the Editor. If it not behaves correctly, try firing a restart action.
+The LSP server is start as any lean file is open in the Editor and the editor gets focus. If it not behaves correctly, try firing a restart action.
 
 Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live templates, the `<SPACE>` keypress is always required.
 
@@ -38,12 +39,21 @@ in Jetbrains platform, it contains some basic functionally and for popup it requ
 Messages and logs about the lean lsp server can be found in the language server tool window after setting the level to message or trace, check more information about this in [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij).
 ### Actions
 
-| action id              | action text                       | meaning                     |
-|------------------------|-----------------------------------|-----------------------------|
-| OpenLeanInfoView       | Lean4 : Lean open info view       | open the infoview(swing)    |
-| RestartLeanLsp         | Lean4 : Restart Lean Lsp Server   | restart the  lsp server     |
-| RestartCurrentLeanFile | Lean4 : Restart Current Lean File | restart current file        |
-| RestartJcefInfoview    | Lean4 : Restart Jcef Infoview     | restart the jcef infoview   |
+Currently, the following actions are defined, mostly without default shortcut. Add one for them in `Keymap` (like `Control Shift Enter` for toggle infoview)
+
+| action id                            | action text                                                 | default shortcut |
+|--------------------------------------|-------------------------------------------------------------|------------------|
+| OpenLeanInfoViewInternal             | Lean4 Actions: Toggle Infoview (internal)                   |                  |  
+| OpenLeanInfoViewJcef                 | Lean4 Actions: Toggle Infoview (jcef)                       |                  |  
+| IncreaseZoomLevelForLeanInfoViewJcef | Lean4 Actions: Increase zoom level for lean infoview (jcef) |                  |  
+| DecreaseZoomLevelForLeanInfoViewJcef | Lean4 Actions: Decrease zoom level for lean infoview (jcef) |                  |  
+| ResetZoomLevelForLeanInfoViewJcef    | Lean4 Actions: Reset zoom level for lean infoview (jcef)    |                  |  
+| OpenExternalInfoviewInBrowser        | Lean4 Actions: Open infoview in browser                     |                  |  
+| RestartLeanLsp                       | Lean4 Actions: Restart Lean Lsp Server                      |                  |  
+| RestartCurrentLeanFile               | Lean4 Actions: Restart Current Lean File                    |                  |  
+| RestartJcefInfoview                  | Lean4 Actions: Restart Jcef Infoview                        |                  |  
+| AddInlayGoalHint                     | Lean4 Actions: Add Inlay Goal Hint                          | Control I        |  
+| DelInlayGoalHint                     | Lean4 Actions: Delete Inlay Goal Hint                       | Control Shift I  |  
 
 ## Settings
 
@@ -79,6 +89,8 @@ The plugin is still on an early stage, check [ISSUES.md](./ISSUES.md) for known 
   - (Windows) `$HOME\AppData\Local\JetBrains\<Product>\log\idea.log`
   - (Macos) `~/Library/Caches/<Product>/log/idea.log`
 - If the IDE is freezing, try check also the `threadDumps-freeze-***` files under the log folder.
+
+For showing debug/trace log, add `lean4ij:all` in `MENU > Help > Diagnostic Tools > Debug Log Settings` and restart, see [How-to-enable-debug-logging-in-IntelliJ-IDEA](https://youtrack.jetbrains.com/articles/SUPPORT-A-43/How-to-enable-debug-logging-in-IntelliJ-IDEA) for more docs.
  
 ## Acknowledgments
 
@@ -89,6 +101,15 @@ The following projects give great help for developing the plugin:
 - [Julian/lean.nvim](https://github.com/Julian/lean.nvim)
 - [leanprover-community/lean4-mode](https://github.com/leanprover-community/lean4-mode)
 - [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij)
+
+and many source codes with references to
+
+- [intellij-arend](https://github.com/JetBrains/intellij-arend)
+- [intellij-haskell](https://github.com/rikvdkleij/intellij-haskell.git)
+- [julia-intellij](https://github.com/JuliaEditorSupport/julia-intellij)
+- [intellij-quarkus](https://github.com/redhat-developer/intellij-quarkus/)
+- [intellij-rust](https://github.com/intellij-rust/intellij-rust.git)
+- [intellij-sdk-code-samples](https://github.com/JetBrains/intellij-sdk-code-samples)
 
 Plugin based on the [IntelliJ Platform Plugin Template][template].
 

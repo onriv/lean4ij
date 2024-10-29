@@ -78,6 +78,8 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
 //      extra class
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
+    var enableFileProgressBar = true
+
     var commentPrefixForGoalHint : String = "---"
     var commentPrefixForGoalHintRegex = updateCommentPrefixForGoalHintRegex()
     var enableDiagnosticsLens = true
@@ -129,6 +131,7 @@ class Lean4SettingsView {
     
     private val commentPrefixForGoalHint = JBTextField(lean4Settings.commentPrefixForGoalHint)
     private val enableDiagnosticLens = JBCheckBox("Enable diagnostics lens for #check, #print, etc (restart to take effect)", lean4Settings.enableDiagnosticsLens)
+    private val enableFileProgressBar = JBCheckBox("Enable the vertical file progress bar on the left of editor", lean4Settings.enableFileProgressBar)
 
     private val enableLspCompletion = JBCheckBox("Enable lsp completion", lean4Settings.enableLspCompletion)
 
@@ -223,12 +226,14 @@ class Lean4SettingsView {
                 nativeInfoviewPopupPreferredMaxWidth.number != lean4Settings.nativeInfoviewPopupPreferredMaxWidth
             val enableLspCompletionChanged = enableLspCompletion.isSelected != lean4Settings.enableLspCompletion
             val enableDiagnosticLensChanged = enableDiagnosticLens.isSelected != lean4Settings.enableDiagnosticsLens
+            val enableFileProgressBarChanged = enableFileProgressBar.isSelected != lean4Settings.enableFileProgressBar
             return enableNativeInfoviewChanged || enableVscodeInfoviewChanged || enableExtraCssForVscodeInfoviewChanged ||
                     extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged || enableLspCompletionChanged ||
                     nativeInfoviewPopupTextWidth1Changed || nativeInfoviewPopupTextWidth2Changed ||
                     nativeInfoviewPopupPreferredMinWidthChanged || nativeInfoviewPopupPreferredMaxWidthChanged
                     || commentPrefixForGoalHintChanged
                     || enableDiagnosticLensChanged
+                    || enableFileProgressBarChanged
         }
 
     fun apply() {
@@ -246,6 +251,7 @@ class Lean4SettingsView {
         lean4Settings.nativeInfoviewPopupPreferredMinWidth = nativeInfoviewPopupPreferredMinWidth.number
         lean4Settings.nativeInfoviewPopupPreferredMaxWidth = nativeInfoviewPopupPreferredMaxWidth.number
         lean4Settings.enableLspCompletion = enableLspCompletion.isSelected
+        lean4Settings.enableFileProgressBar = enableFileProgressBar.isSelected
         // TODO is it OK here runBlocking?
         // TODO full state
         runBlocking {
@@ -273,9 +279,13 @@ class Lean4SettingsView {
         nativeInfoviewPopupPreferredMinWidth.number = lean4Settings.nativeInfoviewPopupPreferredMinWidth
         nativeInfoviewPopupPreferredMaxWidth.number = lean4Settings.nativeInfoviewPopupPreferredMaxWidth
         enableLspCompletion.isSelected = lean4Settings.enableLspCompletion
+        enableFileProgressBar.isSelected = lean4Settings.enableFileProgressBar
     }
 
     fun createComponent() = panel {
+        group("General Settings") {
+            row { cell(enableFileProgressBar) }
+        }
         group("Inlay Hints Settings ") {
             row { cell(enableDiagnosticLens) }
             labeled("Comment prefix for goal hints", commentPrefixForGoalHint)

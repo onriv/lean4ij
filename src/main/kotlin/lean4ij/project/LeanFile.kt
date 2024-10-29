@@ -97,6 +97,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     init {
         scope.launch {
             // TODO is it here also blocking a thread?
+            // TODO add a setting for this
             while (true) {
                 var info = processingInfoChannel.receive()
                 var highlighters = mutableListOf<RangeHighlighter>()
@@ -143,11 +144,10 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private val leanFileProgressEmptyTextAttributesKey = TextAttributesKey.createTextAttributesKey("LEAN_FILE_PROGRESS_EMPTY")
 
     /**
-     * TODO rather than one line highlight. Highlight it on range
-     *      for avoiding flashing, or performance issue
      */
     private fun tryAddLineMarker(info: FileProgressProcessingInfo, highlighters: MutableList<RangeHighlighter>): MutableList<RangeHighlighter> {
         val ret = mutableListOf<RangeHighlighter>()
+        if (!lean4Settings.enableFileProgressBar) return ret
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             if (editor.virtualFile.path == unquotedFile) {
                 val document = editor.document
@@ -204,6 +204,8 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      *      more smoothly and independently
      * TODO maybe try psi for infoview tool window
      * TODO passing things like editor etc seems cumbersome, maybe add some implement for context
+     * TODO this should maybe named as [updateInternalInfoview], but it contains a switch...
+     *      The switch should put in [updateInternalInfoview]
      */
     fun updateCaret(editor: Editor, logicalPosition: LogicalPosition) {
         if (lean4Settings.enableNativeInfoview) {
@@ -455,9 +457,20 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                         position
                     )
                     allMessage = getInteractiveDiagnostics(diagnosticsParams)
+                    // after getting all Messages, do an update intermediately...
+                    // to avoid lag
+                    updateCaretIntermediately()
                     lastMaxLine = maxLine
                     maxLine = -1
                 }
+            }
+        }
+    }
+
+    private fun updateCaretIntermediately() {
+        FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
+            if (editor.virtualFile.path == unquotedFile) {
+                updateCaret(editor, editor.caretModel.logicalPosition)
             }
         }
     }

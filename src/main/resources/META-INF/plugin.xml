@@ -35,6 +35,24 @@
         <!-- Lean4ParserDefinition is still problematic -->
         <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/>
         <lang.commenter language="lean4" implementationClass="lean4ij.language.Lean4Commenter"/>
+        <!-- TODO this seems must not use textmate highlighter -->
+        <!-- <lang.braceMatcher language="lean4" implementationClass="lean4ij.language.Lean4PairedBraceMatcher"/> -->
+        <lang.braceMatcher language="textmate" implementationClass="lean4ij.language.Lean4PairedBraceMatcher"/>
+
+        <!--
+        TODO
+            must it have something like
+            <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"
+                          order="first"/>
+            ?
+        -->
+        <!-- both these two not working... -->
+        <completion.contributor language="lean4" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor"/>
+        <completion.contributor language="lean4" implementationClass="com.intellij.util.textCompletion.TextCompletionContributor"
+                                order="first, before commitCompletion"/>
+        <!-- it works, but not ready to add yet(and lsp completion too slow kind of blocking it...) -->
+        <!-- <completion.contributor language="lean4" implementationClass="lean4ij.language.Lean4ManualCompletionContributor" -->
+        <!--                         order="first, before commitCompletion"/> -->
 
         <!-- ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008202719-Syntax-Highlighting-for-Custom-Filetype-conflicts-with-Textmate-bundle -->
         <editorHighlighterProvider
@@ -45,8 +63,15 @@
                 language="lean4"
                 implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/>
 
-        <toolWindow factoryClass="lean4ij.infoview.LeanInfoViewWindowFactory" id="LeanInfoViewWindow"/>
-        <toolWindow factoryClass="lean4ij.infoview.external.JcefInfoviewTooWindowFactory" id="LeanInfoviewJcef"/>
+        <!-- check https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries for making icons to respect theme -->
+        <toolWindow factoryClass="lean4ij.infoview.LeanInfoViewWindowFactory"
+                    id="LeanInfoViewWindow"
+                    icon="/icons/infoview_icon.svg"
+        />
+        <toolWindow factoryClass="lean4ij.infoview.external.JcefInfoviewTooWindowFactory"
+                    id="LeanInfoviewJcef"
+                    icon="/icons/jcef_icon.svg"
+        />
 
         <postStartupActivity implementation="lean4ij.project.LeanProjectActivity"/>
 

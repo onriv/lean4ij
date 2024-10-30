@@ -4,11 +4,15 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2024-10-30
+
+Depend on the latest approved nightly build of LSP4IJ: 0.7.1-20241027-013436
+
 - setting for disable progress bar on the left of editor while file progressing
-- disable LEAN_SERVER_LOG (and a setting for enable it) Please read [issue#45](https://github.com/onriv/lean4ij/issues/45) for removing existing logs
+- main reason for the release: disable LEAN_SERVER_LOG (and a setting for enable it) Please read [issue#45](https://github.com/onriv/lean4ij/issues/45) for removing existing logs
 - disable placeholder inlay hints by default
 - fix some errors and exceptions
-- fix some bad cases in inlay hints
+- @enigmurl fix some bad cases in inlay hints
 
 ## [0.1.0] - 2024-10-27
 
@@ -60,7 +64,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/onriv/lean4ij/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/onriv/lean4ij/compare/v0.0.19...v0.1.0
 [0.0.19]: https://github.com/onriv/lean4ij/compare/v0.0.18...v0.0.19
 [0.0.18]: https://github.com/onriv/lean4ij/compare/v0.0.17...v0.0.18

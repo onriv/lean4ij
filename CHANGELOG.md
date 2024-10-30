@@ -5,9 +5,10 @@
 ## [Unreleased]
 
 - setting for disable progress bar on the left of editor while file progressing
-- disable LEAN_SERVER_LOG (and a setting for enable it)
+- disable LEAN_SERVER_LOG (and a setting for enable it) Please read [issue#45](https://github.com/onriv/lean4ij/issues/45) for removing existing logs
 - disable placeholder inlay hints by default
-- fix some errors
+- fix some errors and exceptions
+- fix some bad cases in inlay hints
 
 ## [0.1.0] - 2024-10-27
 

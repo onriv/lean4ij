@@ -5,8 +5,12 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
+import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.Annotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lexer.FlexAdapter
 import com.intellij.lexer.Lexer
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
@@ -15,10 +19,8 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.IncorrectOperationException
-import lean4ij.language.psi.TokenType.BLOCK_COMMENT
-import lean4ij.language.psi.TokenType.DOC_COMMENT
-import lean4ij.language.psi.TokenType.LINE_COMMENT
-import lean4ij.language.psi.TokenType.STRING
+import lean4ij.language.psi.TokenType
+import lean4ij.language.psi.TokenType.*
 
 class Lean4TokenType(debugName: String) : IElementType(debugName, Lean4Language.INSTANCE)
 
@@ -47,17 +49,8 @@ class Lean4ParserDefinition : ParserDefinition {
 
     override fun getStringLiteralElements(): TokenSet = STRINGS
 
-    override fun createElement(node: ASTNode?): PsiElement {
-        // IElementType type = node.getElementType();
-        // if (type == PROPERTY) {
-        //     return new SimplePropertyImpl(node);
-        // }
-        // throw new AssertionError("Unknown element type: " + type);
-        val type = node?.elementType
-        if (type == FILE) {
-            return Lean4ElementImpl(node)
-        }
-        throw AssertionError("Unknown element type: $type")
+    override fun createElement(node: ASTNode): PsiElement {
+        return Factory.createElement(node)
     }
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile = Lean4PsiFile(viewProvider)

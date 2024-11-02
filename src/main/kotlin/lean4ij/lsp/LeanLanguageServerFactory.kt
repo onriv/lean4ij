@@ -1,13 +1,17 @@
 package lean4ij.lsp
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.redhat.devtools.lsp4ij.LanguageServerEnablementSupport
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
+import com.redhat.devtools.lsp4ij.client.features.LSPDiagnosticFeature
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
+import lean4ij.Lean4Settings
 import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -15,6 +19,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * The language server factory as LSP4IJ describe
  */
 class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablementSupport {
+
+    private val lean4Settings = service<Lean4Settings>()
 
     companion object {
         /**
@@ -36,7 +42,7 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
      * set it to always true if no language server return while debugging
      */
     override fun isEnabled(project: Project): Boolean {
-        return isEnable.get()
+        return lean4Settings.enableLanguageServer && isEnable.get()
     }
 
     override fun setEnabled(enabled: Boolean, project: Project) {
@@ -59,6 +65,11 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
         return object : LSPClientFeatures() {
             init {
                 completionFeature = LeanLSPCompletionFeature()
+                diagnosticFeature = object : LSPDiagnosticFeature() {
+                    override fun isEnabled(file: PsiFile): Boolean {
+                        return true
+                    }
+                }
             }
             // waiting for lsp4ij https://github.com/redhat-developer/lsp4ij/pull/586
             override fun isEnabled(file: VirtualFile): Boolean {

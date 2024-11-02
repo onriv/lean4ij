@@ -56,6 +56,9 @@ KEYWORD_COMMAND_PREFIX   = local|private|protected|scoped|partial|noncomputable|
 KEYWORD_MODIFIER        = renaming|hiding|where|extends|using|with|at|rec|deriving
 KEYWORD_COMMAND2        = syntax|elab|elab_rules|macro_rules|macro
 KEYWORD_COMMAND3        = namespace|section|end
+KEYWORD_COMMAND4        = class|def|lemma|example|theorem|instance
+KEYWORD_COMMAND5        = #check|#guard_msgs|#eval|#reduce
+DEFAUTL_TYPE = Type|(Type \*)
 
  // special
 left_paren          = "("
@@ -72,7 +75,12 @@ dot = "."
 // TODO any way to avoid the exclusion?
 GREEK = [\u0370-\u03FF]
 ALPHA_NUM = [a-zA-Z0-9_]
-IDENTIFIER              = ({ALPHA_NUM} | {GREEK})+
+SUPERSCRIPT = [⁻¹²³⁴⁵⁶⁷⁸⁹⁰]
+SUBSCRIPT = [₁₂₃₄₅₆₇₈₉₀]
+IDENTIFIER              = ({ALPHA_NUM} | {GREEK}|{digit}|{quote}|{SUPERSCRIPT}|{SUBSCRIPT})+
+
+NUMBER              = [0-9]+
+NEGATIVE_NUMBER     = -{NUMBER}
 
 // the following part is copied from intellij-haskell
 newline             = \r|\n|\r\n
@@ -112,9 +120,11 @@ hash                = "#"
 dollar              = "$"
 percentage          = "%"
 ampersand           = "&"
-star                = "*" | "★"
+star                = "*"
+unicode_star        = "★"
 plus                = "+"
-dot                 = "." | "∘"
+dot                 = "."
+small_circle        = "∘"
 slash               = "/"
 lt                  = "<"
 gt                  = ">"
@@ -203,7 +213,30 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {STRING}                {
           return STRING;
                             }
+    {at} {
+        return AT;
+    }
+    {colon}    {
+        return COLON;
+    }
+    {MISC_COMPARISON_SYM}    {
+        return MISC_COMPARISON_SYM;
+    }
+    {star}    {
+    return STAR;
+    }
+    {forall}  {
+    return FOR_ALL;
+    }
+    {NUMBER}                { return NUMBER; }
+    {NEGATIVE_NUMBER}       { return NEGATIVE_NUMBER; }
 
+    {comma} {
+    return COMMA;
+    }
+    {equal} {
+    return EQUAL;
+    }
     {BlOCK_COMMENT_START}   {
                                 originalState = yystate();
                                 yybegin(BLOCK_COMMENT_INNER);
@@ -239,6 +272,15 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
                             }
     {KEYWORD_COMMAND3}      {
           return KEYWORD_COMMAND3;
+                            }
+    {KEYWORD_COMMAND4}      {
+          return KEYWORD_COMMAND4;
+                            }
+    {KEYWORD_COMMAND5}      {
+          return KEYWORD_COMMAND5;
+                            }
+    {DEFAUTL_TYPE}      {
+          return DEFAULT_TYPE;
                             }
     {IDENTIFIER}            {
           return IDENTIFIER;
@@ -277,6 +319,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {dot}                   {
           return DOT;
                             }
+
     // comparison symbols
     {MISC_COMPARISON_SYM}   {
           return MISC_COMPARISON_SYM;

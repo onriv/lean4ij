@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors.BAD_CHARACTER
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
@@ -23,11 +24,12 @@ import lean4ij.language.psi.TokenType.IDENTIFIER
  * TODO use customized textAttributes
  */
 class Lean4SyntaxHighlighter : SyntaxHighlighterBase() {
-    val SEPARATOR: TextAttributesKey = createTextAttributesKey("SIMPLE_SEPARATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN)
-    val KEY: TextAttributesKey = createTextAttributesKey("SIMPLE_KEY", DefaultLanguageHighlighterColors.KEYWORD)
-    val VALUE: TextAttributesKey = createTextAttributesKey("SIMPLE_VALUE", DefaultLanguageHighlighterColors.STRING)
-    val COMMENT: TextAttributesKey = createTextAttributesKey("SIMPLE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
-    val NUMBER: TextAttributesKey = createTextAttributesKey("SIMPLE_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
+    val SEPARATOR: TextAttributesKey = createTextAttributesKey("LEAN_SEPARATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN)
+    val KEY: TextAttributesKey = createTextAttributesKey("LEAN_KEY", DefaultLanguageHighlighterColors.KEYWORD)
+    val VALUE: TextAttributesKey = createTextAttributesKey("LEAN_VALUE", DefaultLanguageHighlighterColors.STRING)
+    val COMMENT: TextAttributesKey = createTextAttributesKey("LEAN_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
+    val NUMBER: TextAttributesKey = createTextAttributesKey("LEAN_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
+    val SORRY : TextAttributesKey = createTextAttributesKey("LEAN_SORRY", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE)
 
     val BAD_CHAR_KEYS: Array<TextAttributesKey> = arrayOf(BAD_CHARACTER)
     val SEPARATOR_KEYS: Array<TextAttributesKey> = arrayOf(SEPARATOR)
@@ -36,6 +38,7 @@ class Lean4SyntaxHighlighter : SyntaxHighlighterBase() {
     val COMMENT_KEYS: Array<TextAttributesKey> = arrayOf(COMMENT)
     val NUMBER_KEYS: Array<TextAttributesKey> = arrayOf(NUMBER)
     val EMPTY_KEYS: Array<TextAttributesKey> = arrayOf()
+    val SORRY_KEYS: Array<TextAttributesKey> = arrayOf(SORRY)
 
 
     override fun getHighlightingLexer(): Lexer {
@@ -62,6 +65,9 @@ class Lean4SyntaxHighlighter : SyntaxHighlighterBase() {
         }
         if (tokenType == TokenType.NUMBER||tokenType==TokenType.NEGATIVE_NUMBER) {
             return NUMBER_KEYS;
+        }
+        if (tokenType == TokenType.KEYWORD_SORRY) {
+            return SORRY_KEYS;
         }
         return EMPTY_KEYS;
     }

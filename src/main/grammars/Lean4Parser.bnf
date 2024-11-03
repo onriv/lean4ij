@@ -48,7 +48,8 @@ tokens ::= (WHITE_SPACE|
     DEFAULT_TYPE|
     FOR_ALL|COMMA|EQUAL|
     NUMBER|NEGATIVE_NUMBER|
-    KEKWORD_SORRY|
+    KEYWORD_SORRY|
+    TEMPLATE_TRIGGER|
     definition
     )*
 

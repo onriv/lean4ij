@@ -35,9 +35,7 @@
         <!-- Lean4ParserDefinition is still problematic -->
         <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/>
         <lang.commenter language="lean4" implementationClass="lean4ij.language.Lean4Commenter"/>
-        <!-- TODO this seems must not use textmate highlighter -->
-        <!-- <lang.braceMatcher language="lean4" implementationClass="lean4ij.language.Lean4PairedBraceMatcher"/> -->
-        <lang.braceMatcher language="textmate" implementationClass="lean4ij.language.Lean4PairedBraceMatcher"/>
+        <lang.braceMatcher language="lean4" implementationClass="lean4ij.language.Lean4PairedBraceMatcher"/>
 
         <!--
         TODO
@@ -54,14 +52,6 @@
         <!-- <completion.contributor language="lean4" implementationClass="lean4ij.language.Lean4ManualCompletionContributor" -->
         <!--                         order="first, before commitCompletion"/> -->
 
-        <!-- ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008202719-Syntax-Highlighting-for-Custom-Filetype-conflicts-with-Textmate-bundle -->
-        <!-- <editorHighlighterProvider -->
-        <!--         filetype="lean4" -->
-        <!--         implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider" -->
-        <!-- /> -->
-        <!-- <lang.syntaxHighlighterFactory -->
-        <!--         language="lean4" -->
-        <!--         implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/> -->
         <lang.syntaxHighlighterFactory
                 language="lean4"
                 implementationClass="lean4ij.language.Lean4SyntaxHighlighterFactory"/>

@@ -58,6 +58,7 @@ KEYWORD_COMMAND2        = syntax|elab|elab_rules|macro_rules|macro
 KEYWORD_COMMAND3        = namespace|section|end
 KEYWORD_COMMAND4        = class|def|lemma|example|theorem|instance
 KEYWORD_COMMAND5        = #check|#guard_msgs|#eval|#reduce
+KEYWORD_SORRY = sorry
 DEFAUTL_TYPE = Type|(Type \*)
 
  // special
@@ -159,6 +160,7 @@ left_uni_bracket    = "⟨"
 right_uni_bracket   = "⟩"
 left_uni_double_bracket = "⟦"
 right_uni_double_bracket = "⟧"
+template_trigger = \\[^  \t\r\n]+
 
 // this part is copied from julia-intellij
 MISC_COMPARISON_SYM      =[∉∋∌⊆⊈⊂⊄⊊∝∊∍∥∦∷∺∻∽∾≁≃≄≅≆≇≈≉≊≋≌≍≎≐≑≒≓≔≕≖≗≘≙≚≛≜≝≞≟≣≦≧≨≩≪≫≬≭≮≯≰≱≲≳≴≵≶≷≸≹≺≻≼≽≾≿⊀⊁⊃⊅⊇⊉⊋⊏⊐⊑⊒⊜⊩⊬⊮⊰⊱⊲⊳⊴⊵⊶⊷⋍⋐⋑⋕⋖⋗⋘⋙⋚⋛⋜⋝⋞⋟⋠⋡⋢⋣⋤⋥⋦⋧⋨⋩⋪⋫⋬⋭⋲⋳⋴⋵⋶⋷⋸⋹⋺⋻⋼⋽⋾⋿⟈⟉⟒⦷⧀⧁⧡⧣⧤⧥⩦⩧⩪⩫⩬⩭⩮⩯⩰⩱⩲⩳⩴⩵⩶⩷⩸⩹⩺⩻⩼⩽⩾⩿⪀⪁⪂⪃⪄⪅⪆⪇⪈⪉⪊⪋⪌⪍⪎⪏⪐⪑⪒⪓⪔⪕⪖⪗⪘⪙⪚⪛⪜⪝⪞⪟⪠⪡⪢⪣⪤⪥⪦⪧⪨⪩⪪⪫⪬⪭⪮⪯⪰⪱⪲⪳⪴⪵⪶⪷⪸⪹⪺⪻⪼⪽⪾⪿⫀⫁⫂⫃⫄⫅⫆⫇⫈⫉⫊⫋⫌⫍⫎⫏⫐⫑⫒⫓⫔⫕⫖⫗⫘⫙⫷⫸⫹⫺⊢⊣⟂]
@@ -279,6 +281,12 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {KEYWORD_COMMAND5}      {
           return KEYWORD_COMMAND5;
                             }
+    {KEYWORD_SORRY}      {
+          return KEYWORD_SORRY;
+                            }
+    {template_trigger} {
+        return TEMPLATE_TRIGGER;
+    }
     {DEFAUTL_TYPE}      {
           return DEFAULT_TYPE;
                             }

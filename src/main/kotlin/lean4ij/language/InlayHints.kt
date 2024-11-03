@@ -154,6 +154,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
     companion object {
         const val TIMEOUT_STEP_MILLIS: Long = 25
         const val TIMEOUT_MAX_ITS = 10
+        val lean4Settings = service<Lean4Settings>()
     }
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
@@ -203,7 +204,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
         var its = 0
         while (!hints.isDone) {
             its += 1
-            if (element.containingFile.modificationStamp != computeTime || its >= TIMEOUT_MAX_ITS) {
+            if (element.containingFile.modificationStamp != computeTime || its * TIMEOUT_MAX_ITS >= lean4Settings.maxInlayHintWaitingMillis) {
                 return
             }
 

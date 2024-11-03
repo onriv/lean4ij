@@ -82,6 +82,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableLeanServerLog = false
     var enableFileProgressBar = true
 
+    var maxInlayHintWaitingMillis = 250
     var commentPrefixForGoalHint : String = "---"
     var commentPrefixForGoalHintRegex = updateCommentPrefixForGoalHintRegex()
     var enableDiagnosticsLens = true
@@ -130,7 +131,8 @@ data class Lean4SettingsState(
  */
 class Lean4SettingsView {
     private val lean4Settings = service<Lean4Settings>()
-    
+
+    private val maxInlayHintWaitingMillis = JBIntSpinner(lean4Settings.maxInlayHintWaitingMillis, 0, 500, 25)
     private val commentPrefixForGoalHint = JBTextField(lean4Settings.commentPrefixForGoalHint)
     private val enableDiagnosticLens = JBCheckBox("Enable diagnostics lens for #check, #print, etc (restart to take effect)", lean4Settings.enableDiagnosticsLens)
     private val enableFileProgressBar = JBCheckBox("Enable the vertical file progress bar on the left of editor", lean4Settings.enableFileProgressBar)
@@ -212,6 +214,7 @@ class Lean4SettingsView {
         get() {
 
             val commentPrefixForGoalHintChanged = commentPrefixForGoalHint.text != lean4Settings.commentPrefixForGoalHint
+            val maxInlayHintWaitingMillisChanged = maxInlayHintWaitingMillis.number != lean4Settings.maxInlayHintWaitingMillis
 
             val enableNativeInfoviewChanged = enableNativeInfoview.isSelected != lean4Settings.enableNativeInfoview
             val enableVscodeInfoviewChanged = enableVscodeInfoview.isSelected != lean4Settings.enableVscodeInfoview
@@ -238,6 +241,7 @@ class Lean4SettingsView {
                     extraCssForVscodeInfoviewChanged || hoveringTimeBeforePopupNativeInfoviewDocChanged || enableLspCompletionChanged ||
                     nativeInfoviewPopupTextWidth1Changed || nativeInfoviewPopupTextWidth2Changed ||
                     nativeInfoviewPopupPreferredMinWidthChanged || nativeInfoviewPopupPreferredMaxWidthChanged
+                    || maxInlayHintWaitingMillisChanged
                     || commentPrefixForGoalHintChanged
                     || enableDiagnosticLensChanged
                     || enableFileProgressBarChanged
@@ -246,6 +250,7 @@ class Lean4SettingsView {
         }
 
     fun apply() {
+        lean4Settings.maxInlayHintWaitingMillis = maxInlayHintWaitingMillis.number
         lean4Settings.commentPrefixForGoalHint = commentPrefixForGoalHint.text
         lean4Settings.commentPrefixForGoalHintRegex = Regex("""(\n\s*${lean4Settings.commentPrefixForGoalHint})\s*?\n\s*\S""")
         lean4Settings.enableDiagnosticsLens = enableDiagnosticLens.isSelected
@@ -279,6 +284,7 @@ class Lean4SettingsView {
 
     fun reset() {
         enableDiagnosticLens.isSelected = lean4Settings.enableDiagnosticsLens
+        maxInlayHintWaitingMillis.number = lean4Settings.maxInlayHintWaitingMillis
         commentPrefixForGoalHint.text = lean4Settings.commentPrefixForGoalHint
         enableNativeInfoview.isSelected = lean4Settings.enableNativeInfoview
         enableVscodeInfoview.isSelected = lean4Settings.enableVscodeInfoview
@@ -302,6 +308,7 @@ class Lean4SettingsView {
         group("Inlay Hints Settings ") {
             row { cell(enableDiagnosticLens) }
             labeled("Comment prefix for goal hints", commentPrefixForGoalHint)
+            labeled("Max inlay hint waiting millis", maxInlayHintWaitingMillis)
         }
         group("Language Server Settings") {
             row { cell(enableLanguageServer) }

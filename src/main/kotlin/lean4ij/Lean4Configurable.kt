@@ -82,7 +82,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableLeanServerLog = false
     var enableFileProgressBar = true
 
-    var maxInlayHintWaitingMillis = 250
+    var maxInlayHintWaitingMillis = 100
     var commentPrefixForGoalHint : String = "---"
     var commentPrefixForGoalHintRegex = updateCommentPrefixForGoalHintRegex()
     var enableDiagnosticsLens = true

@@ -3,6 +3,11 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+- remove textmate dep, backport to version 2023.2
+- a first highlight with customized lexer/parser
+- skip inlay hints collecting if disabled in the setting
+- a setting for max inlay hint wait time
+- a setting for disable language server globally
 
 ## [0.1.1] - 2024-10-30
 

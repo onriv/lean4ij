@@ -3,6 +3,12 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+
+## [0.1.2] - 2024-11-03
+
+Depend on the latest approved nightly build of LSP4IJ: 0.7.1-20241101-225116
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.1-20241101-225116@nightly]
+
 - remove textmate dep
 - a first highlight with customized lexer/parser
 - skip inlay hints collecting if disabled in the setting
@@ -70,7 +76,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/onriv/lean4ij/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/onriv/lean4ij/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/onriv/lean4ij/compare/v0.0.19...v0.1.0
 [0.0.19]: https://github.com/onriv/lean4ij/compare/v0.0.18...v0.0.19

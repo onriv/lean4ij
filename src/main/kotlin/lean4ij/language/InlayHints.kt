@@ -4,6 +4,7 @@ import com.google.common.base.MoreObjects
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HintRenderer
+import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.CollapseState
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
@@ -145,6 +146,7 @@ class HintCache {
     }
 }
 
+
 // Base functionality
 abstract class InlayHintBase(protected val editor: Editor, protected val project: Project?) : SharedBypassCollector {
     var hintCache = HintCache()
@@ -155,6 +157,12 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
     }
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+        val inlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
+        val isEnabled = inlayHintsSettings.isProviderEnabled(getId())?:return
+        if (!isEnabled) {
+            return
+        }
+
         // since here we check if it's a file, this is in fact collect on the file level rather then
         // psi element
         if (project == null || element !is PsiFile) {
@@ -211,6 +219,11 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
     }
 
     abstract suspend fun computeFor(file: LeanFile, content: String): HintSet
+
+    /**
+     * we need the provider id for checking if it's disabled
+     */
+    abstract fun getId() : String
 }
 
 /**
@@ -257,6 +270,10 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
         }
 
         return hints
+    }
+
+    override fun getId(): String {
+        return "lean.def.omit.type"
     }
 
     private fun hasTypeNotation(s: String): Boolean {
@@ -339,6 +356,10 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
 
         return hints
     }
+
+    override fun getId(): String {
+        return "lean.goal.hint.value"
+    }
 }
 
 class GoalInlayHintsProvider : InlayHintsProvider {
@@ -393,6 +414,9 @@ class PlaceHolderInlayHintsCollector(editor: Editor, project: Project?) : InlayH
         return hints
     }
 
+    override fun getId(): String {
+        return "lean.placeholder"
+    }
 }
 
 class PlaceHolderInlayHintsProvider : InlayHintsProvider {
@@ -556,9 +580,13 @@ class DiagInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
 
 
         val hints = HintSet()
-        val leanProject = project.service<LeanProjectService>()
+    val leanProject = project.service<LeanProjectService>()
 
         return hints
+    }
+
+    override fun getId(): String {
+        TODO("Not yet implemented")
     }
 }
 

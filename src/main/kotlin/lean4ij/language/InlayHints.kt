@@ -157,6 +157,10 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
     }
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+        // if the language server is not start, return directly
+        if (!lean4Settings.enableLanguageServer) {
+            return
+        }
         val inlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
         val isEnabled = inlayHintsSettings.isProviderEnabled(getId())?:return
         if (!isEnabled) {

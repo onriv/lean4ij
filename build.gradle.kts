@@ -108,7 +108,6 @@ intellij {
     }
     //Uses `platformPlugins` property from the gradle.properties file.
     // from https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/build.gradle.kts
-    platformPlugins.add("org.jetbrains.plugins.textmate")
     platformPlugins.addAll(properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }.get())
     println("Depends on platformPlugins: $platformPlugins")
     plugins = platformPlugins

@@ -314,7 +314,7 @@ class Lean4SettingsView {
             row { cell(enableLanguageServer) }
             row {
                 cell(enableLeanServerLog)
-                text("<html><a href='https://github.com/leanprover/lean4/tree/master/src/Lean/Server#in-general'>ref</a></html>")
+                text("<a href='https://github.com/leanprover/lean4/tree/master/src/Lean/Server#in-general'>ref</a>")
             }
             row { cell(enableLspCompletion) }
         }

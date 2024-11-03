@@ -60,7 +60,6 @@ import lean4ij.util.LeanUtil
 import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.jetbrains.plugins.textmate.psi.TextMateFile
 import java.awt.Color
 import java.util.IdentityHashMap
 import java.util.concurrent.CompletableFuture

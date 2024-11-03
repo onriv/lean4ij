@@ -6,7 +6,7 @@
 
     <depends>com.intellij.modules.platform</depends>
 <!--    <depends>com.intellij.modules.ultimate</depends>-->
-    <depends>org.jetbrains.plugins.textmate</depends>
+<!--     <depends>org.jetbrains.plugins.textmate</depends> -->
     <depends>com.redhat.devtools.lsp4ij</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
@@ -18,7 +18,7 @@
                 implementation="lean4ij.language.Lean4Context"/>
         <!-- // from https://github.com/JetBrains/godot-support/blob/master/rider/src/main/resources/META-INF/plugin.xml-->
         <!-- https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/src/main/resources/META-INF/plugin.xml#L26-->
-        <textmate.bundleProvider implementation="lean4ij.language.TextMateBundleProvider"/>
+        <!-- <textmate.bundleProvider implementation="lean4ij.language.TextMateBundleProvider"/> -->
         <colorSettingsPage implementation="lean4ij.infoview.LeanInfoviewColorSettingPage"/>
 
         <!-- lsp4ij says:-->
@@ -45,7 +45,7 @@
             ?
         -->
         <!-- both these two not working... -->
-        <completion.contributor language="lean4" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor"/>
+        <!-- <completion.contributor language="lean4" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor"/> -->
         <completion.contributor language="lean4" implementationClass="com.intellij.util.textCompletion.TextCompletionContributor"
                                 order="first, before commitCompletion"/>
         <!-- it works, but not ready to add yet(and lsp completion too slow kind of blocking it...) -->

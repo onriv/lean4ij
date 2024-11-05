@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- fix some style in the external infoview
+
 ## [0.1.2] - 2024-11-03
 
 Depend on the latest approved nightly build of LSP4IJ: 0.7.1-20241101-225116

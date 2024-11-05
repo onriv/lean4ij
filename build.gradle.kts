@@ -209,6 +209,10 @@ tasks {
         args.set(listOf("run", "build"))
     }
 
+    register<NpmTask>("runBrowserInfoview") {
+        args.set(listOf("run", "dev"))
+    }
+
     buildPlugin {
         dependsOn("buildBrowserInfoview")
     }

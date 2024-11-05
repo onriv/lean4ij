@@ -7,6 +7,12 @@ html,body {
     height: 100%;
 }
 
+.restart-file-button {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
 .font-code {
     color: var(--vscode-editor-foreground);
     font-family: var(--vscode-editor-font-family);

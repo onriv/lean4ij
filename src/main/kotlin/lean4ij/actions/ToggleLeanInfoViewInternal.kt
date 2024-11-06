@@ -3,10 +3,13 @@ package lean4ij.actions
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import lean4ij.infoview.LeanInfoViewWindowFactory
 import lean4ij.infoview.external.JcefInfoviewService
 import lean4ij.infoview.external.JcefInfoviewTooWindowFactory
+import lean4ij.util.LeanUtil
 import lean4ij.util.notify
 
 class ToggleLeanInfoViewInternal : AnAction() {
@@ -19,6 +22,13 @@ class ToggleLeanInfoViewInternal : AnAction() {
             toolWindow.hide()
         } else {
             toolWindow.show()
+        }
+    }
+
+    override fun update(e: AnActionEvent) {
+        val editor = e.dataContext.getData<Editor>(CommonDataKeys.EDITOR)?:return
+        if (!LeanUtil.isLeanFile(editor.virtualFile)) {
+            e.presentation.isVisible = false
         }
     }
 }

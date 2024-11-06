@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 
 <svg
-   width="14"
-   height="14"
-   viewBox="0 0 14 14"
+   width="16"
+   height="16"
+   viewBox="0 0 16 16"
    fill="none"
    version="1.1"
    id="svg1"
-   sodipodi:docname="infoview_icon.svg"
+   sodipodi:docname="resume.svg"
    inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -25,26 +25,32 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     showgrid="false"
-     inkscape:zoom="125.5"
-     inkscape:cx="7.0079681"
-     inkscape:cy="3.3426295"
+     inkscape:zoom="77.649163"
+     inkscape:cx="11.081897"
+     inkscape:cy="8.6092363"
      inkscape:window-width="3840"
      inkscape:window-height="2046"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg1" />
+  <circle
+     opacity="0.1"
+     cx="8"
+     cy="8"
+     r="8"
+     fill="#313547"
+     id="circle1" />
   <text
      xml:space="preserve"
-     style="font-size:19.7451px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#6c707e;stroke-width:1.64543;fill-opacity:1"
-     x="0.27771345"
-     y="14.554084"
-     id="text1"
-     transform="scale(1.0681506,0.93619758)"><tspan
+     style="font-size:14.9167px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#818594;stroke:#818592;stroke-width:0.678712;fill-opacity:1;stroke-opacity:1"
+     x="3.2000346"
+     y="13.766417"
+     id="text2"
+     transform="scale(1.0085892,0.99148392)"><tspan
        sodipodi:role="line"
-       id="tspan1"
-       x="0.27771345"
-       y="14.554084"
-       style="stroke-width:1.64543;fill:#6c707e;fill-opacity:1">∀</tspan></text>
+       id="tspan2"
+       x="3.2000346"
+       y="13.766417"
+       style="stroke-width:0.678712;fill:#818594;fill-opacity:1;stroke:#818592;stroke-opacity:1">∀</tspan></text>
 </svg>

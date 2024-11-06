@@ -131,11 +131,15 @@
     </extensions>
 
     <actions>
-        <action id="OpenLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4 Actions: Toggle Infoview (internal)" description="Lean4: Toggle Infoview (internal)">
-            <add-to-group group-id="MainMenu" anchor="last"/>
+        <action id="OpenLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4 Actions: Toggle Infoview (internal)" description="Lean4: Toggle Infoview (internal)"
+                icon="/icons/infoview_icon.svg"
+        >
         </action>
-        <action id="OpenLeanInfoViewJcef" class="lean4ij.actions.ToggleLeanInfoViewJcef" text="Lean4 Actions: Toggle Infoview (jcef)" description="Lean4: Toggle Infoview (jcef)">
-            <add-to-group group-id="MainMenu" anchor="last"/>
+        <action id="OpenLeanInfoViewJcef" class="lean4ij.actions.ToggleLeanInfoViewJcef" text="Lean4 Actions: Toggle Infoview (jcef)" description="Lean4: Toggle Infoview (jcef)"
+                icon="/icons/jcef_icon.svg"
+        >
+            <add-to-group group-id="MainToolbarRight" anchor="first"/>
+            <add-to-group group-id="ToolbarRunGroup" anchor="first"/>
         </action>
         <action id="IncreaseZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.IncreaseZoomLevelForLeanInfoViewJcef" text="Lean4 Actions: Increase zoom level for lean infoview (jcef)" description="Lean4: increase zoom level for lean infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>

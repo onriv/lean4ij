@@ -1,6 +1,7 @@
 package lean4ij.actions
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -52,6 +53,9 @@ class ToggleLeanInfoViewJcef : AnAction() {
         }
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT;
+    }
 }
 
 class OpenExternalInfoviewInBrowser : AnAction() {

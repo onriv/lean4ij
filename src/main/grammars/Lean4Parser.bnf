@@ -14,7 +14,7 @@
     elementTypeClass = "lean4ij.language.Lean4TokenType"
 }
 
-tokens ::= (WHITE_SPACE|
+tokens ::= (
     LINE_COMMENT|
     STRING|
     KEYWORD_COMMAND1|
@@ -52,6 +52,7 @@ tokens ::= (WHITE_SPACE|
     KEYWORD_SORRY|
     TEMPLATE_TRIGGER|
     ASSIGN|
+    PLACEHOLDER|
     definition|
     attributes
     )*

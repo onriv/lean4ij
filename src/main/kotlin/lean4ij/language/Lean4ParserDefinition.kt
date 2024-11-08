@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
@@ -37,6 +38,7 @@ class Lean4ParserDefinition : ParserDefinition {
         val FILE = IFileElementType(Lean4Language.INSTANCE)
         val COMMENTS = TokenSet.create(LINE_COMMENT, DOC_COMMENT, BLOCK_COMMENT)
         val STRINGS = TokenSet.create(STRING)
+        val WHITESPACE = TokenSet.create(WHITE_SPACE)
     }
 
     override fun createLexer(project: Project?): Lexer = Lean4LexerAdapter()
@@ -46,6 +48,8 @@ class Lean4ParserDefinition : ParserDefinition {
     override fun getFileNodeType(): IFileElementType = FILE
 
     override fun getCommentTokens(): TokenSet = COMMENTS
+
+    override fun getWhitespaceTokens(): TokenSet = WHITESPACE
 
     override fun getStringLiteralElements(): TokenSet = STRINGS
 

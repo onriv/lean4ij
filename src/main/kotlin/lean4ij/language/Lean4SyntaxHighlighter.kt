@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lexer.Lexer
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors.BAD_CHARACTER
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -15,7 +16,10 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.elementType
+import lean4ij.Lean4Settings
 import lean4ij.language.psi.TokenType
 import java.nio.charset.StandardCharsets
 
@@ -89,6 +93,7 @@ class Lean4SyntaxHighlighterFactory : SyntaxHighlighterFactory() {
  * TODO use customized text attributes
  */
 class Lean4Annotator : Annotator {
+    private val lean4Settings = service<Lean4Settings>()
 
     companion object {
         val tactics = getAllTactics()
@@ -113,9 +118,8 @@ class Lean4Annotator : Annotator {
                 holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                     .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION).create();
             }
-        }
-        // check the parent rather than the element itself for skipping comments
-        if (element.parent is Lean4Attributes) {
+        } else if (element.parent is Lean4Attributes) {
+            // check the parent rather than the element itself for skipping comments
             if (element.node.elementType == TokenType.IDENTIFIER) {
                 holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                     .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.METADATA).create();
@@ -124,12 +128,38 @@ class Lean4Annotator : Annotator {
                 holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                     .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.KEYWORD).create();
             }
-        }
-        if (element.node.elementType == TokenType.IDENTIFIER) {
-            if (tactics.containsKey(element.text)) {
+        } else if (element.node.elementType == TokenType.IDENTIFIER) {
+            if (isField(element)) {
                 holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                    .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.FUNCTION_CALL).create();
+                    .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD).create();
+            } else {
+                if (tactics.containsKey(element.text)) {
+                    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                        .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.FUNCTION_CALL).create();
+                }
             }
         }
+    }
+
+    private fun isField(element: PsiElement): Boolean {
+        return prevSiblingIsNewLine(element) && nextSiblingIsAssign(element)
+    }
+
+    private fun prevSiblingIsNewLine(element: PsiElement): Boolean {
+        val prevElement = element.prevSibling?:return false
+        return prevElement.elementType == WHITE_SPACE && prevElement.text.contains('\n')
+    }
+
+    private fun nextSiblingIsAssign(element: PsiElement): Boolean {
+        var nextValidElement : PsiElement? = element.nextSibling
+        while (!isValid(nextValidElement)) {
+            nextValidElement = nextValidElement?.nextSibling
+        }
+        val elementType = nextValidElement?.node?.elementType
+        return elementType == TokenType.ASSIGN || elementType == TokenType.COLON
+    }
+
+    private fun isValid(element: PsiElement?): Boolean {
+        return element?.node?.elementType != WHITE_SPACE && element?.node?.elementType != TokenType.PLACEHOLDER;
     }
 }

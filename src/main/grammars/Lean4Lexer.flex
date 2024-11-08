@@ -56,8 +56,9 @@ KEYWORD_COMMAND_PREFIX   = local|private|protected|scoped|partial|noncomputable|
 KEYWORD_MODIFIER        = renaming|hiding|where|extends|using|with|at|rec|deriving
 KEYWORD_COMMAND2        = syntax|elab|elab_rules|macro_rules|macro
 KEYWORD_COMMAND3        = namespace|section|end
-KEYWORD_COMMAND4        = class|def|lemma|example|theorem|instance
+KEYWORD_COMMAND4        = class|def|lemma|example|theorem|instance|structure
 KEYWORD_COMMAND5        = #check|#guard_msgs|#eval|#reduce
+KEYWORD_COMMAND6        = match|have|with|by
 KEYWORD_SORRY = sorry
 DEFAUTL_TYPE = Type|(Type \*)
 
@@ -140,6 +141,9 @@ backslash           = "\\"
 vertical_bar        = "|"
 tilde               = "~"
 colon               = ":"
+colon_equal         = ":="
+at_leftbracket      = "@["
+attribute            = "attribute"
 
 colon_colon         = "::" | "∷"
 left_arrow          = "<-" | "←"
@@ -218,8 +222,17 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {at} {
         return AT;
     }
+    {at_leftbracket}        {
+        return ATTRIBUTE_START;
+    }
+    {attribute}    {
+        return ATTRIBUTE;
+    }
     {colon}    {
         return COLON;
+    }
+    {colon_equal} {
+        return ASSIGN;
     }
     {MISC_COMPARISON_SYM}    {
         return MISC_COMPARISON_SYM;
@@ -280,6 +293,9 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
                             }
     {KEYWORD_COMMAND5}      {
           return KEYWORD_COMMAND5;
+                            }
+    {KEYWORD_COMMAND6}      {
+          return KEYWORD_COMMAND6;
                             }
     {KEYWORD_SORRY}      {
           return KEYWORD_SORRY;

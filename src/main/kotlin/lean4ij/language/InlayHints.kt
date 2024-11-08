@@ -373,6 +373,10 @@ class GoalInlayHintsProvider : InlayHintsProvider {
     }
 
     override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
+        // TODO weird here it can be null
+        if (file.virtualFile == null) {
+            return null
+        }
         return providers.computeIfAbsent(file.virtualFile.path) {
             GoalInlayHintsCollector(editor, editor.project)
         }

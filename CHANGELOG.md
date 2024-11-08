@@ -3,8 +3,9 @@
 # lean4ij Changelog
 
 ## [Unreleased]
-
 - fix some style in the external infoview
+- add a button in main toolbar for toggling infoview toolwindow 
+- some tuning for the basic syntax highlight
 
 ## [0.1.2] - 2024-11-03
 

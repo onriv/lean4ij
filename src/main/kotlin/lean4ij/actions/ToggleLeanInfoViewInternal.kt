@@ -44,6 +44,14 @@ class ToggleLeanInfoViewJcef : AnAction() {
             toolWindow.show()
         }
     }
+
+    override fun update(e: AnActionEvent) {
+        val editor = e.dataContext.getData<Editor>(CommonDataKeys.EDITOR)?:return
+        if (!LeanUtil.isLeanFile(editor.virtualFile)) {
+            e.presentation.isVisible = false
+        }
+    }
+
 }
 
 class OpenExternalInfoviewInBrowser : AnAction() {

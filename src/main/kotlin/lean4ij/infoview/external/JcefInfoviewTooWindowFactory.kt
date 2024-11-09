@@ -1,10 +1,15 @@
 package lean4ij.infoview.external
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -13,26 +18,27 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
-import com.intellij.ui.jcef.JBCefClient
+import com.intellij.util.ui.JBUI
 import lean4ij.util.notify
-import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.callback.CefAuthCallback
 import org.cef.callback.CefCallback
-import org.cef.handler.CefDisplayHandler
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefRequestHandler
 import org.cef.handler.CefResourceRequestHandler
 import org.cef.misc.BoolRef
 import org.cef.network.CefRequest
 import org.cef.security.CefSSLInfo
+import java.awt.BorderLayout
+import javax.swing.JComponent
 
 /**
  * TODO the name like infoview and infoView is inconsistent in the whole codebase...
  */
 @Service(Service.Level.PROJECT)
 class JcefInfoviewService(private val project: Project) {
+    var actionToolbar: ActionToolbar? = null
     private var _url: String? = null
     val url get() = _url
 
@@ -179,5 +185,30 @@ class JcefInfoviewTooWindowFactory : ToolWindowFactory {
         }
         val content = ContentFactory.getInstance().createContent(jcefInfoview, null, false)
         toolWindow.contentManager.addContent(content)
+        jcefService.actionToolbar = configureToolbar(project, toolWindow)
+    }
+
+    fun configureToolbar(project: Project, toolWindow: ToolWindow): ActionToolbar {
+        val actions = DefaultActionGroup()
+        val manager = ActionManager.getInstance()
+        actions.add(manager.getAction("RestartJcefInfoview"))
+        actions.add(manager.getAction("RestartCurrentLeanFile"))
+        actions.add(manager.getAction("RestartLeanLsp"))
+        actions.add(manager.getAction("IncreaseZoomLevelForLeanInfoViewJcef"))
+        actions.add(manager.getAction("DecreaseZoomLevelForLeanInfoViewJcef"))
+        actions.add(manager.getAction("ResetZoomLevelForLeanInfoViewJcef"))
+        actions.add(manager.getAction("ToggleLeanInfoviewJcefToolbarVisibility"))
+
+        // TODO what is place for?
+        val tb = manager.createActionToolbar("Lean Jcef Infoview", actions, true)
+
+        tb.targetComponent = toolWindow.component
+        tb.component.border = JBUI.Borders.merge(
+            tb.component.border,
+            JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1),
+            true
+        )
+        toolWindow.component.add(tb.component, BorderLayout.NORTH)
+        return tb
     }
 }

@@ -1,5 +1,6 @@
 package lean4ij.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -7,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.IconLoader.getIcon
 import lean4ij.infoview.LeanInfoViewWindowFactory
 import lean4ij.infoview.external.JcefInfoviewService
 import lean4ij.infoview.external.JcefInfoviewTooWindowFactory
@@ -71,6 +73,11 @@ class OpenExternalInfoviewInBrowser : AnAction() {
 }
 
 class IncreaseZoomLevelForLeanInfoViewJcef : AnAction() {
+
+    init {
+        templatePresentation.icon = AllIcons.Graph.ZoomIn
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val service = project.service<JcefInfoviewService>()
@@ -79,16 +86,44 @@ class IncreaseZoomLevelForLeanInfoViewJcef : AnAction() {
 }
 
 class DecreaseZoomLevelForLeanInfoViewJcef : AnAction() {
+
+    init {
+        templatePresentation.icon = AllIcons.Graph.ZoomOut
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val service = project.service<JcefInfoviewService>()
         service.decreaseZoomLevel()
     }
 }
+
 class ResetZoomLevelForLeanInfoViewJcef : AnAction() {
+
+    init {
+        templatePresentation.icon = AllIcons.Graph.ActualZoom
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val service = project.service<JcefInfoviewService>()
         service.resetZoomLevel()
     }
+}
+
+class ToggleLeanInfoviewJcefToolbarVisibility : AnAction() {
+
+    init {
+        templatePresentation.icon = getIcon("/icons/review_eye.svg", javaClass);
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
+        val service = project.service<JcefInfoviewService>()
+        val actionToolbar = service.actionToolbar?:return
+        val component = actionToolbar.component
+        component.isVisible = !component.isVisible
+    }
+
+
 }

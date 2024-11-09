@@ -19,7 +19,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
-import lean4ij.Lean4Settings
+import lean4ij.setting.Lean4Settings
 import lean4ij.lsp.data.ContextInfo
 import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveGoals

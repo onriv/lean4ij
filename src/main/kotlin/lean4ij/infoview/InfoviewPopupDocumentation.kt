@@ -19,7 +19,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import lean4ij.Lean4Settings
+import lean4ij.setting.Lean4Settings
 import lean4ij.lsp.data.ContextInfo
 import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveInfoParams

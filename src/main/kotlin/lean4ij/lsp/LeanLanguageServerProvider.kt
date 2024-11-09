@@ -1,8 +1,5 @@
 package lean4ij.lsp
 
-import com.intellij.notification.BrowseNotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -10,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleManager
 import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
-import lean4ij.Lean4Settings
+import lean4ij.setting.Lean4Settings
 import lean4ij.util.OsUtil
 import lean4ij.util.notify
 import lean4ij.util.notifyErr

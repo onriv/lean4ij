@@ -3,7 +3,7 @@ package lean4ij.lsp
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiFile
 import com.redhat.devtools.lsp4ij.client.features.LSPCompletionFeature
-import lean4ij.Lean4Settings
+import lean4ij.setting.Lean4Settings
 
 /**
  * Add an impl for disable lsp completion for lean

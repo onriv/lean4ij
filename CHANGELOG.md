@@ -6,6 +6,8 @@
 - fix some style in the external infoview
 - add a button in main toolbar for toggling infoview toolwindow 
 - some tuning for the basic syntax highlight
+- some refactor for the setting page implementation
+- remove extra css setting in the setting page for currently messing up with theme
 
 ## [0.1.2] - 2024-11-03
 

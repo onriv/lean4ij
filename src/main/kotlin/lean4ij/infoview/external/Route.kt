@@ -22,7 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import lean4ij.Lean4SettingsView
+import lean4ij.setting.Lean4SettingsView
 import lean4ij.infoview.TextAttributesKeys
 import lean4ij.infoview.external.data.ApplyEditParam
 import lean4ij.infoview.external.data.InfoviewEvent
@@ -132,22 +132,6 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                         sendWithLog(themeJson)
                     }
                 })
-
-                launch {
-                    // here it's very vague in the design for different packages that using Lean4SettingsView here maybe
-                    Lean4SettingsView.events.collect { event ->
-                        // TODO maybe the event contains detail for the change is better
-                        val theme = if (event.enableExtraCssForVscodeInfoview) {
-                            event.extraCssForVscodeInfoview
-                        } else {
-                            val scheme = EditorColorsManager.getInstance().globalScheme
-                            createThemeCss(scheme)
-                        }
-                        val themeJson = Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme)))
-                        logger.trace(themeJson)
-                        sendWithLog(themeJson)
-                    }
-                }
 
                 val serverRestarted = service.awaitInitializedResult()
                 sendWithLog(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted)))

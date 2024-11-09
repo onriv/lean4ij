@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import lean4ij.Lean4Settings
+import lean4ij.setting.Lean4Settings
 import lean4ij.infoview.LeanInfoViewWindowFactory
 import lean4ij.infoview.external.data.ApplyEditChange
 import lean4ij.lsp.data.FileProgressProcessingInfo

@@ -25,8 +25,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
-import com.intellij.openapi.editor.colors.ColorKey
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -39,16 +37,13 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
-import com.intellij.openapi.util.text.LineColumn
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiPlainText
-import com.intellij.ui.JBColor
 import com.intellij.util.io.await
 import com.jetbrains.rd.util.lifetime.intersect
 import kotlinx.coroutines.launch
-import lean4ij.Lean4Settings
+import lean4ij.setting.Lean4Settings
 import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveGoalsParams
 import lean4ij.lsp.data.InteractiveTermGoalParams
@@ -326,7 +321,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
         val hints = HintSet()
 
-        for (m in lean4Settings.commentPrefixForGoalHintRegex.findAll(content)) {
+        for (m in lean4Settings.nonPersistent().commentPrefixForGoalHintRegex!!.findAll(content)) {
             val session = file.getSession()
 
             val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last)

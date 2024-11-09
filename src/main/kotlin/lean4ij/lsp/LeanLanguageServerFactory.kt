@@ -11,7 +11,7 @@ import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
 import com.redhat.devtools.lsp4ij.client.features.LSPDiagnosticFeature
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
-import lean4ij.Lean4Settings
+import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.atomic.AtomicBoolean
 

@@ -9,7 +9,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
-import lean4ij.Lean4Settings
+import lean4ij.setting.Lean4Settings
 
 class AddInlayGoalHint : AnAction() {
 

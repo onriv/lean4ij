@@ -20,6 +20,12 @@ import com.intellij.util.xmlb.XmlSerializerUtil
     storages = [Storage("Lean4.xml")]
 )
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
+
+    var enableHeuristicTactic = true
+    var enableHeuristicField = true
+    var enableHeuristicAttributes = true
+    var enableHeuristicDefinition = true
+
     /**
      * TODO add project level configuration for this
      */
@@ -78,6 +84,10 @@ class Lean4NonPersistentSetting {
 fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
     group("General Settings") {
         boolean("Enable the vertical file progress bar on the left of editor", settings::enableFileProgressBar)
+        boolean("Enable heuristic definition highlighting", settings::enableHeuristicDefinition)
+        boolean("Enable heuristic tactic highlighting", settings::enableHeuristicTactic)
+        boolean("Enable heuristic field highlighting", settings::enableHeuristicField)
+        boolean("Enable heuristic attributes highlighting", settings::enableHeuristicAttributes)
     }
     group("Inlay Hints Settings ") {
         boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)

@@ -114,11 +114,13 @@ class Lean4Annotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         if (element.parent is Lean4Definition) {
+            if (!lean4Settings.enableHeuristicDefinition) return
             if (element.node.elementType == TokenType.IDENTIFIER || element.node.elementType == TokenType.DOT) {
                 holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                     .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION).create();
             }
         } else if (element.parent is Lean4Attributes) {
+            if (!lean4Settings.enableHeuristicAttributes) return
             // check the parent rather than the element itself for skipping comments
             if (element.node.elementType == TokenType.IDENTIFIER) {
                 holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
@@ -130,9 +132,11 @@ class Lean4Annotator : Annotator {
             }
         } else if (element.node.elementType == TokenType.IDENTIFIER) {
             if (isField(element)) {
+                if (!lean4Settings.enableHeuristicField) return
                 holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                     .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD).create();
             } else {
+                if (!lean4Settings.enableHeuristicTactic) return
                 if (tactics.containsKey(element.text)) {
                     holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                         .range(element.textRange).textAttributes(DefaultLanguageHighlighterColors.FUNCTION_CALL).create();
@@ -142,7 +146,8 @@ class Lean4Annotator : Annotator {
     }
 
     private fun isField(element: PsiElement): Boolean {
-        return prevSiblingIsNewLine(element) && nextSiblingIsAssign(element)
+        // quite loose check
+        return prevSiblingIsNewLine(element) /*&& nextSiblingIsAssign(element)*/
     }
 
     private fun prevSiblingIsNewLine(element: PsiElement): Boolean {

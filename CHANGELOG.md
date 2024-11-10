@@ -3,6 +3,12 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+
+## [0.1.3] - 2024-11-10
+
+Depend on the latest approved nightly build of LSP4IJ: 0.8.0-20241105-013235
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.8.0-20241105-013235@nightly]
+
 - fix some style in the external infoview
 - add a button in main toolbar for toggling infoview toolwindow 
 - some tuning for the basic syntax highlight
@@ -86,7 +92,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/onriv/lean4ij/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/onriv/lean4ij/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/onriv/lean4ij/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/onriv/lean4ij/compare/v0.0.19...v0.1.0

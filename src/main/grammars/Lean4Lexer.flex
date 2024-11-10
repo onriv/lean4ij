@@ -56,9 +56,9 @@ KEYWORD_COMMAND_PREFIX   = local|private|protected|scoped|partial|noncomputable|
 KEYWORD_MODIFIER        = renaming|hiding|where|extends|using|with|at|rec|deriving
 KEYWORD_COMMAND2        = syntax|elab|elab_rules|macro_rules|macro
 KEYWORD_COMMAND3        = namespace|section|end
-KEYWORD_COMMAND4        = class|def|lemma|example|theorem|instance|structure|fun|set_option|vairable|infixr
+KEYWORD_COMMAND4        = class|def|lemma|example|theorem|instance|structure|set_option|vairable|infixr
 KEYWORD_COMMAND5        = #check|#guard_msgs|#eval|#reduce|#synth|#help
-KEYWORD_COMMAND6        = match|have|with|by|in
+KEYWORD_COMMAND6        = match|have|with|by|in|fun
 KEYWORD_SORRY = sorry
 DEFAUTL_TYPE = Type|(Type \*)
 

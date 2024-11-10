@@ -64,7 +64,8 @@ class TaggedTextText<T>(val text: String) : TaggedText<T>() where T: InfoViewCon
                 return null
             }
         }
-        return t.contextInfo(offset, parent!!.startOffset, parent!!.endOffset)
+        return null
+        // return t.contextInfo(offset, parent!!.startOffset, parent!!.endOffset)
     }
 }
 

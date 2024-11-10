@@ -266,6 +266,7 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
         val attrKey = TextAttributesKey.find(keyStr)
         val attr = scheme.getAttributes(attrKey)
         if (attrStr == "foreground") {
+            // TODO some theme gives NPE here
             themeSb.append("    ${t}: ${attr.foregroundColor.toHexRgba()};\n")
         }
         if (attrStr == "background") {

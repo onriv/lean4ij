@@ -59,7 +59,11 @@ class InfoviewRender(val sb: StringBuilder) {
      *      	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:684)
      */
     fun substring(start: Int, end: Int) : String {
-        return sb.substring(start, end)
+        try {
+            return sb.substring(start, end)
+        } catch (e: IndexOutOfBoundsException) {
+            return ""
+        }
     }
 
     fun substring(start: Int) : String {

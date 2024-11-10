@@ -8,7 +8,7 @@
    fill="none"
    version="1.1"
    id="svg1"
-   sodipodi:docname="aggregate.svg"
+   sodipodi:docname="aggregate_dark.svg"
    inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -26,7 +26,7 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="109.8125"
-     inkscape:cx="8"
+     inkscape:cx="8.7285145"
      inkscape:cy="8"
      inkscape:window-width="3840"
      inkscape:window-height="2046"
@@ -38,11 +38,11 @@
      cx="8"
      cy="8"
      r="6.5"
-     fill="#E7EFFD"
-     stroke="#3574F0"
+     fill="#25324D"
+     stroke="#548AF7"
      id="circle1" />
   <path
-     d="M 8.6098417,10.999273 7.5477426,11.000629 5.27399,4.9835063 6.2758592,4.9822274 6.8066525,6.4650711 9.2834505,6.4619095 9.7717564,4.977765 10.795156,4.9764586 Z M 7.0828567,7.2516191 7.989056,9.7573644 8.0841334,10.131343 8.1782558,9.7571229 9.0307551,7.2491327 Z"
-     fill="#3574f0"
+     d="m 7.47083,11 h 1.0621 L 10.799,4.97998 H 9.79713 L 9.26823,6.4635 H 6.79143 L 6.30123,4.97998 h -1.0234 z m 1.5222,-3.7496 -0.903,2.5069 -0.0946,0.3741 -0.0946,-0.3741 -0.8557,-2.5069 z"
+     fill="#548af7"
      id="path1" />
 </svg>

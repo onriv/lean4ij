@@ -206,10 +206,20 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      * TODO passing things like editor etc seems cumbersome, maybe add some implement for context
      * TODO this should maybe named as [updateInternalInfoview], but it contains a switch...
      *      The switch should put in [updateInternalInfoview]
+     * TODO maybe move some logic back to [lean4ij.project.listeners.LeanFileCaretListener]
+     *      here in fact messed up two different source for update infoview : from the caret change and from the document update
      */
-    fun updateCaret(editor: Editor, logicalPosition: LogicalPosition) {
+    fun updateCaret(editor: Editor, logicalPosition: LogicalPosition, forceUpdate: Boolean = false) {
+        val position = Position(line = logicalPosition.line, character = logicalPosition.column)
+        val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
+        val params = PlainGoalParams(textDocument, position)
+        if (lean4Settings.enableVscodeInfoview) {
+            // TODO this is in fact not fully controlling the behavior for the vscode/internal/jcef infoview
+            leanProjectService.updateCaret(params)
+        }
         if (lean4Settings.enableNativeInfoview) {
-            updateInternalInfoview(editor, logicalPosition)
+            if (!lean4Settings.autoUpdateInternalInfoview && !forceUpdate) return
+            updateInternalInfoview(editor, params)
         } else {
             LeanInfoViewWindowFactory.getLeanInfoview(project)?.let { leanInfoviewWindow ->
                 leanProjectService.scope.launch {
@@ -219,11 +229,9 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         }
     }
 
-    private fun updateInternalInfoview(editor: Editor, logicalPosition: LogicalPosition) {
-        val position = Position(line = logicalPosition.line, character = logicalPosition.column)
-        val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
-        val params = PlainGoalParams(textDocument, position)
-        leanProjectService.updateCaret(params)
+    private fun updateInternalInfoview(editor: Editor, params: PlainGoalParams) {
+        val textDocument = params.textDocument
+        val position = params.position
         leanProjectService.scope.launch {
             if (virtualFile == null) {
                 thisLogger().info("No virtual file for $file, skip updating infoview")
@@ -233,7 +241,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val interactiveGoalsParams = InteractiveGoalsParams(session, params, textDocument, position)
             val interactiveTermGoalParams = InteractiveTermGoalParams(session, params, textDocument, position)
             // TODO how to determine which diagnostic get?
-            val line = logicalPosition.line
+            val line = position.line
             val diagnosticsParams = InteractiveDiagnosticsParams(session, LineRangeParam(LineRange(line, line+1)), textDocument, position)
             val interactiveGoalsAsync = async { getInteractiveGoals(interactiveGoalsParams) }
             val interactiveTermGoalAsync = async { getInteractiveTermGoal(interactiveTermGoalParams) }
@@ -244,7 +252,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val interactiveGoals = interactiveGoalsAsync.await()
             val interactiveTermGoal = interactiveTermGoalAsync.await()
             val interactiveDiagnostics = interactiveDiagnosticsAsync.await()
-            LeanInfoViewWindowFactory.updateInteractiveGoal(editor, project, virtualFile!!, logicalPosition, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
+            LeanInfoViewWindowFactory.updateInteractiveGoal(editor, project, virtualFile!!, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
         }
     }
 

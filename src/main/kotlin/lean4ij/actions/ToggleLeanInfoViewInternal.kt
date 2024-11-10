@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.IconLoader.getIcon
 import lean4ij.infoview.LeanInfoViewWindowFactory
+import lean4ij.infoview.LeanInfoviewService
 import lean4ij.infoview.external.JcefInfoviewService
 import lean4ij.infoview.external.JcefInfoviewTooWindowFactory
 import lean4ij.util.LeanUtil
@@ -125,5 +126,22 @@ class ToggleLeanInfoviewJcefToolbarVisibility : AnAction() {
         component.isVisible = !component.isVisible
     }
 
+}
+
+class ToggleLeanInfoviewToolbarVisibility : AnAction() {
+
+    init {
+        templatePresentation.icon = getIcon("/icons/review_eye.svg", javaClass);
+    }
+
+    /**
+     * TODO make a service for the Internal infoview
+     */
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
+        val actionToolbar = project.service<LeanInfoviewService>().actionToolbar ?: return
+        val component = actionToolbar.component
+        component.isVisible = !component.isVisible
+    }
 
 }

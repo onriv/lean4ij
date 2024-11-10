@@ -24,6 +24,7 @@ import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
+import lean4ij.lsp.data.Position
 import lean4ij.project.LeanProjectService
 import javax.swing.BorderFactory
 import javax.swing.JEditorPane
@@ -137,7 +138,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
     suspend fun updateEditorMouseMotionListener(
         interactiveInfo: InfoviewRender,
         file: VirtualFile,
-        logicalPosition: LogicalPosition,
+        position: Position,
         interactiveGoals: InteractiveGoals?,
         interactiveTermGoal: InteractiveTermGoal?,
         interactiveDiagnostics: List<InteractiveDiagnostics>?,
@@ -188,7 +189,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         if (mouseMotionListener != null) {
             editorEx.removeEditorMouseMotionListener(mouseMotionListener!!)
         }
-        mouseMotionListener = InfoviewMouseMotionListener(leanProject, this, editorEx, file, logicalPosition,
+        mouseMotionListener = InfoviewMouseMotionListener(leanProject, this, editorEx, file, position,
             interactiveGoals, interactiveTermGoal, interactiveDiagnostics, interactiveDiagnosticsAllMessages)
         editorEx.addEditorMouseMotionListener(mouseMotionListener!!)
     }

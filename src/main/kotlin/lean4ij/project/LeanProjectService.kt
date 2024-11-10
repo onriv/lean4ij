@@ -9,7 +9,14 @@ import lean4ij.util.LspUtil
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.LineColumn
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.LanguageServerManager
 import kotlinx.coroutines.CompletableDeferred
@@ -18,6 +25,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import lean4ij.util.LeanUtil
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.services.LanguageServer
@@ -119,4 +127,27 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         return Path(project.basePath!!, "lean-toolchain").toFile().isFile
     }
 
+    fun updateInfoviewFor(document: Document) {
+        val file = FileDocumentManager.getInstance().getFile(document)?:return
+        if (!LeanUtil.isLeanFile(file)) return
+        val editor = EditorFactory.getInstance().getEditors(document).firstOrNull()?:return
+        val lineCol : LineColumn = StringUtil.offsetToLineColumn(document.text, editor.caretModel.offset) ?: return
+        val position = LogicalPosition(lineCol.line, lineCol.column)
+        // TODO this may be duplicated with caret events some times
+        //      but without this there are cases no caret events but document changed events
+        //      maybe some debounce
+        file(file).updateCaret(editor, position)
+    }
+
+    fun updateInfoviewFor(editor: Editor, forceUpdate: Boolean = false) {
+        val document = editor.document
+        val file = FileDocumentManager.getInstance().getFile(document)?:return
+        if (!LeanUtil.isLeanFile(file)) return
+        val lineCol : LineColumn = StringUtil.offsetToLineColumn(document.text, editor.caretModel.offset) ?: return
+        val position = LogicalPosition(lineCol.line, lineCol.column)
+        // TODO this may be duplicated with caret events some times
+        //      but without this there are cases no caret events but document changed events
+        //      maybe some debounce
+        file(file).updateCaret(editor, position, forceUpdate)
+    }
 }

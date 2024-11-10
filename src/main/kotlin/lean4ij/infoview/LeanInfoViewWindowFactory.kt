@@ -1,5 +1,8 @@
 package lean4ij.infoview
 
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -9,15 +12,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import lean4ij.lsp.data.*
 import lean4ij.project.LeanProjectService
+import java.awt.BorderLayout
 
 
 /**
@@ -56,7 +62,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             editor: Editor,
             project: Project,
             file: VirtualFile?, // TODO this should add some UT for the rendering
-            logicalPosition: LogicalPosition,
+            position: Position,
             interactiveGoals: InteractiveGoals?,
             interactiveTermGoal: InteractiveTermGoal?,
             interactiveDiagnostics: List<InteractiveDiagnostics>?,
@@ -69,7 +75,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO implement the fold/open logic
             val infoviewRender = InfoviewRender()
             val start = infoviewRender.length
-            val header = "${file.name}:${logicalPosition.line+1}:${logicalPosition.column}"
+            val header = "${file.name}:${position.line+1}:${position.character}"
             infoviewRender.append("${header}")
             infoviewRender.highlight(start, infoviewRender.length, EditorColorsManager.getInstance().globalScheme.getAttributes(TextAttributesKeys.SwingInfoviewCurrentPosition.key))
             infoviewRender.append('\n')
@@ -165,7 +171,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html
             // TODO minimize the invoke later range
             scope.launch(Dispatchers.EDT) {
-                infoViewWindow.updateEditorMouseMotionListener(infoviewRender, file, logicalPosition, // TODO this should add some UT for the rendering
+                infoViewWindow.updateEditorMouseMotionListener(infoviewRender, file, position, // TODO this should add some UT for the rendering
                     interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
             }
         }
@@ -176,6 +182,9 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         thisLogger().info("create infoview window using swing")
     }
 
+    /**
+     * TODO this seems called twice
+     */
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         ApplicationManager.getApplication().invokeLater {
             // This should be run in EDT
@@ -184,10 +193,35 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             val leanInfoViewWindow = LeanInfoViewWindow(toolWindow)
             val content = ContentFactory.getInstance().createContent(leanInfoViewWindow, null, false)
             toolWindow.contentManager.addContent(content)
+            val leanInfoviewService = project.service<LeanInfoviewService>()
+            leanInfoviewService.actionToolbar = configureToolbar(project, toolWindow)
         }
     }
 
     override fun shouldBeAvailable(project: Project) = true
 
+    fun configureToolbar(project: Project, toolWindow: ToolWindow): ActionToolbar {
+        val actions = DefaultActionGroup()
+        val manager = ActionManager.getInstance()
+        actions.add(manager.getAction("RestartInternalInfoview"))
+        actions.add(manager.getAction("RestartCurrentLeanFile"))
+        actions.add(manager.getAction("RestartLeanLsp"))
+        // actions.add(manager.getAction("IncreaseZoomLevelForLeanInfoView"))
+        // actions.add(manager.getAction("DecreaseZoomLevelForLeanInfoView"))
+        // actions.add(manager.getAction("ResetZoomLevelForLeanInfoView"))
+        actions.add(manager.getAction("ToggleLeanInfoviewToolbarVisibility"))
+
+        // TODO what is place for?
+        val tb = manager.createActionToolbar("Lean Infoview", actions, true)
+
+        tb.targetComponent = toolWindow.component
+        tb.component.border = JBUI.Borders.merge(
+            tb.component.border,
+            JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1),
+            true
+        )
+        toolWindow.component.add(tb.component, BorderLayout.NORTH)
+        return tb
+    }
 
 }

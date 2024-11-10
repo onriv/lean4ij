@@ -24,6 +24,7 @@ import lean4ij.lsp.data.ContextInfo
 import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
+import lean4ij.lsp.data.Position
 import lean4ij.project.LeanProjectService
 import java.awt.Color
 
@@ -35,7 +36,7 @@ class InfoviewMouseMotionListener(
     private val infoViewWindow: LeanInfoViewWindow,
     private val editor: EditorEx,
     private val file: VirtualFile,
-    private val logicalPosition: LogicalPosition,
+    private val position: Position,
     private val interactiveGoals: InteractiveGoals?,
     private val interactiveTermGoal: InteractiveTermGoal?,
     private val interactiveDiagnostics: List<InteractiveDiagnostics>?,
@@ -110,7 +111,7 @@ class InfoviewMouseMotionListener(
         leanProjectService.scope.launch {
             offsetsFlow.send(
                 InfoviewPopupDocumentation(
-                    leanProjectService.scope, infoViewWindow, file, logicalPosition, c.first,
+                    leanProjectService.scope, infoViewWindow, file, position, c.first,
                     RelativePoint(e.mouseEvent)
                 )
             )

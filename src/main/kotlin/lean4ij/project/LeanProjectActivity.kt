@@ -221,6 +221,7 @@ class LeanProjectActivity : ProjectActivity {
                         return
                     }
                     try {
+                        // TODO do some refactor here, extract similar code
                         val leanProjectService = project.service<LeanProjectService>()
                         val editor = EditorFactory.getInstance().getEditors(document).firstOrNull()?:return
                         val lineCol : LineColumn = StringUtil.offsetToLineColumn(document.text, event.offset) ?: return

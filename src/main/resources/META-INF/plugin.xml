@@ -150,6 +150,9 @@
         <action id="ToggleLeanInfoviewJcefToolbarVisibility" class="lean4ij.actions.ToggleLeanInfoviewJcefToolbarVisibility" text="Lean4 Actions: toggle lean infoview (jcef) toolbar visibility" description="Lean4 Actions: toggle lean infoview (jcef) toolbar visibility">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+        <action id="ToggleLeanInfoviewToolbarVisibility" class="lean4ij.actions.ToggleLeanInfoviewToolbarVisibility" text="Lean4 Actions: toggle lean infoview (internal) toolbar visibility" description="Lean4 Actions: toggle lean infoview (internal) toolbar visibility">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
         <action id="ResetZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.ResetZoomLevelForLeanInfoViewJcef" text="Lean4 Actions: Reset zoom level for lean infoview (jcef)" description="Lean4: reset zoom level for lean infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
@@ -163,6 +166,9 @@
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
         <action id="RestartJcefInfoview" class="lean4ij.actions.RestartJcefInfoview" text="Lean4 Actions: Restart Jcef Infoview" description="Lean4 Actions: Restart Jcef Infoview">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+        <action id="RestartInternalInfoview" class="lean4ij.actions.RestartInternalInfoview" text="Lean4 Actions: Restart Internal Infoview" description="Lean4 Actions: Restart Internal Infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
         <action id="AddInlayGoalHint" class="lean4ij.actions.AddInlayGoalHint" text="Lean4 Actions: Add Inlay Goal Hint" description="Add goal hint">

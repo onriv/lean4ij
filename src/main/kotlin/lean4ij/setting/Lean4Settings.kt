@@ -40,6 +40,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableLspCompletion = true
 
     var enableNativeInfoview = true
+    var autoUpdateInternalInfoview = true
     var hoveringTimeBeforePopupNativeInfoviewDoc = 200
     var nativeInfoviewPopupMinWidthTextLengthUpperBound = 200
     var nativeInfoviewPopupMaxWidthTextLengthLowerBound = 1000
@@ -103,6 +104,10 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
     }
     group("Infoview Settings") {
         val (row, component) = boolean("Enable the native infoview", settings::enableNativeInfoview)
+        boolean("Auto Update internal infoview", settings::autoUpdateInternalInfoview).let {
+            val (row, _) = it
+            row.enabledIf(component.selected)
+        }
         int("Time limit for popping up native infoview doc (millis): ", settings::hoveringTimeBeforePopupNativeInfoviewDoc, 50, 3000).enabledIf(component.selected)
         int("text length upper bound for using min width", settings::nativeInfoviewPopupMinWidthTextLengthUpperBound, 0, 3000).enabledIf(component.selected)
         int("text length lower bound for using max width", settings::nativeInfoviewPopupMaxWidthTextLengthLowerBound, 0, 3000).enabledIf(component.selected)

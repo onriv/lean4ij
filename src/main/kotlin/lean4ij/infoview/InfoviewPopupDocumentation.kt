@@ -102,7 +102,7 @@ class InfoviewPopupDocumentation(
     val scope: CoroutineScope,
     val toolWindow: LeanInfoViewWindow,
     val file: VirtualFile,
-    val logicalPosition: LogicalPosition,
+    val position: Position,
     val contextInfo: ContextInfo,
     val point: RelativePoint
 ) : HyperlinkInfo {
@@ -123,8 +123,6 @@ class InfoviewPopupDocumentation(
             // file.url has format file://I:/.. whereas file.path has format "I:/..." in windows
             // TODO absolutely the different formats for url/uri/path should be summarize somewhere
             val textDocument = TextDocumentIdentifier(LspUtil.quote(file.path))
-            val logicalPosition = logicalPosition
-            val position = Position(line = logicalPosition.line, character = logicalPosition.column)
             val rpcParams = InteractiveInfoParams(
                 sessionId = session,
                 params = contextInfo,

@@ -62,6 +62,11 @@ class ToggleLeanInfoViewJcef : AnAction() {
 }
 
 class OpenExternalInfoviewInBrowser : AnAction() {
+
+    init {
+        templatePresentation.icon = getIcon("/icons/inlayGlobe.svg", javaClass)
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val service = project.service<JcefInfoviewService>()

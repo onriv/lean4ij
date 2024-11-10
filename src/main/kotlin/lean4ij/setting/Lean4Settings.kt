@@ -42,10 +42,10 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableNativeInfoview = true
     var autoUpdateInternalInfoview = true
     var hoveringTimeBeforePopupNativeInfoviewDoc = 200
-    var nativeInfoviewPopupMinWidthTextLengthUpperBound = 200
-    var nativeInfoviewPopupMaxWidthTextLengthLowerBound = 1000
-    var nativeInfoviewPopupPreferredMinWidth = 500
-    var nativeInfoviewPopupPreferredMaxWidth = 800
+    var nativeInfoviewPopupMinWidthTextLengthUpperBound = 0
+    var nativeInfoviewPopupMaxWidthTextLengthLowerBound = 100
+    var nativeInfoviewPopupPreferredMinWidth = 100
+    var nativeInfoviewPopupPreferredMaxWidth = 600
 
     var enableVscodeInfoview = true
 

@@ -54,7 +54,17 @@ class TaggedTextText<T>(val text: String) : TaggedText<T>() where T: InfoViewCon
     override fun getCodeText(offset: Int, t: T?): Triple<ContextInfo, Int, Int>? {
         // TODO find why here allow null
         if (t == null) return null
-        return t!!.contextInfo(offset, parent!!.startOffset, parent!!.endOffset)
+        // TODO the implementation currently is trying to make it generic and avoid type check,
+        //      but as time pass it becomes hard to read
+        (t as? MsgEmbedExpr)?.let {
+            (it.expr as? TaggedTextTag<SubexprInfo>)?.let {
+                if (it.startOffset <= offset && offset < it.endOffset) {
+                    return it.getCodeText(offset, it.f0)
+                }
+                return null
+            }
+        }
+        return t.contextInfo(offset, parent!!.startOffset, parent!!.endOffset)
     }
 }
 

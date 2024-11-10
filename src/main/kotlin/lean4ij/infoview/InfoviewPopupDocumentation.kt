@@ -1,6 +1,7 @@
 package lean4ij.infoview
 
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.ide.BrowserUtil
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -32,6 +33,7 @@ import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.JTextPane
 import javax.swing.ScrollPaneConstants
+import javax.swing.event.HyperlinkEvent
 
 /**
  * Since currently we don't have a language implementation for the infoview, we cannot hover the content directly. Hence, we here implement a custom
@@ -52,9 +54,18 @@ class InfoviewPopupEditorPane(text: String, maxWidth: Int, maxHeight: Int) : JTe
         // TODO maybe some setting for this, font/size etc
         font = schemeFont
         this.text = text
+
         val width = getPreferredContentWidth(text.length, preferredSize)
         val height = getPreferredHeightByWidth(width)
         preferredSize = Dimension(width, height)
+
+        // from https://stackoverflow.com/questions/30041021/how-to-insert-clickable-text-into-a-jtextpane
+        isEditable = false
+        addHyperlinkListener {
+            if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+                BrowserUtil.browse(it.url)
+            }
+        }
     }
 
     /**

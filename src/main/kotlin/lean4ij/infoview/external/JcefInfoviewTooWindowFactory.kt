@@ -194,6 +194,7 @@ class JcefInfoviewTooWindowFactory : ToolWindowFactory {
         actions.add(manager.getAction("RestartJcefInfoview"))
         actions.add(manager.getAction("RestartCurrentLeanFile"))
         actions.add(manager.getAction("RestartLeanLsp"))
+        actions.add(manager.getAction("OpenExternalInfoviewInBrowser"))
         actions.add(manager.getAction("IncreaseZoomLevelForLeanInfoViewJcef"))
         actions.add(manager.getAction("DecreaseZoomLevelForLeanInfoViewJcef"))
         actions.add(manager.getAction("ResetZoomLevelForLeanInfoViewJcef"))

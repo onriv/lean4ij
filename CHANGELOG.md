@@ -9,7 +9,10 @@
 - some refactor for the setting page implementation
 - remove extra css setting in the setting page for currently messing up with theme
 - basic toolwindow toolbar for infoview
-- switch to a new icon 
+- switch to a new icon ([ref](https://intellij-icons.jetbrains.design/))
+- fix internal infoview hyperlink click
+- fix internal infoview wrong hover
+- tuning default parameter for better popup document in internal infoview
 
 ## [0.1.2] - 2024-11-03
 

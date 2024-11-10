@@ -102,6 +102,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
                 isLineMarkerAreaShown = false
                 isRefrainFromScrolling = true
                 isCaretRowShown = true
+                isBlinkCaret = true
                 isUseSoftWraps = true
                 setGutterIconsShown(false)
                 additionalLinesCount = 0
@@ -118,7 +119,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
             setCaretEnabled(true)
             setHorizontalScrollbarVisible(false)
             setVerticalScrollbarVisible(true)
-            isRendererMode = true
+            isRendererMode = false
         }
         return editor
     }

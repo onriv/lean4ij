@@ -203,6 +203,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
     fun configureToolbar(project: Project, toolWindow: ToolWindow): ActionToolbar {
         val actions = DefaultActionGroup()
         val manager = ActionManager.getInstance()
+        // actions.add(manager.getAction("ToggleAutomaticallyRefreshInternalInfoview"))
         actions.add(manager.getAction("RestartInternalInfoview"))
         actions.add(manager.getAction("RestartCurrentLeanFile"))
         actions.add(manager.getAction("RestartLeanLsp"))

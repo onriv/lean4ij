@@ -11,4 +11,5 @@ import com.intellij.openapi.project.Project
 class LeanInfoviewService(private val project: Project) {
 
    var actionToolbar: ActionToolbar? = null
+   var automaticallyRefreshInternalInfoview = true
 }

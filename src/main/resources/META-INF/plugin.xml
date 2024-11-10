@@ -153,6 +153,9 @@
         <action id="ToggleLeanInfoviewToolbarVisibility" class="lean4ij.actions.ToggleLeanInfoviewToolbarVisibility" text="Lean4 Actions: toggle lean infoview (internal) toolbar visibility" description="Lean4 Actions: toggle lean infoview (internal) toolbar visibility">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+        <!-- <action id="ToggleAutomaticallyRefreshInternalInfoview" class="lean4ij.actions.ToggleAutomaticallyRefreshInternalInfoview" text="Lean4 Actions: toggle lean infoview (internal) automatically refresh" description="Lean4 Actions: toggle lean infoview (internal) automatically refresh"> -->
+        <!--     <add-to-group group-id="MainMenu" anchor="last"/> -->
+        <!-- </action> -->
         <action id="ResetZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.ResetZoomLevelForLeanInfoViewJcef" text="Lean4 Actions: Reset zoom level for lean infoview (jcef)" description="Lean4: reset zoom level for lean infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>

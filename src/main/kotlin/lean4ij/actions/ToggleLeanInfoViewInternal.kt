@@ -51,6 +51,8 @@ class ToggleLeanInfoViewJcef : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val editor = e.dataContext.getData<Editor>(CommonDataKeys.EDITOR)?:return
+        // TODO here it can be null, weird
+        val virtualFile = editor.virtualFile?: return
         if (!LeanUtil.isLeanFile(editor.virtualFile)) {
             e.presentation.isVisible = false
         }

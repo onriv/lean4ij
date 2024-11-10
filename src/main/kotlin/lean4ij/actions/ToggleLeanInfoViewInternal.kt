@@ -18,6 +18,10 @@ import lean4ij.util.notify
 
 class ToggleLeanInfoViewInternal : AnAction() {
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val leanInfoview = LeanInfoViewWindowFactory.getLeanInfoview(project)?:return
@@ -65,6 +69,10 @@ class ToggleLeanInfoViewJcef : AnAction() {
 
 class OpenExternalInfoviewInBrowser : AnAction() {
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
+
     init {
         templatePresentation.icon = getIcon("/icons/inlayGlobe.svg", javaClass)
     }
@@ -82,6 +90,10 @@ class OpenExternalInfoviewInBrowser : AnAction() {
 
 class IncreaseZoomLevelForLeanInfoViewJcef : AnAction() {
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
+
     init {
         templatePresentation.icon = AllIcons.Graph.ZoomIn
     }
@@ -94,6 +106,10 @@ class IncreaseZoomLevelForLeanInfoViewJcef : AnAction() {
 }
 
 class DecreaseZoomLevelForLeanInfoViewJcef : AnAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
 
     init {
         templatePresentation.icon = AllIcons.Graph.ZoomOut
@@ -108,6 +124,10 @@ class DecreaseZoomLevelForLeanInfoViewJcef : AnAction() {
 
 class ResetZoomLevelForLeanInfoViewJcef : AnAction() {
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
+
     init {
         templatePresentation.icon = AllIcons.Graph.ActualZoom
     }
@@ -120,6 +140,10 @@ class ResetZoomLevelForLeanInfoViewJcef : AnAction() {
 }
 
 class ToggleLeanInfoviewJcefToolbarVisibility : AnAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
 
     init {
         templatePresentation.icon = getIcon("/icons/review_eye.svg", javaClass);
@@ -136,6 +160,10 @@ class ToggleLeanInfoviewJcefToolbarVisibility : AnAction() {
 }
 
 class ToggleLeanInfoviewToolbarVisibility : AnAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
 
     init {
         templatePresentation.icon = getIcon("/icons/review_eye.svg", javaClass);

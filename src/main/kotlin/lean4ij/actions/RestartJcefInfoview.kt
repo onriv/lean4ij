@@ -23,9 +23,18 @@ class RestartJcefInfoview : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         e.project?.service<JcefInfoviewService>()?.reload()
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
+
 }
 
 class RestartInternalInfoview : AnAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
 
     init {
         templatePresentation.icon = AllIcons.Actions.Restart

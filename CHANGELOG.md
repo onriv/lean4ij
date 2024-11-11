@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- fix internal infoview document not popping up
+
 ## [0.1.3] - 2024-11-10
 
 Depend on the latest approved nightly build of LSP4IJ: 0.8.0-20241105-013235

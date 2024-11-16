@@ -112,6 +112,8 @@
         <applicationService serviceImplementation="lean4ij.setting.Lean4Settings"/>
         <!-- <lang.foldingBuilder language="textmate" implementationClass="lean4ij.language.PlaceholderFolding"/> -->
         <applicationConfigurable groupId="language" displayName="Lean4" id="preferences.language.Lean4" instance="lean4ij.setting.Lean4Configurable"/>
+        <sdkType implementation="lean4ij.language.Lean4SdkType"/>
+        <additionalLibraryRootsProvider implementation="lean4ij.project.Lean4StdLibraryProvider"/>
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="lean"

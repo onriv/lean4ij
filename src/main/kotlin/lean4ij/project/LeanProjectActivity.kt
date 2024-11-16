@@ -1,5 +1,7 @@
 package lean4ij.project
 
+import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.application.ApplicationManager
 import lean4ij.infoview.external.ExternalInfoViewService
 import lean4ij.project.listeners.LeanFileCaretListener
 import com.intellij.openapi.components.service
@@ -24,63 +26,133 @@ import lean4ij.lsp.LeanLanguageServerFactory
 import lean4ij.util.OsUtil
 import java.awt.event.FocusEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.text.LineColumn
 import com.intellij.openapi.util.text.StringUtil
 import lean4ij.util.LeanUtil
 
+import com.intellij.openapi.roots.libraries.DummyLibraryProperties
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import lean4ij.language.Lean4FileType
+import lean4ij.language.Lean4SdkType
+import java.nio.file.Paths
+import javax.swing.Icon
+
+object DotLake : PersistentLibraryKind<DummyLibraryProperties>(".lake") {
+    override fun createDefaultProperties(): DummyLibraryProperties = DummyLibraryProperties.INSTANCE
+}
 
 fun Module.addExcludeFolder(basePath: String) {
     ModuleRootModificationUtil.updateModel(this) { rootModule ->
         // check https://github.com/intellij-rust/intellij-rust/issues/1062<
         // TODO any way not use Sdk or make a Sdk for lean?
-        rootModule.inheritSdk()
+        // rootModule.inheritSdk()
+        val application = ApplicationManager.getApplication()
+        application.invokeLater {
+            application.runWriteAction {
+                rootModule.setInvalidSdk("LeanInvalid", "LeanInvalid")
+                val projectJdkTable = ProjectJdkTable.getInstance()
+                val sdk = ProjectJdkImpl("Lean4", Lean4SdkType.INSTANCE)
+                projectJdkTable.addJdk(sdk)
+                rootModule.sdk = sdk
+                ProjectRootManager.getInstance(project).setProjectSdkName("LeanInvalid1", "Lean4")
+                // project.save()
+                rootModule.commit()
+            }
+        }
         val contentEntries = rootModule.contentEntries
+        //
+        // val application = ApplicationManager.getApplication()
+        // // TODO tested and it seems
+        // application.invokeLater {
+        //     application.runWriteAction {
+        //     val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+        //     val moduleManager = ModuleManager.getInstance(project)
+        //     val module = rootModule.module
+        //     if (!module.isDisposed) {
+        //         val moduleRootManager = ModuleRootManager.getInstance(rootModule.module)
+        //         var depLibrary = libraryTable.getLibraryByName(".lake")
+        //         if (depLibrary == null) {
+        //             val libraryTableModifiableModule = libraryTable.modifiableModel
+        //             depLibrary = libraryTableModifiableModule.createLibrary(".lake", DotLake)
+        //             libraryTableModifiableModule.commit()
+        //         }
+        //
+        //         moduleRootManager.modifiableModel.run {
+        //             addLibraryEntry(depLibrary)
+        //             commit()
+        //         }
+        //     }
+        //
+        //     }
+        // }
+
         contentEntries.singleOrNull()?.let { contentEntry ->
             // TODO excludeFolder seems still in Find
+            contentEntry.addExcludeFolder(
+                VfsUtil.findFile(
+                    Paths.get("/home/onriv/repos/mathematics_in_lean/.lake"),
+                    true
+                )!!
+            )
             contentEntry.addExcludePattern(".olean")
             contentEntry.addExcludePattern(".ilean")
+            contentEntry.addExcludePattern(".lean")
             contentEntry.addExcludePattern(".c")
-            // contentEntry.addSourceFolder()
-
-            val lakePath = Path.of(basePath, ".lake")
+            // // contentEntry.addSourceFolder()
+            //
+            // val lakePath = Path.of(basePath, ".lake")
             // skip normal project that is not a lean project and contains no .lake directory
-            if (!lakePath.toFile().let { it.exists() && it.isDirectory }) {
-                return@let
-            }
-            Files.walk(Path.of(basePath, ".lake"), 5)
-                .filter { path -> path.isDirectory() }
-                .forEach { path ->
-                    // TODO these logger should change the level to trace
-                    thisLogger().info("checking if $path should be excluded")
-                    if (path.parent.name == ".lake" && path.name == "build" ) {
-                        // TODO these logger should change the level to trace
-                        // TODO extract this out and make a general class or something for normalizing all these url and path
-                        thisLogger().info("adding $path to excludeFolder")
-                        // must be of pattern "file://", the last replace is for fixing path in Windows...
-                        val uri = path.toUri().toString().let {
-                            var ret = it
-                            if (OsUtil.isWindows()) {
-                                // TODO switch back to Windows for testing this behavior
-                                ret = it.replace("file:///", "file://")
-                            }
-                            ret
-                        }
-
-                        try {
-                            contentEntry.addExcludeFolder(uri)
-                            // TODO here thisLogger is Module
-                            //      maybe it's better not using extension method
-                            thisLogger().info("$path excluded")
-                        } catch (ex: Exception) {
-                            thisLogger().error("cannot exclude $uri", ex)
-                        }
-                    }
-                }
+            // if (!lakePath.toFile().let { it.exists() && it.isDirectory }) {
+            //     return@let
+            // }
+            // Files.walk(Path.of(basePath, ".lake"), 5)
+            //     .filter { path -> path.isDirectory() }
+            //     .forEach { path ->
+            //         // TODO these logger should change the level to trace
+            //         thisLogger().info("checking if $path should be excluded")
+            //         if (path.parent.name == ".lake" && path.name == "build" ) {
+            //             // TODO these logger should change the level to trace
+            //             // TODO extract this out and make a general class or something for normalizing all these url and path
+            //             thisLogger().info("adding $path to excludeFolder")
+            //             // must be of pattern "file://", the last replace is for fixing path in Windows...
+            //             val uri = path.toUri().toString().let {
+            //                 var ret = it
+            //                 if (OsUtil.isWindows()) {
+            //                     // TODO switch back to Windows for testing this behavior
+            //                     ret = it.replace("file:///", "file://")
+            //                 }
+            //                 ret
+            //             }
+            //
+            //             try {
+            //                 contentEntry.addExcludeFolder(uri)
+            //                 // TODO here thisLogger is Module
+            //                 //      maybe it's better not using extension method
+            //                 thisLogger().info("$path excluded")
+            //             } catch (ex: Exception) {
+            //                 thisLogger().error("cannot exclude $uri", ex)
+            //             }
+            //         }
+            //     }
         }
         rootModule.project.save()
     }
 
 }
+
 /**
  * see: [defining-project-level-listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html#defining-project-level-listeners)
  * this is copied from [ConnectDocumentToLanguageServerSetupParticipant](https://github.com/redhat-developer/lsp4ij/blob/cb04e064f93ec8c2bb22b216e54b6a7fb1c75496/src/main/java/com/redhat/devtools/lsp4ij/ConnectDocumentToLanguageServerSetupParticipant.java#L29)
@@ -106,7 +178,7 @@ class LeanProjectActivity : ProjectActivity {
      */
     private fun setupEditorFocusChangeEventListener(project: Project) {
         (EditorFactory.getInstance().eventMulticaster as? EditorEventMulticasterEx)?.let { ex ->
-            ex.addFocusChangeListener(object: FocusChangeListener {
+            ex.addFocusChangeListener(object : FocusChangeListener {
                 override fun focusGained(editor: Editor) {
                     LeanLanguageServerFactory.isEnable.set(true)
                 }
@@ -216,15 +288,15 @@ class LeanProjectActivity : ProjectActivity {
             ex.addDocumentListener(object : DocumentListener {
                 override fun documentChanged(event: DocumentEvent) {
                     val document = event.document
-                    val file = FileDocumentManager.getInstance().getFile(document)?:return
+                    val file = FileDocumentManager.getInstance().getFile(document) ?: return
                     if (!LeanUtil.isLeanFile(file)) {
                         return
                     }
                     try {
                         // TODO do some refactor here, extract similar code
                         val leanProjectService = project.service<LeanProjectService>()
-                        val editor = EditorFactory.getInstance().getEditors(document).firstOrNull()?:return
-                        val lineCol : LineColumn = StringUtil.offsetToLineColumn(document.text, event.offset) ?: return
+                        val editor = EditorFactory.getInstance().getEditors(document).firstOrNull() ?: return
+                        val lineCol: LineColumn = StringUtil.offsetToLineColumn(document.text, event.offset) ?: return
                         val position = LogicalPosition(lineCol.line, lineCol.column)
                         // TODO this may be duplicated with caret events some times
                         //      but without this there are cases no caret events but document changed events
@@ -253,12 +325,12 @@ class LeanProjectActivity : ProjectActivity {
 
     /**
      * Mostly this method is from
-     * intellij-rust/src/main/kotlin/org/rust/ide/module/CargoConfigurationWizardStep.kt" 100 lines
+     * intellij-rust/src/main/kotlin/org/rust/ide/module/CargoConfigurationWizardStep.kt 100 lines
      * for setting up module for ignoring .lake/build for index
      * check also intellij-rust/intellij
      */
     private fun setupModule(project: Project) {
-        project.basePath?.let{ basePath ->
+        project.basePath?.let { basePath ->
             project.projectFile?.let {
                 thisLogger().info("current module is $it")
                 // logger shows .idea/misc.xml
@@ -268,4 +340,46 @@ class LeanProjectActivity : ProjectActivity {
         }
     }
 
+}
+
+class Lean4StdLibraryProvider : AdditionalLibraryRootsProvider() {
+    override fun getAdditionalProjectLibraries(project: Project): Collection<StdLibrary> {
+        return listOf(
+            StdLibrary(
+                "mathlib TODO",
+                VfsUtil.findFile(Paths.get("/home/onriv/repos/mathematics_in_lean/.lake"), true)!!,
+                Lean4LibraryType.PKG
+            )
+        )
+    }
+
+    enum class Lean4LibraryType {
+        PKG, SDK
+    }
+
+
+    companion object {
+        val EXCLUDE_NAMES = arrayOf("test", "deps", "docs")
+    }
+
+    class StdLibrary(
+        private val name: String,
+        private val root: VirtualFile,
+        private val type: Lean4LibraryType = Lean4LibraryType.SDK
+    ) : SyntheticLibrary(), ItemPresentation {
+        private val roots = root.children.asList()
+        override fun hashCode() = root.hashCode()
+        override fun equals(other: Any?): Boolean = other is StdLibrary && other.root == root
+        override fun getSourceRoots() = roots
+        override fun getLocationString() = ""
+        override fun getIcon(p0: Boolean): Icon = Lean4FileType.icon
+        override fun getPresentableText() = name
+        override fun getExcludeFileCondition(): Condition<VirtualFile>? = Condition { file ->
+            when {
+                file.isDirectory -> file.name in EXCLUDE_NAMES || file.parent.name == "base"
+                else -> !file.name.endsWith(".lean")
+            }
+        }
+
+    }
 }

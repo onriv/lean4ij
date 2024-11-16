@@ -63,12 +63,12 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
         // toolchain path is $HOME/.elan/toolchains/<toolchainDir>
         val toolchainPath = Path.of(System.getProperty("user.home"), ".elan", "toolchains", toolchainDir)
         if (!toolchainPath.exists()) {
-            val content = "Path $toolchainFile does not exist. Please try to setup the toolchain outside the IDE."
+            val content = "Path $toolchainPath does not exist. Please try to setup the toolchain outside the IDE."
             project.notifyErr(content)
             return
         }
         if (!toolchainPath.isDirectory()) {
-            val content = "Path $toolchainFile is not a directory. Please check if the toolchain setup correctly."
+            val content = "Path $toolchainPath is not a directory. Please check if the toolchain setup correctly."
             project.notifyErr(content)
             return
         }

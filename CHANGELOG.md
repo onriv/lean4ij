@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- add sdk and library support
+
 ## [0.1.4] - 2024-11-11
 
 Depend on the latest approved nightly build of LSP4IJ: 0.8.0-20241105-013235

@@ -41,6 +41,10 @@ class InteractiveGoal(
             val start = sb.length
             val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = "")
             sb.append(names)
+            when {
+                hyp.isRemoved == true -> sb.highlight(start, sb.length, TextAttributesKeys.RemovedText)
+                hyp.isInserted == true -> sb.highlight(start, sb.length, TextAttributesKeys.InsertedText)
+            }
             if (names.contains("✝")) {
                 sb.highlight(start, sb.length, TextAttributesKeys.GoalInaccessible)
             } else {

@@ -6,6 +6,9 @@
 
 - add sdk and library support
 - add a soft wrap action/toolbar button for internal infoview
+- impl preferred infoview
+  - add a setting for it
+  - switch button of main toolbar to it
 
 ## [0.1.4] - 2024-11-11
 

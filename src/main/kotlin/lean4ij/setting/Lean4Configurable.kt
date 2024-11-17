@@ -7,9 +7,21 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
+import java.awt.Component
+import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
+import javax.swing.JList
 import kotlin.reflect.KMutableProperty0
 
+class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListCellRenderer() {
+    override fun getListCellRendererComponent(list: JList<*>, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
+        val comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        if (index >= 0 && index < toolTips.size) {
+            list.toolTipText = toolTips[index]
+        }
+        return comp
+    }
+}
 
 class Lean4SettingsView {
     private val lean4Settings = service<Lean4Settings>()
@@ -70,9 +82,10 @@ class Lean4SettingsView {
         cell(component).label(text)
     }
 
-    private val applyActions : MutableList<()->Unit> = mutableListOf()
-    private val resetActions : MutableList<()->Unit> = mutableListOf()
-    private val isChangedPredicates : MutableList<()->Boolean> = mutableListOf()
+    // TODO maybe it should not be public, but currently still no api for combos
+    val applyActions : MutableList<()->Unit> = mutableListOf()
+    val resetActions : MutableList<()->Unit> = mutableListOf()
+    val isChangedPredicates : MutableList<()->Boolean> = mutableListOf()
 }
 
 class Lean4Configurable : SearchableConfigurable {

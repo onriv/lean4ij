@@ -135,11 +135,15 @@
     <actions>
 
         <!-- infoview actions -->
-        <action id="OpenLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4 Actions: Toggle Infoview (internal) visibility" description="Lean4: Toggle Infoview (internal) visibility"
+        <action id="ToggleLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4 Actions: Toggle Infoview (internal) visibility" description="Lean4: Toggle Infoview (internal) visibility"
                 icon="/icons/infoview_icon.svg"
         >
         </action>
-        <action id="OpenLeanInfoViewJcef" class="lean4ij.actions.ToggleLeanInfoViewJcef" text="Lean4 Actions: Toggle Infoview (jcef) visibility" description="Lean4: Toggle Infoview (jcef) visibility"
+        <action id="ToggleLeanInfoViewJcef" class="lean4ij.actions.ToggleLeanInfoViewJcef" text="Lean4 Actions: Toggle Infoview (jcef) visibility" description="Lean4: Toggle Infoview (jcef) visibility"
+                icon="/icons/jcef_icon.svg"
+        >
+        </action>
+        <action id="ToggleInfoviewPreferred" class="lean4ij.actions.ToggleInfoviewPreferred" text="Lean4 Actions: Toggle Infoview (preferred) visibility" description="Lean4: Toggle Infoview (preferred) visibility"
                 icon="/icons/jcef_icon.svg"
         >
             <add-to-group group-id="MainToolbarRight" anchor="first"/>

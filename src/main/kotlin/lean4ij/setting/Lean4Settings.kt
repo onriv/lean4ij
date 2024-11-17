@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -39,6 +40,8 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableDiagnosticsLens = true
     var enableLspCompletion = true
 
+    // TODO this should switch to dropdown selection
+    var preferredInfoview = "Jcef"
     var enableNativeInfoview = true
     var autoUpdateInternalInfoview = true
     var hoveringTimeBeforePopupNativeInfoviewDoc = 200
@@ -98,11 +101,34 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
     group("Language Server Settings") {
         boolean("Enable language server", settings::enableLanguageServer)
         boolean("Enable the lean language server log (restart to take effect)", settings::enableLeanServerLog) {
-            comment("<a href='https://github.com/leanprover/lean4/tree/master/src/Lean/Server#in-general'>ref</a>")
+            comment("<a href='https://github.com/leanperrover/lean4/tree/master/src/Lean/Server#in-general'>ref</a>")
         }
         boolean("Enable lsp completion", settings::enableLspCompletion)
     }
     group("Infoview Settings") {
+
+        row {
+            val preferredInfoview = ComboBox(arrayOf(
+                "Jcef",
+                "Swing",
+                ))
+                .apply {
+                    renderer = ToolTipListCellRenderer(listOf("Prefer the Jcef/External/Vscode infoview", "Prefer the Swing/Native/Internal infoview"))
+                }
+            cell(preferredInfoview).label("Select preferred infoview")
+            applyActions.add {
+                preferredInfoview.selectedItem?.let {
+                    settings.preferredInfoview = it as String
+                }
+            }
+            resetActions.add {
+                preferredInfoview.selectedItem = settings.preferredInfoview
+            }
+            isChangedPredicates.add {
+                preferredInfoview.selectedItem != settings.preferredInfoview
+            }
+        }
+
         val (row, component) = boolean("Enable the native infoview", settings::enableNativeInfoview)
         boolean("Auto Update internal infoview", settings::autoUpdateInternalInfoview).let {
             val (row, _) = it

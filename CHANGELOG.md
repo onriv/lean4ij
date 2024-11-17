@@ -9,6 +9,7 @@
 - impl preferred infoview
   - add a setting for it
   - switch button of main toolbar to it
+- fix external infoview trace message style
 
 ## [0.1.4] - 2024-11-11
 

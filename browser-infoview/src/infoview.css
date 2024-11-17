@@ -75,7 +75,7 @@ html,body {
 
 /* Interactive traces */
 .trace-line:hover {
-    background-color: #dbeeff;
+    background-color: var(--trace-line-hover-background);
 }
 .vscode-dark .trace-line:hover {
     background-color: #1a2c3c;

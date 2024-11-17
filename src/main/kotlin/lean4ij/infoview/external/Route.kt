@@ -4,7 +4,9 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -238,6 +240,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
 
 /**
  * TODO the vscode prefix is unnecessary?
+ * TODO absolutely this require some refactor
  */
 fun createThemeCss(scheme: EditorColorsScheme) : String {
     val foreground : String = scheme.defaultForeground.toHexRgba()
@@ -274,6 +277,10 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
         }
         // themeSb.append("\n")
     }
+    // TODO should define some TextAttributesKey for this
+
+    val traceLineHoverBackground = scheme.getColor(EditorColors.CARET_ROW_COLOR)?.toHexRgba()?:background
+
     // check https://plugins.jetbrains.com/docs/intellij/jcef.html?from=jetbrains.org#disposing-resources
     val scrollbarStyle = JBCefScrollbarsHelper.buildScrollbarsStyle()
     return """:root {
@@ -284,7 +291,7 @@ ${themeSb}    --header-foreground-color: ${scheme.getAttributes(TextAttributesKe
     font-size: ${scheme.editorFontSize}px;
     --vscode-editor-font-family: '${scheme.editorFontName}', 'JuliaMono', 'Source Code Pro', 'STIX Two Math', monospace;
     --vscode-editor-font-size: ${scheme.editorFontSize}px;
-    
+    --trace-line-hover-background: $traceLineHoverBackground;
 }
 $scrollbarStyle
 """//.trimIndent()

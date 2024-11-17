@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
  */
 @Service(Service.Level.PROJECT)
 class LeanInfoviewService(private val project: Project) {
-
+   var toolWindow: LeanInfoViewWindow? = null
    var actionToolbar: ActionToolbar? = null
    var automaticallyRefreshInternalInfoview = true
 }

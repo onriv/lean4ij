@@ -80,6 +80,15 @@ dependencies {
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
         exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")
     }*/
+
+    /**
+     * In local unittest got the following error:
+     * Caused by: java.lang.ExceptionInInitializerError:
+     * Exception java.lang.UnsatisfiedLinkError:
+     * Native library (com/sun/jna/linux-x86-64/libjnidispatch.so) not found in resource path
+     * Hence add this, not saw before on GitHub action
+     */
+    testImplementation("net.java.dev.jna:jna:5.15.0")
 }
 
 // Set the JVM language level used to build the project.

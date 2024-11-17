@@ -7,11 +7,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.IconLoader.getIcon
-import com.intellij.ui.icons.getDisabledIcon
 import lean4ij.infoview.LeanInfoviewService
 import lean4ij.infoview.external.JcefInfoviewService
 import lean4ij.project.LeanProjectService
-import lean4ij.util.LeanUtil
 import javax.swing.Icon
 
 class RestartJcefInfoview : AnAction() {
@@ -43,6 +41,10 @@ class RestartInternalInfoview : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project?:return
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
+            // TODO here in fact message up two things:
+            //      one is recreating a new editor for removing old editor's bug
+            //      the other is updating infoview manually
+            project.service<LeanInfoviewService>().toolWindow?.restartEditor()
             project.service<LeanProjectService>().updateInfoviewFor(editor, true)
         }
     }

@@ -133,6 +133,8 @@
     </extensions>
 
     <actions>
+
+        <!-- infoview actions -->
         <action id="OpenLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4 Actions: Toggle Infoview (internal) visibility" description="Lean4: Toggle Infoview (internal) visibility"
                 icon="/icons/infoview_icon.svg"
         >
@@ -164,18 +166,17 @@
         <action id="OpenExternalInfoviewInBrowser" class="lean4ij.actions.OpenExternalInfoviewInBrowser" text="Lean4 Actions: Open infoview in browser" description="Lean4: Open infoview in browser">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-        <action id="RestartLeanLsp" class="lean4ij.actions.RestartLeanLsp" text="Lean4 Actions: Restart Lean Lsp Server" description="Restart Lean Lsp Server">
-            <add-to-group group-id="MainMenu" anchor="last"/>
-        </action>
-        <action id="RestartCurrentLeanFile" class="lean4ij.actions.RestartCurrentFile" text="Lean4 Actions: Restart Current Lean File" description="Restart Current Lean File">
-            <add-to-group group-id="MainMenu" anchor="last"/>
-        </action>
         <action id="RestartJcefInfoview" class="lean4ij.actions.RestartJcefInfoview" text="Lean4 Actions: Restart Jcef Infoview" description="Lean4 Actions: Restart Jcef Infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
         <action id="RestartInternalInfoview" class="lean4ij.actions.RestartInternalInfoview" text="Lean4 Actions: Restart Internal Infoview" description="Lean4 Actions: Restart Internal Infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+        <action id="ToggleInternalInfoviewSoftWrap" class="lean4ij.actions.ToggleInternalInfoviewSoftWrap" text="Lean4 Actions: Toggle Internal Infoview Soft Wrap" description="Lean4 Actions: Toggle Internal Infoview Soft Wrap">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+
+        <!-- inlay hint actions -->
         <action id="AddInlayGoalHint" class="lean4ij.actions.AddInlayGoalHint" text="Lean4 Actions: Add Inlay Goal Hint" description="Add goal hint">
             <add-to-group group-id="CodeMenu" anchor="last"/>
             <keyboard-shortcut
@@ -189,6 +190,14 @@
                     keymap="$default"
                     first-keystroke="control shift I"
             />
+        </action>
+
+        <!-- lsp actions -->
+        <action id="RestartLeanLsp" class="lean4ij.actions.RestartLeanLsp" text="Lean4 Actions: Restart Lean Lsp Server" description="Restart Lean Lsp Server">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+        <action id="RestartCurrentLeanFile" class="lean4ij.actions.RestartCurrentFile" text="Lean4 Actions: Restart Current Lean File" description="Restart Current Lean File">
+            <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
 
     </actions>

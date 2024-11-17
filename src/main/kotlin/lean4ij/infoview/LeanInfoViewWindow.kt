@@ -35,7 +35,15 @@ import javax.swing.JEditorPane
  */
 class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(true) {
     private val goals = JEditorPane()
-    val editor : CompletableDeferred<EditorEx> = CompletableDeferred()
+
+    /**
+     * TODO make this private
+     */
+    private val editor : CompletableDeferred<EditorEx> = CompletableDeferred()
+
+    suspend fun getEditor(): EditorEx {
+        return editor.await()
+    }
 
     /**
      * This si for displaying popup expr
@@ -43,6 +51,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
     val popupEditor : CompletableDeferred<EditorEx> = CompletableDeferred()
     val project = toolWindow.project
     val leanProject = project.service<LeanProjectService>()
+    val leanInfoviewService = project.service<LeanInfoviewService>()
     init {
         leanProject.scope.launch(Dispatchers.EDT) {
             try {
@@ -58,6 +67,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
                 popupEditor.completeExceptionally(ex)
             }
         }
+        leanInfoviewService.toolWindow = this
     }
 
     private val BORDER = BorderFactory.createEmptyBorder(3, 0, 5, 0)
@@ -117,7 +127,9 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
             }
             headerComponent = null
             setCaretEnabled(true)
-            setHorizontalScrollbarVisible(false)
+            // if true, then it's in fact also only visible if necessary
+            // check com.intellij.openapi.editor.impl.EditorImpl#setHorizontalScrollbarVisible
+            setHorizontalScrollbarVisible(true)
             setVerticalScrollbarVisible(true)
             isRendererMode = false
         }
@@ -193,6 +205,12 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         mouseMotionListener = InfoviewMouseMotionListener(leanProject, this, editorEx, file, position,
             interactiveGoals, interactiveTermGoal, interactiveDiagnostics, interactiveDiagnosticsAllMessages)
         editorEx.addEditorMouseMotionListener(mouseMotionListener!!)
+    }
+
+    fun restartEditor() {
+        leanProject.scope.launch(Dispatchers.EDT) {
+            editor.complete(createEditor())
+        }
     }
 
 }

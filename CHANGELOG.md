@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 - add sdk and library support
+- add a soft wrap action/toolbar button for internal infoview
 
 ## [0.1.4] - 2024-11-11
 

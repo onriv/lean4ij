@@ -23,7 +23,8 @@ class LeanLibraryExcludeFileCondition : SyntheticLibrary.ExcludeFileCondition {
         val result = when {
             isRoot.asBoolean -> false
             filename.startsWith(".") -> true
-            filename in EXCLUDE_NAMES -> isDir
+            filename in EXCLUDE_NAMES -> true
+            isDir -> false
             else -> !filename.endsWith(".lean")
         }
         return result
@@ -45,11 +46,16 @@ class LeanLibrary(
 
     override fun equals(other: Any?): Boolean = other is LeanLibrary && other.root == root
 
-    override fun getSourceRoots() = listOf(root)
+    override fun getSourceRoots() = root.children.toList()
+
+    override fun getBinaryRoots() = root.children.toList()
 
     override fun getLocationString() = ""
 
     override fun getIcon(p0: Boolean): Icon = LIBRARY_ICON
 
     override fun getPresentableText() = name
+
+    override fun isShowInExternalLibrariesNode(): Boolean = false
+
 }

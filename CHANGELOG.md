@@ -4,8 +4,9 @@
 
 ## [Unreleased]
 
-- add sdk and library support
+- add sdk and library support (if searching of file not working, try `invalidate cache` and remove `.idea` directory)
 - add a soft wrap action/toolbar button for internal infoview
+- rename actions for toggling infoviews (require rebind shortcuts)
 - impl preferred infoview
   - add a setting for it
   - switch button of main toolbar to it

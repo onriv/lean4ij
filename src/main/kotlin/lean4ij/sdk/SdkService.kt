@@ -28,15 +28,17 @@ class SdkService(private val project: Project) {
     /**
      * TODO this is duplicated with [lean4ij.lsp.LeanLanguageServerProvider.setServerCommand]
      */
-    fun getLeanVersion() : String? {
+    fun getLeanVersion(): String? {
         val toolchainFile = Path.of(project.basePath!!, "lean-toolchain")
         if (!toolchainFile.exists()) {
-            val content = "File $toolchainFile does not exist in the project root. Please check if this is a lean project."
+            val content =
+                "File $toolchainFile does not exist in the project root. Please check if this is a lean project."
             project.notifyErr(content)
             return null
         }
         if (!toolchainFile.isRegularFile()) {
-            val content = "File $toolchainFile lean-toolchain seems not a regular file. Please check if the project setup correctly"
+            val content =
+                "File $toolchainFile lean-toolchain seems not a regular file. Please check if the project setup correctly"
             project.notifyErr(content)
             return null
         }
@@ -66,8 +68,8 @@ class SdkService(private val project: Project) {
 
     fun setupModule() {
         val application = ApplicationManager.getApplication()
-        val toolchain = getLeanVersion()?:return
-        val toolchainPath = getHomePath(toolchain)?.toString()?:return
+        val toolchain = getLeanVersion() ?: return
+        val toolchainPath = getHomePath(toolchain)?.toString() ?: return
         val sdkName = toolchain.split('/').last().replace(':', ' ')
         var sdk: Sdk? = ProjectJdkTable.getInstance().findJdk(sdkName)
         val sdkCompletable = CompletableFuture<Sdk>()
@@ -81,7 +83,8 @@ class SdkService(private val project: Project) {
                             // homePath = toolchainPath
                             addRoot(
                                 VfsUtil.findFile(Path.of(toolchainPath, "src", "lean"), true)!!,
-                                OrderRootType.CLASSES)
+                                OrderRootType.CLASSES
+                            )
                             commitChanges()
                         }
                         addJdk(newSdk)
@@ -115,10 +118,9 @@ class SdkService(private val project: Project) {
                             )!!
                         )
                     }
-                    project.save()
                 }
+                project.save()
             }
         }
     }
-
 }

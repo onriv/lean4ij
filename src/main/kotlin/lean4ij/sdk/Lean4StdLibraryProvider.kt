@@ -3,6 +3,7 @@ package lean4ij.sdk
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
@@ -15,12 +16,13 @@ import kotlin.io.path.notExists
 class Lean4StdLibraryProvider : AdditionalLibraryRootsProvider() {
     override fun getAdditionalProjectLibraries(project: Project): Collection<LeanLibrary> {
         val basePath = project.basePath ?: return listOf()
-        val packagesPath = Path.of(basePath, ".lake", "packages")
+        val packagesPath = Path.of(basePath, ".lake")
         if (packagesPath.notExists()) {
             return listOf()
         }
         return Files.list(packagesPath)
             .filter { it.isDirectory() }
+            .filter { it.name == "packages" }
             .map {
                 LeanLibrary(it.name, VfsUtil.findFile(it, true)!!)
         }.toList()

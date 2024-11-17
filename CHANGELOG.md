@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.1.5] - 2024-11-17
+
+Depend on the latest approved nightly build of LSP4IJ: 0.8.0-20241115-145814
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.8.0-20241115-145814@nightly]
+
 - add sdk and library support (if searching of file not working, try `invalidate cache` and remove `.idea` directory)
 - add a soft wrap action/toolbar button for internal infoview
 - rename actions for toggling infoviews (require rebind shortcuts)
@@ -109,7 +114,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/onriv/lean4ij/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/onriv/lean4ij/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/onriv/lean4ij/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/onriv/lean4ij/compare/v0.1.1...v0.1.2

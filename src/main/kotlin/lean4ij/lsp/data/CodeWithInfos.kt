@@ -77,6 +77,7 @@ class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where
         f1.toInfoViewString(sb, this)
         endOffset = sb.length
         f0.mayHighlight(sb, startOffset, endOffset)
+        // TODO when does this happen? Mostly when error happens
         codeText = sb.substring(startOffset, endOffset)
         return codeText
     }
@@ -127,7 +128,7 @@ class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
     }
 
     override fun contextInfo(offset: Int, startOffset: Int, endOffset : Int) : Triple<ContextInfo, Int, Int>? {
-        // TODO when does this happen?
+        // TODO when does this happen? Mostly when error happens
         //      This happened on MIL/C07/S03_Subojects.lean:148
         TODO("Not yet implemented")
     }

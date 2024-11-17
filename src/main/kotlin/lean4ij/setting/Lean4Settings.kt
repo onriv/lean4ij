@@ -21,7 +21,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil
     storages = [Storage("Lean4.xml")]
 )
 class Lean4Settings : PersistentStateComponent<Lean4Settings> {
-
+    var commentEmptyLine = true
+    var commentAtFirstColumn = false
+    var useSpaceAfterLineComment = true
     var enableHeuristicTactic = true
     var enableHeuristicField = true
     var enableHeuristicAttributes = true
@@ -92,6 +94,9 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Enable heuristic tactic highlighting", settings::enableHeuristicTactic)
         boolean("Enable heuristic field highlighting", settings::enableHeuristicField)
         boolean("Enable heuristic attributes highlighting", settings::enableHeuristicAttributes)
+        boolean("Comment at first column", settings::commentAtFirstColumn)
+        boolean("Use space after line comment", settings::useSpaceAfterLineComment)
+        boolean("Comment empty line", settings::commentEmptyLine)
     }
     group("Inlay Hints Settings ") {
         boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)

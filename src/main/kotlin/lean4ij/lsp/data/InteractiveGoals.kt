@@ -62,6 +62,7 @@ class InfoviewRender(val sb: StringBuilder) {
         try {
             return sb.substring(start, end)
         } catch (e: IndexOutOfBoundsException) {
+            // TODO mostly happen when errors
             return ""
         }
     }

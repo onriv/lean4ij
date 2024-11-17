@@ -11,6 +11,7 @@
   - switch button of main toolbar to it
 - fix external infoview trace message style
 - add style for removed/inserted hyp in internal infoview
+- support space/empty-line/first-column setting for the commenter
 
 ## [0.1.4] - 2024-11-11
 

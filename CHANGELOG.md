@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+- add a first goto symbol/class implementation
+  - for some performance tuning currently debouncing gap set to 1 second
+  - a setting for the debouncing gap
+
 ## [0.1.5] - 2024-11-17
 
 Depend on the latest approved nightly build of LSP4IJ: 0.8.0-20241115-145814

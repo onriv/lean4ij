@@ -37,6 +37,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableFileProgressBar = true
 
     var maxInlayHintWaitingMillis = 100
+    var debouncingMillisForWorkspaceSymbol = 1000
     var commentPrefixForGoalHint = "---"
 
     var enableDiagnosticsLens = true
@@ -101,13 +102,14 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
     group("Inlay Hints Settings ") {
         boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)
         string("Comment prefix for goal hints", settings::commentPrefixForGoalHint)
-        int("Max inlay hint waiting millis", settings::maxInlayHintWaitingMillis, 0, 500, 25)
+        int("Max inlay hint waiting millis(multiple of 25)", settings::maxInlayHintWaitingMillis, 0, 500, 25)
     }
     group("Language Server Settings") {
         boolean("Enable language server", settings::enableLanguageServer)
         boolean("Enable the lean language server log (restart to take effect)", settings::enableLeanServerLog) {
             comment("<a href='https://github.com/leanperrover/lean4/tree/master/src/Lean/Server#in-general'>ref</a>")
         }
+        int("Debouncing millis for sending workspace/symbol request to the language server(multiple of 100)", settings::debouncingMillisForWorkspaceSymbol, 0, 3000, 100)
         boolean("Enable lsp completion", settings::enableLspCompletion)
     }
     group("Infoview Settings") {

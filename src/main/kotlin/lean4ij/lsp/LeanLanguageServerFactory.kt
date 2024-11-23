@@ -10,6 +10,7 @@ import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
 import com.redhat.devtools.lsp4ij.client.features.LSPDiagnosticFeature
+import com.redhat.devtools.lsp4ij.client.features.LSPWorkspaceSymbolFeature
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.services.LanguageServer
@@ -62,12 +63,21 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
     }
 
     override fun createClientFeatures(): LSPClientFeatures {
+        // TODO extract this to a standalone class and do some refactor
         return object : LSPClientFeatures() {
             init {
                 completionFeature = LeanLSPCompletionFeature()
                 diagnosticFeature = object : LSPDiagnosticFeature() {
                     override fun isEnabled(file: PsiFile): Boolean {
-                        return true
+                       return true
+                    }
+                }
+                // for currently we need some performance tuning
+                // for seemingly no cancelRequests handled in the language server end
+                // we do the workspace symbol feature manually
+                workspaceSymbolFeature = object : LSPWorkspaceSymbolFeature() {
+                    override fun isEnabled(): Boolean {
+                        return false
                     }
                 }
             }

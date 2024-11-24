@@ -35,6 +35,10 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableLanguageServer = true
     var enableLeanServerLog = false
     var enableFileProgressBar = true
+    // TODO use constant or enum for this
+    //      a reason currently it's not enum is for serialization/persistence
+    var languageServerStartingStrategy = "Eager"
+    var fileProgressTriggeringStrategy = "OnlySelectedEditor"
 
     var maxInlayHintWaitingMillis = 100
     var debouncingMillisForWorkspaceSymbol = 1000
@@ -43,7 +47,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableDiagnosticsLens = true
     var enableLspCompletion = true
 
-    // TODO this should switch to dropdown selection
+    // TODO use constant or enum for this
     var preferredInfoview = "Jcef"
     var enableNativeInfoview = true
     var autoUpdateInternalInfoview = true
@@ -106,6 +110,29 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
     }
     group("Language Server Settings") {
         boolean("Enable language server", settings::enableLanguageServer)
+        select(
+            "Language server starting strategy",
+            arrayOf(
+                "Eager",
+                "Lazy",
+            ),
+            settings::languageServerStartingStrategy,
+            listOf(
+                "Eagerly start the language server at opening project",
+                "Lazily start the language server until focusing the file"
+            )
+        )
+        select("File processing triggering strategy",
+            arrayOf(
+                "OnlySelectedEditor",
+                "AllOpenedEditor",
+            ),
+            settings::fileProgressTriggeringStrategy,
+            listOf(
+                "Trigger file progressing for only the selected editor while opening project",
+                "Trigger file progressing for only all opened editor while opening project"
+            )
+        )
         boolean("Enable the lean language server log (restart to take effect)", settings::enableLeanServerLog) {
             comment("<a href='https://github.com/leanperrover/lean4/tree/master/src/Lean/Server#in-general'>ref</a>")
         }
@@ -113,39 +140,23 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Enable lsp completion", settings::enableLspCompletion)
     }
     group("Infoview Settings") {
-
-        row {
-            val preferredInfoview = ComboBox(arrayOf(
+        select(
+            "Select preferred infoview",
+            arrayOf(
                 "Jcef",
                 "Swing",
-                ))
-                .apply {
-                    renderer = ToolTipListCellRenderer(listOf("Prefer the Jcef/External/Vscode infoview", "Prefer the Swing/Native/Internal infoview"))
-                }
-            cell(preferredInfoview).label("Select preferred infoview")
-            applyActions.add {
-                preferredInfoview.selectedItem?.let {
-                    settings.preferredInfoview = it as String
-                }
-            }
-            resetActions.add {
-                preferredInfoview.selectedItem = settings.preferredInfoview
-            }
-            isChangedPredicates.add {
-                preferredInfoview.selectedItem != settings.preferredInfoview
-            }
-        }
+            ),
+            settings::preferredInfoview,
+            listOf("Prefer the Jcef/External/Vscode infoview", "Prefer the Swing/Native/Internal infoview")
+        )
 
-        val (row, component) = boolean("Enable the native infoview", settings::enableNativeInfoview)
-        boolean("Auto Update internal infoview", settings::autoUpdateInternalInfoview).let {
-            val (row, _) = it
-            row.enabledIf(component.selected)
-        }
-        int("Time limit for popping up native infoview doc (millis): ", settings::hoveringTimeBeforePopupNativeInfoviewDoc, 50, 3000).enabledIf(component.selected)
-        int("text length upper bound for using min width", settings::nativeInfoviewPopupMinWidthTextLengthUpperBound, 0, 3000).enabledIf(component.selected)
-        int("text length lower bound for using max width", settings::nativeInfoviewPopupMaxWidthTextLengthLowerBound, 0, 3000).enabledIf(component.selected)
-        int("native infoview min width", settings::nativeInfoviewPopupPreferredMinWidth, 0, 3000).enabledIf(component.selected)
-        int("native infoview max width", settings::nativeInfoviewPopupPreferredMaxWidth, 0, 3000).enabledIf(component.selected)
+        val enableNativeInfoview = boolean("Enable the native infoview", settings::enableNativeInfoview)
+        boolean("Auto Update internal infoview", settings::autoUpdateInternalInfoview).enabledIf(enableNativeInfoview.selected)
+        int("Time limit for popping up native infoview doc (millis): ", settings::hoveringTimeBeforePopupNativeInfoviewDoc, 50, 3000).enabledIf(enableNativeInfoview.selected)
+        int("text length upper bound for using min width", settings::nativeInfoviewPopupMinWidthTextLengthUpperBound, 0, 3000).enabledIf(enableNativeInfoview.selected)
+        int("text length lower bound for using max width", settings::nativeInfoviewPopupMaxWidthTextLengthLowerBound, 0, 3000).enabledIf(enableNativeInfoview.selected)
+        int("native infoview min width", settings::nativeInfoviewPopupPreferredMinWidth, 0, 3000).enabledIf(enableNativeInfoview.selected)
+        int("native infoview max width", settings::nativeInfoviewPopupPreferredMaxWidth, 0, 3000).enabledIf(enableNativeInfoview.selected)
         boolean("Enable the vscode infoview", settings::enableVscodeInfoview)
     }
 }

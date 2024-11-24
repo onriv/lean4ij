@@ -24,6 +24,7 @@ import com.redhat.devtools.lsp4ij.LanguageServerManager
 import com.redhat.devtools.lsp4ij.features.workspaceSymbol.LSPWorkspaceSymbolContributor
 import com.redhat.devtools.lsp4ij.features.workspaceSymbol.WorkspaceSymbolData
 import lean4ij.lsp.LeanLanguageServerFactory
+import lean4ij.project.LeanProjectService
 import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.WorkspaceSymbol
 import org.eclipse.lsp4j.WorkspaceSymbolParams
@@ -109,7 +110,7 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<St
         // TODO very fuzzy this way...
         //      after lsp4ij 0.8.0 it can be removed
         //      maybe the best way is make a pr to lean4 for not file progress in didOpen request...
-        LeanLanguageServerFactory.isEnable.set(true)
+        project.service<LeanProjectService>().isEnable.set(true)
         // TODO change the old way getting language server to this maybe!
         val languageServerItem = LanguageServerManager.getInstance(project)
             .getLanguageServer("lean").get()

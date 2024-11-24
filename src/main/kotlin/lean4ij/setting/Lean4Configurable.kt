@@ -2,11 +2,14 @@ package lean4ij.setting
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.selected
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
@@ -21,6 +24,18 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
         }
         return comp
     }
+}
+
+class BooleanSetting(private val row: Row, private val checkbox: JBCheckBox) {
+
+    fun enabledIf(predicate: ComponentPredicate): BooleanSetting {
+        row.enabledIf(predicate)
+        checkbox.selected
+        return this
+    }
+
+    val selected: ComponentPredicate = checkbox.selected
+
 }
 
 class Lean4SettingsView {
@@ -54,7 +69,7 @@ class Lean4SettingsView {
     /**
      * The return type is not perfect as a dsl, but currently I cannot get better idea.
      */
-    fun Panel.boolean(text: String, prop: KMutableProperty0<Boolean>, others: Row.()->Unit={}): Pair<Row, JBCheckBox> {
+    fun Panel.boolean(text: String, prop: KMutableProperty0<Boolean>, others: Row.()->Unit={}): BooleanSetting {
         val component = JBCheckBox(text, prop.get())
         val row = row {
             applyActions.add { prop.set(component.isSelected) }
@@ -63,7 +78,7 @@ class Lean4SettingsView {
             cell(component)
             others()
         }
-        return Pair(row, component)
+        return BooleanSetting(row, component)
     }
 
     fun Panel.string(text: String, prop: KMutableProperty0<String>) = row {
@@ -80,6 +95,21 @@ class Lean4SettingsView {
         resetActions.add { component.number = prop.get() }
         isChangedPredicates.add { component.number != prop.get() }
         cell(component).label(text)
+    }
+
+    fun Panel.select(text: String, options: Array<String>, prop: KMutableProperty0<String>) = select(text, options, prop, null)
+
+    fun Panel.select(text: String, options: Array<String>, prop: KMutableProperty0<String>, toolTips: List<String>?) = row {
+        val comboBox = ComboBox(options)
+        if (toolTips?.isNotEmpty() == true) {
+            comboBox.apply {
+                renderer = ToolTipListCellRenderer(toolTips)
+            }
+        }
+        cell(comboBox).label(text)
+        applyActions.add { prop.set(comboBox.selectedItem as String) }
+        resetActions.add { comboBox.selectedItem = prop.get() }
+        isChangedPredicates.add { comboBox.selectedItem != prop.get() }
     }
 
     // TODO maybe it should not be public, but currently still no api for combos

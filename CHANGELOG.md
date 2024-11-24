@@ -7,6 +7,9 @@
 - add a first goto symbol/class implementation
   - for some performance tuning currently debouncing gap set to 1 second
   - a setting for the debouncing gap
+- some refactor on settings
+- setting for starting the language server eagerly or not
+- setting for file progressing all open editors eagerly or not (requires lsp 0.8.0)
 
 ## [0.1.5] - 2024-11-17
 

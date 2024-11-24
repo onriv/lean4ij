@@ -8,6 +8,7 @@ import lean4ij.util.Constants
 import lean4ij.util.LspUtil
 import com.google.gson.JsonElement
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -25,12 +26,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import lean4ij.setting.Lean4Settings
 import lean4ij.util.LeanUtil
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.services.LanguageServer
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path
 
 @Service(Service.Level.PROJECT)
@@ -40,6 +43,18 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     val languageServer : CompletableDeferred<LeanLanguageServer> get() = _languageServer
     private var _initializeResult = CompletableDeferred<InitializeResult>()
     private val initializeResult : CompletableDeferred<InitializeResult> = _initializeResult
+
+    private val lean4Settings = service<Lean4Settings>()
+
+    /**
+     * Setting this to false rather than true, although it makes the language server does not start as the project
+     * or ide opens, but it seems improving performance for avoiding peak cpu flush as the opening
+     * TODO add this on readme
+     * TODO maybe some settings for it
+     * TODO it's back to true, inconsistent with readme
+     * TODO this is not per project...
+     */
+    val isEnable : AtomicBoolean = AtomicBoolean(lean4Settings.languageServerStartingStrategy == "Eager")
 
     private val _caretEvent = MutableSharedFlow<PlainGoalParams>()
     val caretEvent: Flow<PlainGoalParams> get() = _caretEvent.asSharedFlow()

@@ -42,24 +42,30 @@ class LeanProjectActivity : ProjectActivity {
      * TODO absolutely this requires some refactor
      *      this is for avoiding didOpen request that make the lean lsp server handling it and improve performance
      *      but it may have some false positive event though
+     * TODO should this listener per project? all stuffs related to multiple projects in fact no tested
      */
     private fun setupEditorFocusChangeEventListener(project: Project) {
         (EditorFactory.getInstance().eventMulticaster as? EditorEventMulticasterEx)?.let { ex ->
+            // TODO refactor this part
             ex.addFocusChangeListener(object : FocusChangeListener {
                 override fun focusGained(editor: Editor) {
-                    LeanLanguageServerFactory.isEnable.set(true)
+                    val project = editor.project?:return
+                    project.service<LeanProjectService>().isEnable.set(true)
                 }
 
                 override fun focusGained(editor: Editor, event: FocusEvent) {
-                    LeanLanguageServerFactory.isEnable.set(true)
+                    val project = editor.project?:return
+                    project.service<LeanProjectService>().isEnable.set(true)
                 }
 
                 override fun focusLost(editor: Editor) {
-                    LeanLanguageServerFactory.isEnable.set(false)
+                    val project = editor.project?:return
+                    project.service<LeanProjectService>().isEnable.set(false)
                 }
 
                 override fun focusLost(editor: Editor, event: FocusEvent) {
-                    LeanLanguageServerFactory.isEnable.set(false)
+                    val project = editor.project?:return
+                    project.service<LeanProjectService>().isEnable.set(false)
                 }
             }) {
                 // TODO add real Disposable, it's used for avoiding resource leak

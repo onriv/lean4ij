@@ -6,8 +6,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import lean4ij.infoview.dsl.InfoObjectModel
 import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveGoals
@@ -144,12 +145,57 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         }
     }
 
+    /**
+     * // TODO this should add some UT for the rendering
+     * TODO this in fact can be static
+     */
+    fun updateEditorMouseMotionListenerV1(
+        context: LeanInfoviewContext
+    ) {
+        val editorEx: EditorEx = context.infoviewEditor
+        editorEx.markupModel.removeAllHighlighters()
+        context.rootObjectModel.output(editorEx)
+
+        // this is the critical statement for showing content
+        setContent(editorEx.component)
+
+        // TODO maybe a configuration for this
+        // always move to the beginning while update goal, to avoid losing focus while all message expanded
+        // TODO nevertheless there maybe some better way
+        editorEx.caretModel.moveToOffset(0)
+        editorEx.scrollingModel.scrollToCaret(ScrollType.CENTER)
+
+        // TODO does it require new object for each update?
+        //      it seems so, otherwise the hyperlinks seems mixed and requires remove
+        //      but still, maybe only one is better, try to remove old hyperlinks
+        //      check if multiple editors would leak or not
+        if (mouseMotionListenerV1 != null) {
+            editorEx.removeEditorMouseMotionListener(mouseMotionListenerV1!!)
+        }
+        // TODO this can be refactored to the InfoviewRender class, in that way the definition of hovering
+        //      can be done in the same time when the rendering is defined
+        mouseMotionListenerV1 = InfoviewMouseMotionListenerV1(context)
+        editorEx.addEditorMouseMotionListener(mouseMotionListenerV1!!)
+
+        // mouse listener
+        if (mouseListenerV1 != null) {
+            editorEx.removeEditorMouseListener(mouseListenerV1!!)
+        }
+        mouseListenerV1 = InfoviewMouseListenerV1(context)
+        editorEx.addEditorMouseListener(mouseListenerV1!!)
+    }
+
     private var mouseMotionListener : EditorMouseMotionListener? = null
+
+    private var mouseMotionListenerV1 : EditorMouseMotionListener? = null
+
+    private var mouseListener : EditorMouseListener? = null
+    private var mouseListenerV1 : EditorMouseListener? = null
     /**
      *  // TODO this should add some UT for the rendering
      */
     suspend fun updateEditorMouseMotionListener(
-        interactiveInfo: InfoviewRender,
+        infoviewRender: InfoviewRender,
         file: VirtualFile,
         position: Position,
         interactiveGoals: InteractiveGoals?,
@@ -159,7 +205,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
     ) {
         val editorEx: EditorEx = editor.await()
         editorEx.markupModel.removeAllHighlighters()
-        editorEx.document.setText(interactiveInfo.toString())
+        editorEx.document.setText(infoviewRender.toString())
 
         // TODO maybe a configuration for this
         // always move to the beginning while update goal, to avoid losing focus while all message expanded
@@ -170,7 +216,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         editorEx.foldingModel.runBatchFoldingOperation {
             editorEx.foldingModel.clearFoldRegions()
             var allMessagesFoldRegion : FoldRegion? = null
-            for (folding in interactiveInfo.foldings) {
+            for (folding in infoviewRender.foldings) {
                 val foldRegion = editorEx.foldingModel.addFoldRegion(folding.startOffset, folding.endOffset, folding.placeholderText)
                 foldRegion?.isExpanded = folding.expanded
                 if (folding.isAllMessages) {
@@ -188,7 +234,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
             }
         }
         // highlights
-        for (highlight in interactiveInfo.highlights) {
+        for (highlight in infoviewRender.highlights) {
             editorEx.markupModel.addRangeHighlighter(highlight.startOffset, highlight.endOffset, HighlighterLayer.SYNTAX, highlight.textAttributes, HighlighterTargetArea.EXACT_RANGE)
         }
 
@@ -202,9 +248,16 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         if (mouseMotionListener != null) {
             editorEx.removeEditorMouseMotionListener(mouseMotionListener!!)
         }
+        // TODO this can be refactored to the InfoviewRender class, in that way the definition of hovering
+        //      can be done in the same time when the rendering is defined
         mouseMotionListener = InfoviewMouseMotionListener(leanProject, this, editorEx, file, position,
             interactiveGoals, interactiveTermGoal, interactiveDiagnostics, interactiveDiagnosticsAllMessages)
         editorEx.addEditorMouseMotionListener(mouseMotionListener!!)
+        if (mouseListener != null) {
+            editorEx.removeEditorMouseListener(mouseListener!!)
+        }
+        mouseListener = InfoviewMouseListener(infoviewRender)
+        editorEx.addEditorMouseListener(mouseListener!!)
     }
 
     fun restartEditor() {

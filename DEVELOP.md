@@ -51,7 +51,53 @@ the swing infoview is a raw infoview implemented using intellij platform's swing
 Currently, the code is still very badly organized for requiring further development.
 The entrance point for rendering is at `LeanFile.updateCaret` which call `LeanInfoViewWindowFactory.updateGoal` when all lsp call finish.
 
+### The design for `TaggedText` and `InfoViewContent`
 
+The implementation for the internal infoview, especially the render part needs big refactor.
+
+Currently, the design for `TaggedText` and `InfoviewContent` is extremely complicated for not sure what the contract is. 
+
+The generic class `TaggedText` is original designed for respecting the following structure in the lean source code `src/Lean/Widget/TaggedText.lean`.
+
+```lean4
+inductive TaggedText (α : Type u) where
+  | text   : String → TaggedText α
+  /-- Invariants:
+  - non-empty
+  - no adjacent `text` elements (they should be collapsed)
+  - no directly nested `append`s (but `append #[tag _ (append ..)]` is okay) -/
+  | append : Array (TaggedText α) → TaggedText α
+  | tag    : α → TaggedText α → TaggedText α
+```
+
+That has three constructors. Here they are represented in three subclass: `TaggedTextText`, `TaggedTextAppend` and `TaggedTextTag`.
+For the type α in the above lean source code, currently it's the interface `InfoViewContent` and the implementations are
+- SubexprInfo
+- MsgEmbed
+  - MsgEmbedExpr
+  - MsgEmbedGoal
+  - MsgEmbedTrace
+  - MsgUnsupported
+
+The implementation `SubexprInfo` corresponds to the following source code in the lean4 codebase in `Lean/Widget/InteractiveCode.lean` and is used for
+displaying interactive goals/expecting types in the infoview:
+
+```lean4
+structure SubexprInfo where
+  /-- The `Elab.Info` node with the semantics of this part of the output. -/
+  info : WithRpcRef Lean.Elab.InfoWithCtx
+  /-- The position of this subexpression within the top-level expression. See `Lean.SubExpr`. -/
+  subexprPos : Lean.SubExpr.Pos
+  -- TODO(WN): add fields for semantic highlighting
+  -- kind : Lsp.SymbolKind
+  /-- In certain situations such as when goal states change between positions in a tactic-mode proof,
+  we can show subexpression-level diffs between two expressions. This field asks the renderer to
+  display the subexpression as in a diff view (e.g. red/green like `git diff`). -/
+  diffStatus? : Option DiffTag := none
+  deriving RpcEncodable
+```
+
+The `MsgEmbed` and its subclasses are used for displaying the messages. Almost all complexities came from this part.
 
 ## Developing in Intellij Idea
  Proxy issue (this should only happen in some specific region)

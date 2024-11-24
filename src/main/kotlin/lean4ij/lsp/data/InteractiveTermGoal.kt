@@ -1,9 +1,9 @@
 package lean4ij.lsp.data
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import lean4ij.infoview.TextAttributesKeys
+import lean4ij.infoview.Lean4TextAttributesKeys
+import lean4ij.infoview.dsl.*
 
 /**
  * TODO this is different with the lean4 source code
@@ -12,12 +12,40 @@ import lean4ij.infoview.TextAttributesKeys
  *      where it's extends from InteractiveGoalCore
  */
 class InteractiveTermGoal(
-    val ctx : ContextInfo,
+    val ctx: ContextInfo,
     val hyps: Array<InteractiveHypothesisBundle>,
     val range: Range,
     val term: ContextInfo,
     val type: TaggedText<SubexprInfo>
 ) {
+    fun toInfoObjectModel(): InfoObjectModel = info {
+        fold {
+            h2("Expected type")
+            // TODO duplicated
+            for (hyp in hyps) {
+                val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = "")
+                // TODO check if it's possible for using multiple text attributes
+                val attr: MutableList<Lean4TextAttributesKeys> = mutableListOf()
+                when {
+                    hyp.isRemoved == true -> attr.add(Lean4TextAttributesKeys.RemovedText)
+                    hyp.isInserted == true -> attr.add(Lean4TextAttributesKeys.InsertedText)
+                }
+                if (names.contains("✝")) {
+                    attr.add(Lean4TextAttributesKeys.GoalInaccessible)
+                } else {
+                    attr.add(Lean4TextAttributesKeys.GoalHyp)
+                }
+                p(names, attr.map { it.key }.toMutableList())
+                p(" : ")
+                add(hyp.type.toInfoObjectModel())
+                // TODO is it suitable doing line break this way?
+                br()
+            }
+            p("⊢ ", Lean4TextAttributesKeys.SwingInfoviewGoalSymbol)
+            add(type.toInfoObjectModel())
+        }
+    }
+
     /**
      * TODO refactor StringBuilder into a Render
      */
@@ -25,7 +53,11 @@ class InteractiveTermGoal(
         val header = "Expected type"
         val start = sb.length
         sb.append("$header")
-        sb.highlight(start, sb.length, EditorColorsManager.getInstance().globalScheme.getAttributes(TextAttributesKeys.SwingInfoviewExpectedType.key))
+        sb.highlight(
+            start,
+            sb.length,
+            EditorColorsManager.getInstance().globalScheme.getAttributes(Lean4TextAttributesKeys.SwingInfoviewExpectedType.key)
+        )
         sb.append('\n')
         // TODO deduplicate
         for (hyp in hyps) {
@@ -33,15 +65,15 @@ class InteractiveTermGoal(
             val start = sb.length
             sb.append(names)
             if (names.contains("✝")) {
-                sb.highlight(start, sb.length, TextAttributesKeys.GoalInaccessible)
+                sb.highlight(start, sb.length, Lean4TextAttributesKeys.GoalInaccessible)
             } else {
-                sb.highlight(start, sb.length, TextAttributesKeys.GoalHyp)
+                sb.highlight(start, sb.length, Lean4TextAttributesKeys.GoalHyp)
             }
             sb.append(" : ")
             hyp.type.toInfoViewString(sb, null)
             sb.append("\n")
         }
-        sb.append("⊢", TextAttributesKeys.SwingInfoviewGoalSymbol)
+        sb.append("⊢", Lean4TextAttributesKeys.SwingInfoviewGoalSymbol)
         sb.append(" ")
         type.toInfoViewString(sb, null)
         val end = sb.length

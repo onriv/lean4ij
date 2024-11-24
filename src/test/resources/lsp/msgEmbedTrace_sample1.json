@@ -1,0 +1,60 @@
+{
+  "trace": {
+    "msg": {
+      "append": [
+        {
+          "tag": [
+            {
+              "expr": {
+                "text": "result "
+              }
+            },
+            {
+              "text": ""
+            }
+          ]
+        },
+        {
+          "tag": [
+            {
+              "expr": {
+                "tag": [
+                  {
+                    "subexprPos": "/",
+                    "info": {
+                      "p": "39"
+                    }
+                  },
+                  {
+                    "text": "instHasEquivOfSetoid"
+                  }
+                ]
+              }
+            },
+            {
+              "text": ""
+            }
+          ]
+        },
+        {
+          "tag": [
+            {
+              "expr": {
+                "text": ""
+              }
+            },
+            {
+              "text": ""
+            }
+          ]
+        }
+      ]
+    },
+    "indent": 2,
+    "collapsed": false,
+    "cls": "Meta.synthInstance",
+    "children": {
+      "strict": []
+    }
+  }
+}

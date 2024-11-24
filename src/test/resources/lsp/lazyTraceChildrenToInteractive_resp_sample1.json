@@ -1,0 +1,631 @@
+[
+  {
+    "tag": [
+      {
+        "trace": {
+          "msg": {
+            "append": [
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": "new goal "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "21"
+                          }
+                        },
+                        {
+                          "append": [
+                            {
+                              "text": "HasEquiv "
+                            },
+                            {
+                              "tag": [
+                                {
+                                  "subexprPos": "/1",
+                                  "info": {
+                                    "p": "22"
+                                  }
+                                },
+                                {
+                                  "text": "α"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": ""
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              }
+            ]
+          },
+          "indent": 2,
+          "collapsed": true,
+          "cls": "Meta.synthInstance",
+          "children": {
+            "lazy": {
+              "p": "23"
+            }
+          }
+        }
+      },
+      {
+        "text": ""
+      }
+    ]
+  },
+  {
+    "tag": [
+      {
+        "trace": {
+          "msg": {
+            "append": [
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": ""
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": "✅"
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": " apply "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "24"
+                          }
+                        },
+                        {
+                          "text": "@instHasEquivOfSetoid"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": " to "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "25"
+                          }
+                        },
+                        {
+                          "append": [
+                            {
+                              "text": "HasEquiv "
+                            },
+                            {
+                              "tag": [
+                                {
+                                  "subexprPos": "/1",
+                                  "info": {
+                                    "p": "26"
+                                  }
+                                },
+                                {
+                                  "text": "α"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": ""
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              }
+            ]
+          },
+          "indent": 2,
+          "collapsed": true,
+          "cls": "Meta.synthInstance",
+          "children": {
+            "lazy": {
+              "p": "27"
+            }
+          }
+        }
+      },
+      {
+        "text": ""
+      }
+    ]
+  },
+  {
+    "tag": [
+      {
+        "trace": {
+          "msg": {
+            "append": [
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": ""
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": "✅"
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": " apply "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "28"
+                          }
+                        },
+                        {
+                          "text": "inst✝"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": " to "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "29"
+                          }
+                        },
+                        {
+                          "append": [
+                            {
+                              "text": "Setoid "
+                            },
+                            {
+                              "tag": [
+                                {
+                                  "subexprPos": "/1",
+                                  "info": {
+                                    "p": "30"
+                                  }
+                                },
+                                {
+                                  "text": "α"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": ""
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              }
+            ]
+          },
+          "indent": 2,
+          "collapsed": true,
+          "cls": "Meta.synthInstance",
+          "children": {
+            "lazy": {
+              "p": "31"
+            }
+          }
+        }
+      },
+      {
+        "text": ""
+      }
+    ]
+  },
+  {
+    "tag": [
+      {
+        "trace": {
+          "msg": {
+            "append": [
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": "propagating "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "32"
+                          }
+                        },
+                        {
+                          "append": [
+                            {
+                              "text": "Setoid "
+                            },
+                            {
+                              "tag": [
+                                {
+                                  "subexprPos": "/1",
+                                  "info": {
+                                    "p": "33"
+                                  }
+                                },
+                                {
+                                  "text": "α"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": " to subgoal "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "34"
+                          }
+                        },
+                        {
+                          "append": [
+                            {
+                              "text": "Setoid "
+                            },
+                            {
+                              "tag": [
+                                {
+                                  "subexprPos": "/1",
+                                  "info": {
+                                    "p": "35"
+                                  }
+                                },
+                                {
+                                  "text": "α"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": " of "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "36"
+                          }
+                        },
+                        {
+                          "append": [
+                            {
+                              "text": "HasEquiv "
+                            },
+                            {
+                              "tag": [
+                                {
+                                  "subexprPos": "/1",
+                                  "info": {
+                                    "p": "37"
+                                  }
+                                },
+                                {
+                                  "text": "α"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": ""
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              }
+            ]
+          },
+          "indent": 2,
+          "collapsed": true,
+          "cls": "Meta.synthInstance.resume",
+          "children": {
+            "lazy": {
+              "p": "38"
+            }
+          }
+        }
+      },
+      {
+        "text": ""
+      }
+    ]
+  },
+  {
+    "tag": [
+      {
+        "trace": {
+          "msg": {
+            "append": [
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": "result "
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "tag": [
+                        {
+                          "subexprPos": "/",
+                          "info": {
+                            "p": "39"
+                          }
+                        },
+                        {
+                          "text": "instHasEquivOfSetoid"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              },
+              {
+                "tag": [
+                  {
+                    "expr": {
+                      "text": ""
+                    }
+                  },
+                  {
+                    "text": ""
+                  }
+                ]
+              }
+            ]
+          },
+          "indent": 2,
+          "collapsed": false,
+          "cls": "Meta.synthInstance",
+          "children": {
+            "strict": []
+          }
+        }
+      },
+      {
+        "text": ""
+      }
+    ]
+  }
+]

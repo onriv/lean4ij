@@ -11,14 +11,6 @@ import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 
 /**
- * TODO Add gson util back?
- */
-inline fun <reified T> fromJson(src: String): T {
-    // val type = object : TypeToken<T>() {}.type
-    return Gson().fromJson(src, T::class.java)
-}
-
-/**
  * This class declares the suspend like method for the language server, and handling serialization serialization
  * which making the method type safe, for usage see [lean4ij.project.LeanFile], where handles things like session
  * outdated and is more biz relevant.
@@ -27,7 +19,7 @@ inline fun <reified T> fromJson(src: String): T {
  */
 class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
 
-    suspend fun plainGoal (params: PlainGoalParams): PlainGoal? {
+    suspend fun plainGoal(params: PlainGoalParams): PlainGoal? {
         return plainGoalAsync(params).await()
     }
 
@@ -43,23 +35,28 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
         return rpcCallAsync(params).await()
     }
 
-    suspend fun getInteractiveGoals(params: InteractiveGoalsParams) : InteractiveGoals? {
+    suspend fun getInteractiveGoals(params: InteractiveGoalsParams): InteractiveGoals? {
         return getInteractiveGoalsAsync(params).await()
     }
 
-    suspend fun getInteractiveTermGoal(params : InteractiveTermGoalParams) : InteractiveTermGoal? {
+    suspend fun getInteractiveTermGoal(params: InteractiveTermGoalParams): InteractiveTermGoal? {
         return getInteractiveTermGoalAsync(params).await()
     }
 
-    suspend fun getInteractiveDiagnostics(params : InteractiveDiagnosticsParams) : List<InteractiveDiagnostics>? {
+    suspend fun getInteractiveDiagnostics(params: InteractiveDiagnosticsParams): List<InteractiveDiagnostics>? {
         return getInteractiveDiagnosticsAsync(params).await()
     }
 
-    suspend fun infoToInteractive(params: InteractiveInfoParams) : InfoPopup {
+    suspend fun infoToInteractive(params: InteractiveInfoParams): InfoPopup {
         return infoToInteractiveAsync(params).await()
     }
 
-    fun plainGoalAsync (params: PlainGoalParams): CompletableFuture<PlainGoal?> {
+    suspend fun lazyTraceChildrenToInteractive(params: LazyTraceChildrenToInteractiveParams): List<TaggedText<MsgEmbed>>? {
+        return lazyTraceChildrenToInteractiveAsync(params).await()
+    }
+
+
+    fun plainGoalAsync(params: PlainGoalParams): CompletableFuture<PlainGoal?> {
         return languageServer.plainGoal(params)
     }
 
@@ -75,21 +72,21 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
         return languageServer.rpcCall(params)
     }
 
-    fun getInteractiveGoalsAsync(params: InteractiveGoalsParams) : CompletableFuture<InteractiveGoals?> {
+    fun getInteractiveGoalsAsync(params: InteractiveGoalsParams): CompletableFuture<InteractiveGoals?> {
         return languageServer.rpcCall(params).thenApply {
-            gson.fromJson(it, InteractiveGoals::class.java)
+            gson.fromJson(it)
         }
     }
 
-    fun getInteractiveTermGoalAsync(params: InteractiveTermGoalParams) : CompletableFuture<InteractiveTermGoal?> {
+    fun getInteractiveTermGoalAsync(params: InteractiveTermGoalParams): CompletableFuture<InteractiveTermGoal?> {
         return languageServer.rpcCall(params).thenApply {
-            gson.fromJson(it, InteractiveTermGoal::class.java)
+            gson.fromJson(it)
         }
     }
 
-    fun getInteractiveDiagnosticsAsync(params : InteractiveDiagnosticsParams): CompletableFuture<List<InteractiveDiagnostics>?> {
+    fun getInteractiveDiagnosticsAsync(params: InteractiveDiagnosticsParams): CompletableFuture<List<InteractiveDiagnostics>?> {
         return languageServer.rpcCall(params).thenApply {
-            gson.fromJson(it, object : TypeToken<List<InteractiveDiagnostics>>(){}.type)
+            gson.fromJson(it)
         }
     }
 
@@ -97,11 +94,21 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
      * TODO weird, where is this params [InteractiveInfoParams] and return result [CodeWithInfos]
      *      from?   it seems incorrect
      */
-    fun infoToInteractiveAsync(params: InteractiveInfoParams) : CompletableFuture<InfoPopup> {
+    fun infoToInteractiveAsync(params: InteractiveInfoParams): CompletableFuture<InfoPopup> {
         return languageServer.rpcCall(params).thenApply {
-            gson.fromJson(it, InfoPopup::class.java)
+            gson.fromJson(it)
         }
     }
+
+    /**
+     * the rpc call for showing trace in infoview
+     */
+    fun lazyTraceChildrenToInteractiveAsync(params: LazyTraceChildrenToInteractiveParams): CompletableFuture<List<TaggedText<MsgEmbed>>?> {
+        return languageServer.rpcCall(params).thenApply {
+            gson.fromJson(it)
+        }
+    }
+
 
     fun rpcKeepAlive(params: RpcKeepAliveParams) {
         return languageServer.rpcKeepAlive(params)
@@ -122,13 +129,14 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
         val gson: Gson = GsonBuilder()
             .registerTaggedText<SubexprInfo>()
             .registerTaggedText<MsgEmbed>()
-            .registerTypeAdapter(MsgEmbed::class.java, object :JsonDeserializer<MsgEmbed> {
+            .registerTypeAdapter(MsgEmbed::class.java, object : JsonDeserializer<MsgEmbed> {
                 override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): MsgEmbed {
                     // TODO these and all around deserializer is very similar, maybe refactor them
                     if (p0.isJsonObject && p0.asJsonObject.has("expr")) {
                         @Suppress("NAME_SHADOWING")
                         val p1 = p0.asJsonObject.getAsJsonObject("expr")
-                        val f1: TaggedText<SubexprInfo> = p2.deserialize(p1, object : TypeToken<TaggedText<SubexprInfo>>() {}.type)
+                        val f1: TaggedText<SubexprInfo> =
+                            p2.deserialize(p1, object : TypeToken<TaggedText<SubexprInfo>>() {}.type)
                         return MsgEmbedExpr(f1)
                     }
                     if (p0.isJsonObject && p0.asJsonObject.has("goal")) {
@@ -138,7 +146,10 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
                         return MsgEmbedGoal(f1)
                     }
                     if (p0.isJsonObject && p0.asJsonObject.has("trace")) {
-                        return MsgUnsupported("Trace message is not supported yet. Please the jcef version infoview.")
+                        @Suppress("NAME_SHADOWING")
+                        val p1 = p0.asJsonObject.getAsJsonObject("trace")
+                        val ret: MsgEmbedTrace = p2.deserialize(p1, MsgEmbedTrace::class.java)
+                        return ret
                     }
                     if (p0.isJsonObject && p0.asJsonObject.has("widget")) {
                         return MsgUnsupported("Widget message cannot be supported for technical reason. Please the jcef version infoview.")
@@ -164,8 +175,46 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
                     throw IllegalStateException("Unsupported RPC method: $method")
                 }
             })
+            // TODO here it's quit idle too
+            .registerTypeAdapter(
+                StrictOrLazy::class.java,
+                object : JsonDeserializer<StrictOrLazy<List<TaggedText<MsgEmbed>>, ContextInfo>> {
+                    override fun deserialize(
+                        p0: JsonElement,
+                        p1: Type,
+                        p2: JsonDeserializationContext
+                    ): StrictOrLazy<List<TaggedText<MsgEmbed>>, ContextInfo> {
+                        if (p0.isJsonObject && p0.asJsonObject.has("strict")) {
+                            val p0 = p0.asJsonObject.get("strict")
+                            val children = p2.deserialize<List<TaggedText<MsgEmbed>>>(
+                                p0,
+                                object : TypeToken<List<TaggedText<MsgEmbed>>>() {}.type
+                            )
+                            return StrictOrLazyStrict(children)
+                        }
+                        if (p0.isJsonObject && p0.asJsonObject.has("lazy")) {
+                            val p0 = p0.asJsonObject.get("lazy")
+                            val children = p2.deserialize<ContextInfo>(p0, object : TypeToken<ContextInfo>() {}.type)
+                            return StrictOrLazyLazy(children)
+                        }
+                        throw IllegalStateException("$p0 cannot be deserialized to StrictOrLazy<List<TaggedText<MsgEmbed>>, ContextInfo>")
+                    }
+                })
             .create()
     }
+}
+
+/**
+ * TODO Add gson util back?
+ */
+inline fun <reified T> Gson.fromJson(src: String?): T {
+    val type = object : TypeToken<T>() {}.type
+    return this.fromJson(src, type)
+}
+
+inline fun <reified T> Gson.fromJson(src: JsonElement?): T {
+    val type = object : TypeToken<T>() {}.type
+    return this.fromJson(src, type)
 }
 
 /**
@@ -176,9 +225,9 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
  *      val type = object : TypeToken<TaggedText<T>>() {}.type
  *      all other is already support in Gson (kind of forgetting this)
  */
-inline fun <reified T> GsonBuilder.registerTaggedText(): GsonBuilder where T: InfoViewContent  {
+inline fun <reified T> GsonBuilder.registerTaggedText(): GsonBuilder where T : InfoViewContent {
     val type = object : TypeToken<TaggedText<T>>() {}.type
-    return this.registerTypeAdapter(type, object : JsonDeserializer<TaggedText<T>> {
+    this.registerTypeAdapter(type, object : JsonDeserializer<TaggedText<T>> {
         override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): TaggedText<T> {
             if (p0.isJsonObject && p0.asJsonObject.has("tag")) {
                 @Suppress("NAME_SHADOWING")
@@ -204,4 +253,13 @@ inline fun <reified T> GsonBuilder.registerTaggedText(): GsonBuilder where T: In
             throw IllegalStateException(p0.toString())
         }
     })
+    // TODO not sure why but it requires for deserializing List<TaggedText<MsgEmbed>>
+    val listType = object : TypeToken<List<TaggedText<T>>>() {}.type
+    this.registerTypeAdapter(listType, object : JsonDeserializer<List<TaggedText<T>>> {
+        override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): List<TaggedText<T>> {
+            return p2.deserialize<List<JsonElement>>(p0, object : TypeToken<List<JsonElement>>() {}.type)
+                .map { p2.deserialize(it, type) }
+        }
+    })
+    return this
 }

@@ -259,7 +259,8 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             // TODO what if the server not start?
             //      will it hang and leak?
             val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams) ?: continue
-            val inlayHintType = ": ${termGoal.type.toInfoViewString(InfoviewRender(), null)}"
+            // TODO can here project be null?, the InfoviewRender mainly keeps nullable for it
+            val inlayHintType = ": ${termGoal.type.toInfoViewString(InfoviewRender(project, file.virtualFile), null)}"
             var hintPos = m.range.last - m.groupValues[3].length
             // anonymous have is slightly weird
             if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
@@ -337,7 +338,8 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
 
             val termGoals = file.getInteractiveGoals(interactiveGoalParams)
             if (termGoals != null && !termGoals.goals.isEmpty()) {
-                typeHint = termGoals.goals[0].type.toInfoViewString(InfoviewRender(), null)
+                // TODO can here project be null?, the InfoviewRender mainly keeps nullable for it
+                typeHint = termGoals.goals[0].type.toInfoViewString(InfoviewRender(project, file.virtualFile), null)
             }
             else {
                 // non tactic mode
@@ -345,7 +347,8 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
                 val interactiveTermGoalParams =
                     InteractiveTermGoalParams(session, params, textDocument, position)
                 val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams)
-                typeHint = termGoal?.type?.toInfoViewString(InfoviewRender(), null) ?: continue
+                // TODO can here project be null?, the InfoviewRender mainly keeps nullable for it
+                typeHint = termGoal?.type?.toInfoViewString(InfoviewRender(project, file.virtualFile), null) ?: continue
             }
 
             var hintPos = m.range.first + m.groupValues[1].length

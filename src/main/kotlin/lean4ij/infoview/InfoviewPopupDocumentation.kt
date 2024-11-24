@@ -108,6 +108,7 @@ class InfoviewPopupEditorPane(text: String, maxWidth: Int, maxHeight: Int) : JTe
 
 /**
  * TODO this class absolutely need some refactor and a better implementation
+ * TODO move argument of popup document to context too
  */
 class InfoviewPopupDocumentation(
     val scope: CoroutineScope,
@@ -142,7 +143,7 @@ class InfoviewPopupDocumentation(
             )
             val infoToInteractive = leanProjectService.languageServer.await()
                 .infoToInteractive(rpcParams)
-            val sb = InfoviewRender()
+            val sb = InfoviewRender(project, file)
             val typeStr = infoToInteractive.type?.toInfoViewString(sb, null) ?: ""
             val exprStr = infoToInteractive.exprExplicit?.toInfoViewString(sb, null) ?: ""
             var htmlDoc: String? = null

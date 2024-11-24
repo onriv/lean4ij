@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -24,8 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import lean4ij.setting.Lean4SettingsView
-import lean4ij.infoview.TextAttributesKeys
+import lean4ij.infoview.Lean4TextAttributesKeys
 import lean4ij.infoview.external.data.ApplyEditParam
 import lean4ij.infoview.external.data.InfoviewEvent
 import lean4ij.lsp.LeanLanguageServer
@@ -284,7 +282,7 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
     // check https://plugins.jetbrains.com/docs/intellij/jcef.html?from=jetbrains.org#disposing-resources
     val scrollbarStyle = JBCefScrollbarsHelper.buildScrollbarsStyle()
     return """:root {
-${themeSb}    --header-foreground-color: ${scheme.getAttributes(TextAttributesKeys.Header.key).foregroundColor.toHexRgba()};
+${themeSb}    --header-foreground-color: ${scheme.getAttributes(Lean4TextAttributesKeys.Header.key).foregroundColor.toHexRgba()};
     --vscode-editor-background: $background;
     --vscode-editor-foreground: $foreground;
     /* fonts */

@@ -85,6 +85,7 @@ class JcefInfoviewService(private val project: Project) {
 
         // handle link clicks, which should be opened in real browser but not jcef
 
+        // browser.cefBrowser.find
         browser.jbCefClient
             .addRequestHandler(object : CefRequestHandler {
                 override fun onBeforeBrowse(

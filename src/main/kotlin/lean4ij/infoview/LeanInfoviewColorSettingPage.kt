@@ -26,9 +26,9 @@ fun createTextAttributesKey(color: Color?, fallbackKey: TextAttributesKey?) {
     }
 }
 
-enum class TextAttributesKeys(val style: String, private val fallbackKey: TextAttributesKey,
-                              val attrSelect: AttrSelect,
-                              val key: TextAttributesKey = TextAttributesKey.createTextAttributesKey(style, fallbackKey)) {
+enum class Lean4TextAttributesKeys(val style: String, private val fallbackKey: TextAttributesKey,
+                                   val attrSelect: AttrSelect,
+                                   val key: TextAttributesKey = TextAttributesKey.createTextAttributesKey(style, fallbackKey)) {
     Header("header", DefaultLanguageHighlighterColors.CLASS_NAME, AttrSelect.FOREGROUND),
     GoalHyp("goal-hyp", DefaultLanguageHighlighterColors.INSTANCE_FIELD, AttrSelect.FOREGROUND),
     GoalInaccessible("goal-inaccessible", DefaultLanguageHighlighterColors.LINE_COMMENT, AttrSelect.FOREGROUND),
@@ -54,7 +54,7 @@ class LeanInfoviewColorSettingPage : ColorSettingsPage {
 
     companion object {
         @OptIn(ExperimentalStdlibApi::class)
-        val keys = TextAttributesKeys.entries
+        val keys = Lean4TextAttributesKeys.entries
             .associateBy({ it.style }, { it.key })
             .toMutableMap()
     }

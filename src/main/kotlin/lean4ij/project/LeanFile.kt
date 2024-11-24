@@ -40,14 +40,17 @@ import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveGoalsParams
 import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.lsp.data.InteractiveTermGoalParams
+import lean4ij.lsp.data.LazyTraceChildrenToInteractiveParams
 import lean4ij.lsp.data.LineRange
 import lean4ij.lsp.data.LineRangeParam
+import lean4ij.lsp.data.MsgEmbed
 import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
 import lean4ij.lsp.data.RpcCallParams
 import lean4ij.lsp.data.RpcCallParamsRaw
 import lean4ij.lsp.data.RpcConnectParams
 import lean4ij.lsp.data.RpcKeepAliveParams
+import lean4ij.lsp.data.TaggedText
 import lean4ij.util.Constants
 import lean4ij.util.LspUtil
 import lean4ij.util.step
@@ -252,7 +255,8 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val interactiveGoals = interactiveGoalsAsync.await()
             val interactiveTermGoal = interactiveTermGoalAsync.await()
             val interactiveDiagnostics = interactiveDiagnosticsAsync.await()
-            LeanInfoViewWindowFactory.updateInteractiveGoal(editor, project, virtualFile!!, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
+            // TODO the arguments are passing very deep, need some refactor
+            LeanInfoViewWindowFactory.updateInteractiveGoalV1(editor, project, virtualFile!!, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
         }
     }
 
@@ -315,6 +319,12 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     public suspend fun getInteractiveTermGoal(params : InteractiveTermGoalParams) : InteractiveTermGoal? {
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().getInteractiveTermGoal(it)
+        }
+    }
+
+    public suspend fun lazyTraceChildrenToInteractive(params: LazyTraceChildrenToInteractiveParams) : List<TaggedText<MsgEmbed>>? {
+        return rpcCallWithRetry(params) {
+            leanProjectService.languageServer.await().lazyTraceChildrenToInteractive(it)
         }
     }
 

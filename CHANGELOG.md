@@ -4,7 +4,7 @@
 
 ## [Unreleased]
 
-- add a first goto symbol/class implementation
+- add a first try for goto symbol/class implementation
   - for some performance tuning currently debouncing gap set to 1 second
   - a setting for the debouncing gap
 - some refactor on settings

@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.1.6] - 2024-11-25
+
+Depend on the latest approved nightly build of LSP4IJ: 0.8.0-20241124-230741
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.8.0-20241124-230741@nightly]
+
 - add a first try for goto symbol/class implementation
   - for some performance tuning currently debouncing gap set to 1 second
   - a setting for the debouncing gap
@@ -121,7 +126,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/onriv/lean4ij/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/onriv/lean4ij/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/onriv/lean4ij/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/onriv/lean4ij/compare/v0.1.2...v0.1.3

@@ -7,10 +7,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,6 +22,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import lean4ij.infoview.dsl.*
 import lean4ij.lsp.data.*
 import lean4ij.project.LeanProjectService
 import java.awt.BorderLayout
@@ -47,10 +49,116 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             return contents[0].component as LeanInfoViewWindow
         }
 
+        fun createInfoObjectModel(
+            file: VirtualFile,
+            position: Position,
+            interactiveGoals: InteractiveGoals?,
+            interactiveTermGoal: InteractiveTermGoal?,
+            interactiveDiagnostics: List<InteractiveDiagnostics>?,
+            allMessage: List<InteractiveDiagnostics>?
+        ) = info {
+            fold {
+                var size = 0
+                h1("${file.name}:${position.line + 1}:${position.character}")
+                interactiveGoals?.toInfoObjectModel()?.let {
+                    add(it)
+                    size++
+                }
+                interactiveTermGoal?.toInfoObjectModel()?.let {
+                    // if it has interactive goals, then there should be some line break
+                    // for interactive term goal, i.e., expected type
+                    if (size > 0) {
+                        br()
+                    }
+                    add(it)
+                    size++
+                }
+                if (interactiveDiagnostics?.isNotEmpty() == true) {
+                    if (size > 0) {
+                        br()
+                    }
+                    fold {
+                        h2("Messages (${interactiveDiagnostics.size})")
+                        for ((idx, i) in interactiveDiagnostics.withIndex()) {
+                            fold {
+                                h3("${file.name}:${i.fullRange.start.line + 1}:${i.fullRange.start.character}")
+                                add(i.toInfoObjectModel())
+                                if (idx != interactiveDiagnostics.lastIndex) {
+                                    br()
+                                }
+                            }
+                        }
+                    }
+                }
+                if (size == 0) {
+                    +"No info found."
+                }
+            }
+            if (!allMessage.isNullOrEmpty()) {
+                br()
+                fold(
+                    expanded = expandAllMessage,
+                    isAllMessages = true,
+                    listener = {
+                        expandAllMessage = it.isExpanded
+                    }
+                ) {
+                    h1("All Messages (${allMessage.size})")
+                    for ((idx, i) in allMessage.withIndex()) {
+                        fold {
+                            h2("${file.name}:${i.fullRange.start.line + 1}:${i.fullRange.start.character}")
+                            add(i.toInfoObjectModel())
+                        }
+                        if (idx != allMessage.lastIndex) {
+                            br()
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * TODO the implementation should absolutely be replaced by better rendering way
+         *      using raw text it's very inconvenient to update things like hovering event
+         *      but though vim/emacs has to do it this way maybe ...
+         * TODO passing things like editor etc seems cumbersome, maybe add some implement for context
+         * @param editor Editor that is currently selected. It's not the infoview tool window editor.
+         */
+        fun updateInteractiveGoalV1(
+            editor: Editor,
+            project: Project,
+            file: VirtualFile?, // TODO this should add some UT for the rendering
+            position: Position,
+            interactiveGoals: InteractiveGoals?,
+            interactiveTermGoal: InteractiveTermGoal?,
+            interactiveDiagnostics: List<InteractiveDiagnostics>?,
+            allMessage: List<InteractiveDiagnostics>?
+        ) {
+            if (file == null) {
+                return
+            }
+            val infoViewWindow = getLeanInfoview(project) ?: return
+
+            val infoObjectModel = createInfoObjectModel(file, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
+
+            // TODO render message
+            // TODO this seems kind of should be put inside rendering, check how to do this
+            // TODO maybe it's too broad, maybe only createEditor in EDT
+            var leanProjectService = project.service<LeanProjectService>()
+            val scope = leanProjectService.scope
+            // The scope.launch here is mainly for the editor
+            // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html
+            // TODO minimize the invoke later range
+            scope.launch(Dispatchers.EDT) {
+                val context = LeanInfoviewContext(leanProjectService, infoViewWindow, infoViewWindow.getEditor(), file, position, infoObjectModel)
+                infoViewWindow.updateEditorMouseMotionListenerV1(context)
+            }
+        }
+
         /**
          * TODO should this be a setting?
          */
-        var expandAllMessage : Boolean = false
+        var expandAllMessage: Boolean = false
 
         /**
          * TODO the implementation should absolutely be replaced by better rendering way
@@ -73,11 +181,15 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             }
             val infoViewWindow = getLeanInfoview(project) ?: return
             // TODO implement the fold/open logic
-            val infoviewRender = InfoviewRender()
+            val infoviewRender = InfoviewRender(project, file)
             val start = infoviewRender.length
-            val header = "${file.name}:${position.line+1}:${position.character}"
+            val header = "${file.name}:${position.line + 1}:${position.character}"
             infoviewRender.append("${header}")
-            infoviewRender.highlight(start, infoviewRender.length, EditorColorsManager.getInstance().globalScheme.getAttributes(TextAttributesKeys.SwingInfoviewCurrentPosition.key))
+            infoviewRender.highlight(
+                start,
+                infoviewRender.length,
+                EditorColorsManager.getInstance().globalScheme.getAttributes(Lean4TextAttributesKeys.SwingInfoviewCurrentPosition.key)
+            )
             infoviewRender.append('\n')
             // TODO here maybe null?
             // TODO refactor this
@@ -89,7 +201,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     val start = infoviewRender.length
                     infoviewRender.append("${header}\n")
                     interactiveDiagnostics.forEach { i ->
-                        infoviewRender.append("${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}\n")
+                        infoviewRender.append("${file.name}:${i.fullRange.start.line + 1}:${i.fullRange.start.character}\n")
                         i.toInfoViewString(infoviewRender)
                         infoviewRender.append('\n')
                     }
@@ -113,7 +225,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 val start = infoviewRender.length
                 infoviewRender.append("$header\n")
                 allMessage.forEach { i ->
-                    val header = "${file.name}:${i.fullRange.start.line+1}:${i.fullRange.start.character}"
+                    val header = "${file.name}:${i.fullRange.start.line + 1}:${i.fullRange.start.character}"
                     val start = infoviewRender.length
                     infoviewRender.append(header)
                     val end1 = infoviewRender.length
@@ -124,11 +236,19 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                         //      the toInfoViewString method
                         val content = i.message.toInfoViewString(infoviewRender, null)
                         if (i.message.f0 is MsgUnsupported) {
-                            infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessageUnsupportedPos)
+                            infoviewRender.highlight(
+                                start,
+                                end1,
+                                Lean4TextAttributesKeys.SwingInfoviewAllMessageUnsupportedPos
+                            )
                         } else if (content.contains("declaration uses 'sorry'")) {
-                            infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessageSorryPos)
+                            infoviewRender.highlight(
+                                start,
+                                end1,
+                                Lean4TextAttributesKeys.SwingInfoviewAllMessageSorryPos
+                            )
                         } else {
-                            infoviewRender.highlight(start, end1, TextAttributesKeys.SwingInfoviewAllMessagePos)
+                            infoviewRender.highlight(start, end1, Lean4TextAttributesKeys.SwingInfoviewAllMessagePos)
                         }
                     } else {
                         // TODO for TaggedTextAppend there is also case for not supported trace
@@ -141,9 +261,9 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                         //      | DiagnosticSeverity.hint        => 4⟩
                         //  check src/Lean/Data/Lsp/Diagnostics.lean
                         var key = if (i.severity == 1) {
-                            TextAttributesKeys.SwingInfoviewAllMessageErrorPos
+                            Lean4TextAttributesKeys.SwingInfoviewAllMessageErrorPos
                         } else {
-                            TextAttributesKeys.SwingInfoviewAllMessagePos
+                            Lean4TextAttributesKeys.SwingInfoviewAllMessagePos
                         }
                         infoviewRender.highlight(start, end1, key)
                     }
@@ -153,7 +273,15 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 }
                 infoviewRender.deleteLastChar()
                 val end = infoviewRender.length
-                infoviewRender.addFoldingOperation(FoldingData(start, end, header, expandAllMessage, isAllMessages = true))
+                infoviewRender.addFoldingOperation(
+                    FoldingData(
+                        start,
+                        end,
+                        header,
+                        expandAllMessage,
+                        isAllMessages = true
+                    )
+                )
                 infoviewRender.append("\n")
             } else {
                 val header = "All Messages (0)"
@@ -163,6 +291,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                 infoviewRender.addFoldingOperation(start, infoviewRender.length, header)
                 infoviewRender.append('\n')
             }
+
             // TODO render message
             // TODO this seems kind of should be put inside rendering, check how to do this
             // TODO maybe it's too broad, maybe only createEditor in EDT
@@ -171,8 +300,10 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html
             // TODO minimize the invoke later range
             scope.launch(Dispatchers.EDT) {
-                infoViewWindow.updateEditorMouseMotionListener(infoviewRender, file, position, // TODO this should add some UT for the rendering
-                    interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
+                infoViewWindow.updateEditorMouseMotionListener(
+                    infoviewRender, file, position, // TODO this should add some UT for the rendering
+                    interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage
+                )
             }
         }
 

@@ -2,7 +2,6 @@ package lean4ij.infoview
 
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -19,13 +18,13 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
-import lean4ij.setting.Lean4Settings
 import lean4ij.lsp.data.ContextInfo
 import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.lsp.data.Position
 import lean4ij.project.LeanProjectService
+import lean4ij.setting.Lean4Settings
 import java.awt.Color
 
 /**

@@ -1,5 +1,6 @@
 package lean4ij.lsp.data
 
+import lean4ij.infoview.dsl.InfoObjectModel
 import lean4ij.util.Constants
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
@@ -29,5 +30,9 @@ data class InteractiveDiagnostics(
 ) {
     fun toInfoViewString(interactiveInfoBuilder: InfoviewRender): String {
         return message.toInfoViewString(interactiveInfoBuilder, null)
+    }
+
+    fun toInfoObjectModel(): InfoObjectModel {
+        return message.toInfoObjectModel()
     }
 }

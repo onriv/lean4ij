@@ -1,0 +1,806 @@
+{
+  "goals": [
+    {
+      "userName": "intro.intro.intro.intro.intro.intro.intro.intro",
+      "type": {
+        "tag": [
+          {
+            "subexprPos": "/",
+            "info": {
+              "p": "749"
+            },
+            "diffStatus": "wasChanged"
+          },
+          {
+            "append": [
+              {
+                "tag": [
+                  {
+                    "subexprPos": "/0/1",
+                    "info": {
+                      "p": "750"
+                    }
+                  },
+                  {
+                    "append": [
+                      {
+                        "tag": [
+                          {
+                            "subexprPos": "/0/1/0/1",
+                            "info": {
+                              "p": "751"
+                            }
+                          },
+                          {
+                            "text": "a"
+                          }
+                        ]
+                      },
+                      {
+                        "text": " * "
+                      },
+                      {
+                        "tag": [
+                          {
+                            "subexprPos": "/0/1/1",
+                            "info": {
+                              "p": "752"
+                            }
+                          },
+                          {
+                            "append": [
+                              {
+                                "text": "("
+                              },
+                              {
+                                "tag": [
+                                  {
+                                    "subexprPos": "/0/1/1/0/1",
+                                    "info": {
+                                      "p": "753"
+                                    }
+                                  },
+                                  {
+                                    "text": "w"
+                                  }
+                                ]
+                              },
+                              {
+                                "text": " * "
+                              },
+                              {
+                                "tag": [
+                                  {
+                                    "subexprPos": "/0/1/1/1",
+                                    "info": {
+                                      "p": "754"
+                                    }
+                                  },
+                                  {
+                                    "text": "w\u0027"
+                                  }
+                                ]
+                              },
+                              {
+                                "text": ")"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "text": " \u003d "
+              },
+              {
+                "tag": [
+                  {
+                    "subexprPos": "/1",
+                    "info": {
+                      "p": "755"
+                    }
+                  },
+                  {
+                    "append": [
+                      {
+                        "tag": [
+                          {
+                            "subexprPos": "/1/0/1",
+                            "info": {
+                              "p": "756"
+                            }
+                          },
+                          {
+                            "text": "c"
+                          }
+                        ]
+                      },
+                      {
+                        "text": " * "
+                      },
+                      {
+                        "tag": [
+                          {
+                            "subexprPos": "/1/1",
+                            "info": {
+                              "p": "757"
+                            }
+                          },
+                          {
+                            "append": [
+                              {
+                                "text": "("
+                              },
+                              {
+                                "tag": [
+                                  {
+                                    "subexprPos": "/1/1/0/1",
+                                    "info": {
+                                      "p": "758"
+                                    }
+                                  },
+                                  {
+                                    "text": "z"
+                                  }
+                                ]
+                              },
+                              {
+                                "text": " * "
+                              },
+                              {
+                                "tag": [
+                                  {
+                                    "subexprPos": "/1/1/1",
+                                    "info": {
+                                      "p": "759"
+                                    }
+                                  },
+                                  {
+                                    "text": "z\u0027"
+                                  }
+                                ]
+                              },
+                              {
+                                "text": ")"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "mvarId": "_uniq.59158",
+      "isInserted": false,
+      "hyps": [
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "714"
+                }
+              },
+              {
+                "text": "Type ?u.53752"
+              }
+            ]
+          },
+          "names": [
+            "M"
+          ],
+          "isType": true,
+          "fvarIds": [
+            "_uniq.54334"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "715"
+                }
+              },
+              {
+                "append": [
+                  {
+                    "text": "CommMonoid "
+                  },
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/1",
+                        "info": {
+                          "p": "716"
+                        }
+                      },
+                      {
+                        "text": "M"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "names": [
+            "inst✝"
+          ],
+          "isInstance": true,
+          "fvarIds": [
+            "_uniq.54335"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "717"
+                }
+              },
+              {
+                "append": [
+                  {
+                    "text": "Submonoid "
+                  },
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/0/1",
+                        "info": {
+                          "p": "718"
+                        }
+                      },
+                      {
+                        "text": "M"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "names": [
+            "N"
+          ],
+          "fvarIds": [
+            "_uniq.54336"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "719"
+                }
+              },
+              {
+                "text": "M"
+              }
+            ]
+          },
+          "names": [
+            "a",
+            "b",
+            "c",
+            "w"
+          ],
+          "fvarIds": [
+            "_uniq.57687",
+            "_uniq.57690",
+            "_uniq.57693",
+            "_uniq.57719"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "720"
+                }
+              },
+              {
+                "append": [
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/0/1",
+                        "info": {
+                          "p": "721"
+                        }
+                      },
+                      {
+                        "text": "w"
+                      }
+                    ]
+                  },
+                  {
+                    "text": " ∈ "
+                  },
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/1",
+                        "info": {
+                          "p": "722"
+                        }
+                      },
+                      {
+                        "text": "N"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "names": [
+            "hw"
+          ],
+          "fvarIds": [
+            "_uniq.57742"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "723"
+                }
+              },
+              {
+                "text": "M"
+              }
+            ]
+          },
+          "names": [
+            "z"
+          ],
+          "fvarIds": [
+            "_uniq.57761"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "724"
+                }
+              },
+              {
+                "append": [
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/0/1",
+                        "info": {
+                          "p": "725"
+                        }
+                      },
+                      {
+                        "text": "z"
+                      }
+                    ]
+                  },
+                  {
+                    "text": " ∈ "
+                  },
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/1",
+                        "info": {
+                          "p": "726"
+                        }
+                      },
+                      {
+                        "text": "N"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "names": [
+            "hz"
+          ],
+          "fvarIds": [
+            "_uniq.57780"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "727"
+                }
+              },
+              {
+                "append": [
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/0/1",
+                        "info": {
+                          "p": "728"
+                        }
+                      },
+                      {
+                        "append": [
+                          {
+                            "tag": [
+                              {
+                                "subexprPos": "/0/1/0/1",
+                                "info": {
+                                  "p": "729"
+                                }
+                              },
+                              {
+                                "text": "a"
+                              }
+                            ]
+                          },
+                          {
+                            "text": " * "
+                          },
+                          {
+                            "tag": [
+                              {
+                                "subexprPos": "/0/1/1",
+                                "info": {
+                                  "p": "730"
+                                }
+                              },
+                              {
+                                "text": "w"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "text": " \u003d "
+                  },
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/1",
+                        "info": {
+                          "p": "731"
+                        }
+                      },
+                      {
+                        "append": [
+                          {
+                            "tag": [
+                              {
+                                "subexprPos": "/1/0/1",
+                                "info": {
+                                  "p": "732"
+                                }
+                              },
+                              {
+                                "text": "b"
+                              }
+                            ]
+                          },
+                          {
+                            "text": " * "
+                          },
+                          {
+                            "tag": [
+                              {
+                                "subexprPos": "/1/1",
+                                "info": {
+                                  "p": "733"
+                                }
+                              },
+                              {
+                                "text": "z"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "names": [
+            "h"
+          ],
+          "fvarIds": [
+            "_uniq.57781"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "734"
+                }
+              },
+              {
+                "text": "M"
+              }
+            ]
+          },
+          "names": [
+            "w\u0027"
+          ],
+          "fvarIds": [
+            "_uniq.57801"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "735"
+                }
+              },
+              {
+                "append": [
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/0/1",
+                        "info": {
+                          "p": "736"
+                        }
+                      },
+                      {
+                        "text": "w\u0027"
+                      }
+                    ]
+                  },
+                  {
+                    "text": " ∈ "
+                  },
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/1",
+                        "info": {
+                          "p": "737"
+                        }
+                      },
+                      {
+                        "text": "N"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "names": [
+            "hw\u0027"
+          ],
+          "fvarIds": [
+            "_uniq.57819"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "738"
+                }
+              },
+              {
+                "text": "M"
+              }
+            ]
+          },
+          "names": [
+            "z\u0027"
+          ],
+          "fvarIds": [
+            "_uniq.57837"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "739"
+                }
+              },
+              {
+                "append": [
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/0/1",
+                        "info": {
+                          "p": "740"
+                        }
+                      },
+                      {
+                        "text": "z\u0027"
+                      }
+                    ]
+                  },
+                  {
+                    "text": " ∈ "
+                  },
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/1",
+                        "info": {
+                          "p": "741"
+                        }
+                      },
+                      {
+                        "text": "N"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "names": [
+            "hz\u0027"
+          ],
+          "fvarIds": [
+            "_uniq.57855"
+          ]
+        },
+        {
+          "type": {
+            "tag": [
+              {
+                "subexprPos": "/",
+                "info": {
+                  "p": "742"
+                }
+              },
+              {
+                "append": [
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/0/1",
+                        "info": {
+                          "p": "743"
+                        }
+                      },
+                      {
+                        "append": [
+                          {
+                            "tag": [
+                              {
+                                "subexprPos": "/0/1/0/1",
+                                "info": {
+                                  "p": "744"
+                                }
+                              },
+                              {
+                                "text": "b"
+                              }
+                            ]
+                          },
+                          {
+                            "text": " * "
+                          },
+                          {
+                            "tag": [
+                              {
+                                "subexprPos": "/0/1/1",
+                                "info": {
+                                  "p": "745"
+                                }
+                              },
+                              {
+                                "text": "w\u0027"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "text": " \u003d "
+                  },
+                  {
+                    "tag": [
+                      {
+                        "subexprPos": "/1",
+                        "info": {
+                          "p": "746"
+                        }
+                      },
+                      {
+                        "append": [
+                          {
+                            "tag": [
+                              {
+                                "subexprPos": "/1/0/1",
+                                "info": {
+                                  "p": "747"
+                                }
+                              },
+                              {
+                                "text": "c"
+                              }
+                            ]
+                          },
+                          {
+                            "text": " * "
+                          },
+                          {
+                            "tag": [
+                              {
+                                "subexprPos": "/1/1",
+                                "info": {
+                                  "p": "748"
+                                }
+                              },
+                              {
+                                "text": "z\u0027"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "names": [
+            "h\u0027"
+          ],
+          "fvarIds": [
+            "_uniq.57856"
+          ]
+        }
+      ],
+      "goalPrefix": "⊢ ",
+      "ctx": {
+        "p": "760"
+      }
+    }
+  ]
+}

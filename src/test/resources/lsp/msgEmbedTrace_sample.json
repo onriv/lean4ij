@@ -1,0 +1,73 @@
+{
+  "trace" : {
+    "msg" : {
+      "append" : [ {
+        "tag" : [ {
+          "expr" : {
+            "text" : ""
+          }
+        }, {
+          "text" : ""
+        } ]
+      }, {
+        "tag" : [ {
+          "expr" : {
+            "text" : "✅"
+          }
+        }, {
+          "text" : ""
+        } ]
+      }, {
+        "tag" : [ {
+          "expr" : {
+            "text" : " "
+          }
+        }, {
+          "text" : ""
+        } ]
+      }, {
+        "tag" : [ {
+          "expr" : {
+            "tag" : [ {
+              "subexprPos" : "/",
+              "info" : {
+                "p" : "309"
+              }
+            }, {
+              "append" : [ {
+                "text" : "Setoid "
+              }, {
+                "tag" : [ {
+                  "subexprPos" : "/1",
+                  "info" : {
+                    "p" : "310"
+                  }
+                }, {
+                  "text" : "α"
+                } ]
+              } ]
+            } ]
+          }
+        }, {
+          "text" : ""
+        } ]
+      }, {
+        "tag" : [ {
+          "expr" : {
+            "text" : ""
+          }
+        }, {
+          "text" : ""
+        } ]
+      } ]
+    },
+    "indent" : 0,
+    "collapsed" : true,
+    "cls" : "Meta.synthInstance",
+    "children" : {
+      "lazy" : {
+        "p" : "311"
+      }
+    }
+  }
+}

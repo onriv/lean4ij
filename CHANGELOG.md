@@ -3,6 +3,8 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+- refactoring the internal infoview, and
+- add a first implementation for trace message in internal infoview
 
 ## [0.1.6] - 2024-11-25
 

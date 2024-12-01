@@ -7,6 +7,7 @@ import lean4ij.lsp.data.RpcCallParamsRaw
 import lean4ij.util.Constants
 import lean4ij.util.LspUtil
 import com.google.gson.JsonElement
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -15,23 +16,30 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.LineColumn
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.LanguageServerManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import lean4ij.lsp.data.Target
 import lean4ij.setting.Lean4Settings
 import lean4ij.util.LeanUtil
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.services.LanguageServer
 import java.io.File
+import java.net.URL
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path
@@ -164,5 +172,81 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         //      but without this there are cases no caret events but document changed events
         //      maybe some debounce
         file(file).updateCaret(editor, position, forceUpdate)
+    }
+
+    /**
+     * not sure why it's a list
+     * case for two results:
+     * ```
+     * [
+     *  {
+     *    "targetUri": "file:///home/onriv/.elan/toolchains/leanprover--lean4---v4.11.0-rc2/src/lean/Init/Core.lean",
+     *    "targetSelectionRange": {
+     *      "start": {
+     *        "line": 374,
+     *        "character": 2
+     *      },
+     *      "end": {
+     *        "line": 374,
+     *        "character": 7
+     *      }
+     *    },
+     *    "targetRange": {
+     *      "start": {
+     *        "line": 374,
+     *        "character": 2
+     *      },
+     *      "end": {
+     *        "line": 374,
+     *        "character": 7
+     *      }
+     *    }
+     *  },
+     *  {
+     *    "targetUri": "file:///home/onriv/.elan/toolchains/leanprover--lean4---v4.11.0-rc2/src/lean/Init/Core.lean",
+     *    "targetSelectionRange": {
+     *      "start": {
+     *        "line": 1248,
+     *        "character": 0
+     *      },
+     *      "end": {
+     *        "line": 1248,
+     *        "character": 8
+     *      }
+     *    },
+     *    "targetRange": {
+     *      "start": {
+     *        "line": 1248,
+     *        "character": 0
+     *      },
+     *      "end": {
+     *        "line": 1249,
+     *        "character": 12
+     *      }
+     *    }
+     *  }
+     * ```
+     */
+    fun getGoToLocation(targets: List<Target>) {
+        targets.firstOrNull().let { target ->
+            if (target == null) {
+                return@let
+            }
+            // TODO this must be tested if it work in windows
+            val file = LocalFileSystem.getInstance().findFileByNioFile(Path(URL(target.targetUri).path))?:return@let
+            // TODO UTF_8 might fail for some locale, but no better way currently for it
+            val content = String(file.contentsToByteArray(), StandardCharsets.UTF_8)
+            // TODO also impl select? currently the caret put at the start pos
+            val offset = StringUtil.lineColToOffset(
+                content,
+                target.targetRange.start.line,
+                target.targetRange.start.character)
+            project.service<LeanProjectService>().scope.launch(Dispatchers.EDT) {
+                FileEditorManager.getInstance(project).openTextEditor(
+                    OpenFileDescriptor(project, file, offset),
+                    true
+                )
+            }
+        }
     }
 }

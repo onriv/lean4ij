@@ -9,6 +9,20 @@ import './Editor.css'
 import {EditorApi, InfoviewApi} from '@leanprover/infoview-api'
 import {loadRenderInfoview} from "@leanprover/infoview/loader";
 
+// for right click
+// copy from https://fkhadra.github.io/react-contexify/quick-start/
+import {
+    Menu,
+    Item,
+    Separator,
+    Submenu,
+    useContextMenu
+} from "react-contexify";
+
+import "react-contexify/dist/ReactContexify.css";
+const MENU_ID = "menu-id";
+
+
 class WebSocketClient {
     private socket: WebSocket;
     private responseMap: Map<number, (response: any) => void>;
@@ -166,15 +180,6 @@ export class WebSocketEditorApi implements EditorApi {
     }
 }
 
-/**
- * The imports are documented in
- * https://github.com/leanprover/vscode-lean4/blob/master/lean4-infoview/src/loader.ts
- * and the code used in vscode also give some hints:
- * https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/webview/index.ts
- * old version of lean4web also has it, but currently it's gone, weird
- * check https://github.com/leanprover-community/lean4web/blob/1ed09cf5521421b7f2107220770c35d44db58ef8/client/src/Editor.tsx#L137
- * for the usage in lean4web
- */
 function loadInfoview(div : HTMLDivElement) {
     // log
     console.log('loading infoview')
@@ -186,13 +191,71 @@ function loadInfoview(div : HTMLDivElement) {
         'react-dom': `${host}/react-dom.production.min.js`,
     }
     const editorApi = new WebSocketEditorApi();
-    loadRenderInfoview(imports, [editorApi, div], (api: InfoviewApi)=> editorApi.registerInfoApi(api))
 }
 
 function App() {
+    // copy from https://fkhadra.github.io/react-contexify/quick-start/
+    // 🔥 you can use this hook from everywhere. All you need is the menu id
+    const { show } = useContextMenu({
+        id: MENU_ID
+    });
+
+    function copyItem({ event, props, triggerEvent, data }){
+        console.log(event, props, triggerEvent, data );
+    }
+
+    function isItemDisabled({ props, data, triggerEvent }) {
+        return triggerEvent.srcElement.getAttribute("data-vscode-context") == null
+    }
+
+    function gotoDefinition({ event, props, triggerEvent, data }){
+        const contextStr : string = triggerEvent.srcElement.getAttribute("data-vscode-context")
+        const context = JSON.parse(contextStr)
+        const api = props as InfoviewApi
+        api.goToDefinition(context.interactiveCodeTagId)
+    }
+
     const div = useRef<HTMLDivElement>(null);
-    useEffect(() => loadInfoview(div.current), []);
-    return <div ref={div} id="infoview"></div>;
+
+    useEffect(() => {
+        // log
+        console.log('loading infoview')
+        const host = `http://${location.host}/imports`
+        /**
+         * The imports are documented in
+         * https://github.com/leanprover/vscode-lean4/blob/master/lean4-infoview/src/loader.ts
+         * and the code used in vscode also give some hints:
+         * https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/webview/index.ts
+         * old version of lean4web also has it, but currently it's gone, weird
+         * check https://github.com/leanprover-community/lean4web/blob/1ed09cf5521421b7f2107220770c35d44db58ef8/client/src/Editor.tsx#L137
+         * for the usage in lean4web
+         */
+        const imports = {
+            '@leanprover/infoview': `${host}/index.production.min.js`,
+            'react': `${host}/react.production.min.js`,
+            'react/jsx-runtime': `${host}/react-jsx-runtime.production.min.js`,
+            'react-dom': `${host}/react-dom.production.min.js`,
+        }
+        const editorApi = new WebSocketEditorApi();
+        loadRenderInfoview(imports, [editorApi, div.current], (api: InfoviewApi)=> {
+            editorApi.registerInfoApi(api)
+            div.current.oncontextmenu = (ev: MouseEvent) => {
+                show({
+                    event:ev,
+                    props: api
+                })
+            }
+
+        })
+    }, [show])
+    return <div>
+        <div ref={div} id="infoview"></div>
+        <Menu id={MENU_ID}>
+            <Item onClick={gotoDefinition} disabled={isItemDisabled}>
+                Go to definition
+            </Item>
+        </Menu>
+    </div>
 }
 
 export default App

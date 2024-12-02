@@ -3,6 +3,12 @@
 # lean4ij Changelog
 
 ## [Unreleased]
+
+## [0.1.7] - 2024-12-02
+
+Depend on the latest approved nightly build of LSP4IJ: 0.8.1-20241202-013252
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.8.1-20241202-013252@nightly]
+
 - refactoring the internal infoview, and
 - add a first implementation for trace message in internal infoview
 - add a first implementation for goto definition for vscode-adapted infoview
@@ -130,7 +136,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/onriv/lean4ij/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/onriv/lean4ij/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/onriv/lean4ij/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/onriv/lean4ij/compare/v0.1.3...v0.1.4

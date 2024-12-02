@@ -96,7 +96,7 @@ class BuildWindowService(val project: Project) {
                         val fileProgress = builds.computeIfAbsent(s.file) {
                             progress!!.startChildProgress(s.file)
                         }
-                        fileProgress.output(s.message, false)
+                        fileProgress.output("${s.message}\n", false)
                         if (s.message.contains("error: build failed")) {
                             try {
                                 // for (entry in builds.entries) {

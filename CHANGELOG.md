@@ -6,7 +6,7 @@
 - refactoring the internal infoview, and
 - add a first implementation for trace message in internal infoview
 - add a first implementation for goto definition for vscode-adapted infoview
-- (no code changed but two performance related issue: [ref])
+- fix build window messages have no linebreak
 
 ## [0.1.6] - 2024-11-25
 

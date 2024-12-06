@@ -60,12 +60,14 @@ class LeanProjectActivity : ProjectActivity {
 
                 override fun focusLost(editor: Editor) {
                     val project = editor.project?:return
-                    project.service<LeanProjectService>().isEnable.set(false)
+                    // avoiding set it to false for popup goto declaration requires
+                    // project.service<LeanProjectService>().isEnable.set(false)
                 }
 
                 override fun focusLost(editor: Editor, event: FocusEvent) {
                     val project = editor.project?:return
-                    project.service<LeanProjectService>().isEnable.set(false)
+                    // avoiding set it to false for popup goto declaration requires
+                    // project.service<LeanProjectService>().isEnable.set(false)
                 }
             }) {
                 // TODO add real Disposable, it's used for avoiding resource leak

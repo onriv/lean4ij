@@ -32,6 +32,9 @@ class LeanFileCaretListener(private val project: Project) : CaretListener/*, Pro
     private var editor: Editor? = null
 
     fun update(editor: Editor) {
+        if (this.editor == editor) {
+            return
+        }
         editor.caretModel.addCaretListener(this)
         this.editor?.caretModel?.removeCaretListener(this)
         this.editor = editor

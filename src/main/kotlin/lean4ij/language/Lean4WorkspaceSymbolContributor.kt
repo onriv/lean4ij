@@ -21,7 +21,8 @@ import com.intellij.util.Processor
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import com.redhat.devtools.lsp4ij.LanguageServerManager
-import com.redhat.devtools.lsp4ij.features.workspaceSymbol.LSPWorkspaceSymbolContributor
+// it is removed
+// import com.redhat.devtools.lsp4ij.features.workspaceSymbol.LSPWorkspaceSymbolContributor
 import com.redhat.devtools.lsp4ij.features.workspaceSymbol.WorkspaceSymbolData
 import lean4ij.lsp.LeanLanguageServerFactory
 import lean4ij.project.LeanProjectService
@@ -34,11 +35,11 @@ import java.util.concurrent.atomic.AtomicLong
 
 
 /**
- * copy from [LSPWorkspaceSymbolContributor]
+ * copy from LSPWorkspaceSymbolContributor
  * for currently in lean4 the api `$/cancelRequest` seems, not cancellable in fact...
  * Hence, we copy the class for do some
  * ref: https://plugins.jetbrains.com/docs/intellij/go-to-class-and-go-to-symbol.html
- * TODO maybe do some PR to Lean4 and move back to [LSPWorkspaceSymbolContributor]
+ * TODO maybe do some PR to Lean4 and move back to LSPWorkspaceSymbolContributor
  * TODO the order seems incorrect and cannot rewrite
  * TODO cannot open result in find tool window, don't know why
  */

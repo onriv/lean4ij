@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+- make `goto declaration` work by keeping LSP enable even not focusing on  an editor
+- fix [\#77](https://github.com/onriv/lean4ij/issues/77)(while restarting, the focus lean file may not updateCaret)
+- some code for running a lean file is encluded but not working yet
+
 ## [0.1.7] - 2024-12-02
 
 Depend on the latest approved nightly build of LSP4IJ: 0.8.1-20241202-013252

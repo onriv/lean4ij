@@ -212,7 +212,7 @@
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
 
-        <configurationType implementation="lean4ij.run.LeanRunConfigurationType"/>
+        <!-- <configurationType implementation="lean4ij.run.LeanRunConfigurationType"/> -->
 
     </actions>
 

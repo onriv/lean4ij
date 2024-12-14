@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleManager
 import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
+import lean4ij.project.LeanProjectService
+import lean4ij.project.ToolchainService
 import lean4ij.setting.Lean4Settings
 import lean4ij.util.OsUtil
 import lean4ij.util.notify
@@ -40,6 +42,7 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
      * here we determine it manually to avoid automatically download the toolchain when trying to start
      * the lsp
      * TODO check if should adapt the automation or not.
+     * TODO almost all these should be extracted to [ToolchainService] and refactor
      */
     private fun setServerCommand() {
         val toolchainFile = Path.of(project.basePath!!, "lean-toolchain")
@@ -84,6 +87,15 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
             project.notifyErr(content)
             return
         }
+        // TODO DRY DRY
+        val leanName = if (OsUtil.isWindows()) {"lean.exe"} else {"lean"}
+        val lean = Path.of(toolchainPath.toString(), "bin", leanName)
+
+        val toolchainService = project.service<ToolchainService>()
+        toolchainService.toolChainPath = toolchainPath
+        toolchainService.lakePath = lake
+        toolchainService.leanPath = lean
+
         // TODO should check if lake exists?
         commands = listOf(lake.toString(), "serve", "--", project.basePath)
         workingDirectory = project.basePath

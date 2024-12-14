@@ -15,13 +15,16 @@ import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.ui.FormBuilder
-import com.jetbrains.rd.generator.nova.PredefinedType.*
+import com.intellij.util.xmlb.annotations.OptionTag
+import lean4ij.project.ToolchainService
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -45,21 +48,25 @@ class LeanConfigurationFactory(configurationType: LeanRunConfigurationType) : Co
         return LeanRunConfiguration(project, this, "Lean")
     }
 
+    override fun getId() = "Lean"
+
     override fun getOptionsClass(): Class<out BaseState> {
         return LeanRunConfigurationOptions::class.java
     }
 }
 
 class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, name: String) :
-    RunConfigurationBase<LeanRunConfigurationOptions?>(project, factory, name) {
+    RunConfigurationBase<LeanRunConfigurationOptions>(project, factory, name) {
 
-    override fun getOptions(): LeanRunConfigurationOptions {
-        return super.getOptions() as LeanRunConfigurationOptions
+    private val _options = LeanRunConfigurationOptions()
+
+    override fun getOptionsClass(): Class<out RunConfigurationOptions> {
+        return super.getOptionsClass()
     }
 
-    var scriptName: String = ""
+    public override fun getOptions(): LeanRunConfigurationOptions = _options
 
-    override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration?> {
+    override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> {
         return LeanRunSettingsEditor()
     }
 
@@ -69,8 +76,15 @@ class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, nam
     ): RunProfileState {
         return object : CommandLineState(environment) {
             override fun startProcess(): ProcessHandler {
+
+                val toolchainService = project.service<ToolchainService>()
+
                 val commandLine: GeneralCommandLine =
-                    GeneralCommandLine(options.scriptName)
+                    GeneralCommandLine(
+                        toolchainService.leanPath.toString(),
+                        "--run",
+                        options.fileName
+                    )
                 val processHandler = ProcessHandlerFactory.getInstance()
                     .createColoredProcessHandler(commandLine)
                 ProcessTerminatedListener.attach(processHandler)
@@ -85,6 +99,8 @@ class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, nam
 class LeanRunSettingsEditor : SettingsEditor<LeanRunConfiguration>() {
     private val myPanel: JPanel
     private val scriptPathField: TextFieldWithBrowseButton = TextFieldWithBrowseButton()
+    private val argumentsField = ExpandableTextField()
+    private val workingDirectoryField = TextFieldWithBrowseButton()
 
     init {
         scriptPathField.addBrowseFolderListener(
@@ -93,22 +109,41 @@ class LeanRunSettingsEditor : SettingsEditor<LeanRunConfiguration>() {
         )
         myPanel = FormBuilder.createFormBuilder()
             .addLabeledComponent("Script file", scriptPathField)
+            .addLabeledComponent("Argument", argumentsField)
+            .addLabeledComponent("Working directory", workingDirectoryField)
             .panel
     }
 
+
+
     override fun resetEditorFrom(leanRunConfiguration: LeanRunConfiguration) {
-        scriptPathField.text = leanRunConfiguration.scriptName
+        scriptPathField.text = leanRunConfiguration.options.fileName!!
+        // argumentsField.text = leanRunConfiguration.options.arguments
+        // workingDirectoryField.text = leanRunConfiguration.workingDirectory
     }
 
     override fun applyEditorTo(leanRunConfiguration: LeanRunConfiguration) {
-        leanRunConfiguration.scriptName = scriptPathField.text
+        leanRunConfiguration.options.fileName = scriptPathField.text
+        // leanRunConfiguration.arguments = argumentsField.text
+        // leanRunConfiguration.workingDirectory = workingDirectoryField.text
     }
 
     override fun createEditor(): JComponent {
         return myPanel
     }
+
+    override fun isReadyForApply(): Boolean {
+        return scriptPathField.text.isNotEmpty()
+    }
 }
 
+/**
+ * TODO this class seems created multiple instances for a single run configuration, dont know why
+ */
 class LeanRunConfigurationOptions : RunConfigurationOptions() {
-    var scriptName = ""
+
+    @get:OptionTag(tag = "fileName")
+    var fileName : String? by string("")
+
+    // TODO add arguments and working directory
 }

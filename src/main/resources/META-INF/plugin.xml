@@ -121,7 +121,7 @@
                                implementation="lean4ij.language.Lean4WorkspaceClassContributor"/>
 
         <!-- <elementDescriptionProvider implementation="lean4ij.language.Lean4ElementDescriptionProvider"/> -->
-
+        <configurationType implementation="lean4ij.run.LeanRunConfigurationType"/>
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="lean"
@@ -211,8 +211,6 @@
         <action id="RestartCurrentLeanFile" class="lean4ij.actions.RestartCurrentFile" text="Lean4 Actions: Restart Current Lean File" description="Restart Current Lean File">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
-
-        <!-- <configurationType implementation="lean4ij.run.LeanRunConfigurationType"/> -->
 
     </actions>
 

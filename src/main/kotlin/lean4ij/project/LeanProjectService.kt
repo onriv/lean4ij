@@ -40,6 +40,7 @@ import org.eclipse.lsp4j.services.LanguageServer
 import java.io.File
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path

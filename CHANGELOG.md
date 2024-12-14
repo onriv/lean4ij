@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.1.8] - 2024-12-09
+
+Depend on the latest approved nightly build of LSP4IJ: 0.8.2-20241208-013232
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.8.2-20241208-013232@nightly]
+
 - make `goto declaration` work by keeping LSP enable even not focusing on  an editor
 - fix [\#77](https://github.com/onriv/lean4ij/issues/77)(while restarting, the focus lean file may not updateCaret)
 - some code for running a lean file is encluded but not working yet
@@ -140,7 +145,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/onriv/lean4ij/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/onriv/lean4ij/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/onriv/lean4ij/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/onriv/lean4ij/compare/v0.1.4...v0.1.5

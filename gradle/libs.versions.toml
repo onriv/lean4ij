@@ -7,7 +7,7 @@ kotlin = "2.1.0"
 changelog = "2.2.1"
 gradleIntelliJPlugin = "1.17.3"
 qodana = "2024.3.2"
-kover = "0.8.3"
+kover = "0.9.0"
 
 [libraries]
 exampleLibrary = { group = "com.example", name = "exampleLibrary", version.ref = "exampleLibrary" }

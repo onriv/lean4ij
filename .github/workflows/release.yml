@@ -61,6 +61,7 @@ jobs:
 
       # Publish the plugin to JetBrains Marketplace
       - name: Publish Plugin
+        if: flase
         env:
           PUBLISH_TOKEN: ${{ secrets.JB_TOKEN }}
       #    CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}

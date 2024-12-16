@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- run configuration for lean
+
 ## [0.1.8] - 2024-12-09
 
 Depend on the latest approved nightly build of LSP4IJ: 0.8.2-20241208-013232

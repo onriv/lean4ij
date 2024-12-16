@@ -4,7 +4,12 @@
 
 ## [Unreleased]
 
-- run configuration for lean
+## [0.1.9-beta.2] - 2024-12-16
+
+Depend on the latest approved nightly build of LSP4IJ: 0.9.0-20241214-112757
+Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.9.0-20241214-112757@nightly]
+
+- run configuration for lean (beta)
 
 ## [0.1.8] - 2024-12-09
 
@@ -147,7 +152,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.8...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.9-beta.2...HEAD
+[0.1.9-beta.2]: https://github.com/onriv/lean4ij/compare/v0.1.8...v0.1.9-beta.2
 [0.1.8]: https://github.com/onriv/lean4ij/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/onriv/lean4ij/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/onriv/lean4ij/compare/v0.1.5...v0.1.6

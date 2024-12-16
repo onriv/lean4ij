@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.ui.FormBuilder
-import com.intellij.util.xmlb.annotations.OptionTag
 import lean4ij.project.ToolchainService
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -60,10 +59,9 @@ class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, nam
 
     private val _options = LeanRunConfigurationOptions()
 
-    override fun getOptionsClass(): Class<out RunConfigurationOptions> {
-        return super.getOptionsClass()
-    }
-
+    /**
+     * TODO the tutorial create new instance here every time but it seems the returned options must be a field to be some kind persistent
+     */
     public override fun getOptions(): LeanRunConfigurationOptions = _options
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> {
@@ -76,15 +74,8 @@ class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, nam
     ): RunProfileState {
         return object : CommandLineState(environment) {
             override fun startProcess(): ProcessHandler {
-
                 val toolchainService = project.service<ToolchainService>()
-
-                val commandLine: GeneralCommandLine =
-                    GeneralCommandLine(
-                        toolchainService.leanPath.toString(),
-                        "--run",
-                        options.fileName
-                    )
+                val commandLine: GeneralCommandLine = toolchainService.commandLineForRunningLeanFile(options.fileName)
                 val processHandler = ProcessHandlerFactory.getInstance()
                     .createColoredProcessHandler(commandLine)
                 ProcessTerminatedListener.attach(processHandler)
@@ -114,10 +105,8 @@ class LeanRunSettingsEditor : SettingsEditor<LeanRunConfiguration>() {
             .panel
     }
 
-
-
     override fun resetEditorFrom(leanRunConfiguration: LeanRunConfiguration) {
-        scriptPathField.text = leanRunConfiguration.options.fileName!!
+        scriptPathField.text = leanRunConfiguration.options.fileName
         // argumentsField.text = leanRunConfiguration.options.arguments
         // workingDirectoryField.text = leanRunConfiguration.workingDirectory
     }
@@ -131,19 +120,20 @@ class LeanRunSettingsEditor : SettingsEditor<LeanRunConfiguration>() {
     override fun createEditor(): JComponent {
         return myPanel
     }
-
-    override fun isReadyForApply(): Boolean {
-        return scriptPathField.text.isNotEmpty()
-    }
 }
 
 /**
  * TODO this class seems created multiple instances for a single run configuration, dont know why
+ * The class RunConfigurationOptions use annotation for xml tag, dont know if it's relevant here or not
+ * but the example in run-configurations-tutorial use property.
  */
 class LeanRunConfigurationOptions : RunConfigurationOptions() {
 
-    @get:OptionTag(tag = "fileName")
-    var fileName : String? by string("")
+    private var fileNameOption = string("").provideDelegate(this, "fileName")
+
+    var fileName : String
+        get() = fileNameOption.getValue(this) ?: ""
+        set(value) = fileNameOption.setValue(this, value)
 
     // TODO add arguments and working directory
 }

@@ -89,32 +89,24 @@ class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, nam
 
 class LeanRunSettingsEditor : SettingsEditor<LeanRunConfiguration>() {
     private val myPanel: JPanel
-    private val scriptPathField: TextFieldWithBrowseButton = TextFieldWithBrowseButton()
-    private val argumentsField = ExpandableTextField()
-    private val workingDirectoryField = TextFieldWithBrowseButton()
+    private val leanPathField: TextFieldWithBrowseButton = TextFieldWithBrowseButton()
 
     init {
-        scriptPathField.addBrowseFolderListener(
+        leanPathField.addBrowseFolderListener(
             "Select Script File", null, null,
             FileChooserDescriptorFactory.createSingleFileDescriptor()
         )
         myPanel = FormBuilder.createFormBuilder()
-            .addLabeledComponent("Script file", scriptPathField)
-            .addLabeledComponent("Argument", argumentsField)
-            .addLabeledComponent("Working directory", workingDirectoryField)
+            .addLabeledComponent("Script file", leanPathField)
             .panel
     }
 
     override fun resetEditorFrom(leanRunConfiguration: LeanRunConfiguration) {
-        scriptPathField.text = leanRunConfiguration.options.fileName
-        // argumentsField.text = leanRunConfiguration.options.arguments
-        // workingDirectoryField.text = leanRunConfiguration.workingDirectory
+        leanPathField.text = leanRunConfiguration.options.fileName
     }
 
     override fun applyEditorTo(leanRunConfiguration: LeanRunConfiguration) {
-        leanRunConfiguration.options.fileName = scriptPathField.text
-        // leanRunConfiguration.arguments = argumentsField.text
-        // leanRunConfiguration.workingDirectory = workingDirectoryField.text
+        leanRunConfiguration.options.fileName = leanPathField.text
     }
 
     override fun createEditor(): JComponent {

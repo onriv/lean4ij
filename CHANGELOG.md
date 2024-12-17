@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+- fix the wrongly implemented getOptions for [LeanRunConfiguration.getOptions]
+- remove a dependent log in CHANGELOG.md in build.gradle.kts
+
 ## [0.1.9] - 2024-12-16
 
 Depend on the latest approved nightly build of LSP4IJ: 0.9.0-20241214-112757

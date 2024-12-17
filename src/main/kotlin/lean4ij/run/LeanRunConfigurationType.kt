@@ -21,7 +21,6 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NotNullLazyValue
-import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.ui.FormBuilder
 import lean4ij.project.ToolchainService
 import javax.swing.JComponent
@@ -30,6 +29,8 @@ import javax.swing.JPanel
 
 /**
  * Copy from https://plugins.jetbrains.com/docs/intellij/run-configurations-tutorial.html#implement-a-configurationtype
+ * The general logic seems to be [LeanRunConfigurationType] creates [LeanConfigurationFactory],
+ * and factory creates [LeanRunConfiguration]
  */
 class LeanRunConfigurationType() : ConfigurationTypeBase(
     "LeanRunConfiguration",
@@ -57,12 +58,15 @@ class LeanConfigurationFactory(configurationType: LeanRunConfigurationType) : Co
 class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, name: String) :
     RunConfigurationBase<LeanRunConfigurationOptions>(project, factory, name) {
 
-    private val _options = LeanRunConfigurationOptions()
-
     /**
-     * TODO the tutorial create new instance here every time but it seems the returned options must be a field to be some kind persistent
+     * In the tutorial,
+     * https://github.com/JetBrains/intellij-sdk-code-samples/blob/main/run_configuration/src/main/java/org/jetbrains/sdk/runConfiguration/DemoRunConfiguration.java#L28
+     * the getOptions method is already converting super.getOptions to the target type
+     * Don't know why I am creating new instances every time here earlier. Maybe I took it wrong somewhere
      */
-    public override fun getOptions(): LeanRunConfigurationOptions = _options
+    public override fun getOptions(): LeanRunConfigurationOptions =
+        super.getOptions() as LeanRunConfigurationOptions
+
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> {
         return LeanRunSettingsEditor()
@@ -115,8 +119,7 @@ class LeanRunSettingsEditor : SettingsEditor<LeanRunConfiguration>() {
 }
 
 /**
- * TODO this class seems created multiple instances for a single run configuration, dont know why
- * The class RunConfigurationOptions use annotation for xml tag, dont know if it's relevant here or not
+ * The class [RunConfigurationOptions] use annotation for xml tag, don't know if it's relevant here or not
  * but the example in run-configurations-tutorial use property.
  */
 class LeanRunConfigurationOptions : RunConfigurationOptions() {

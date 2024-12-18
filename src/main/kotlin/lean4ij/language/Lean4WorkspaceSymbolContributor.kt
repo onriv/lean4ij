@@ -2,7 +2,6 @@ package lean4ij.language
 
 // it is removed
 // import com.redhat.devtools.lsp4ij.features.workspaceSymbol.LSPWorkspaceSymbolContributor
-import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -23,8 +22,6 @@ import com.intellij.util.Processor
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import com.redhat.devtools.lsp4ij.LanguageServerManager
-import com.redhat.devtools.lsp4ij.client.features.FileUriSupport
-import com.redhat.devtools.lsp4ij.features.workspaceSymbol.WorkspaceSymbolData
 import lean4ij.project.LeanProjectService
 import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.WorkspaceSymbol
@@ -43,11 +40,11 @@ import java.util.concurrent.atomic.AtomicLong
  * TODO the order seems incorrect and cannot rewrite
  * TODO cannot open result in find tool window, don't know why
  * TODO if possible remove this and move back to lsp4ij
- * TODO remove using the class WorkspaceSymbolData, the involvement
+ * TODO remove using the class LeanWorkspaceSymbolData, the involvement
  */
 abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
 
-    abstract fun filter(data: WorkspaceSymbolData) : Boolean
+    abstract fun filter(data: LeanWorkspaceSymbolData) : Boolean
 
     override fun processNames(
         processor: Processor<in String?>,
@@ -63,8 +60,8 @@ abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
         items?.stream()
             ?.filter { data -> data.file != null && data.file.extension == "lean"}
             ?.filter { data -> filter(data) }
-            ?.filter { data: WorkspaceSymbolData -> scope.accept(data.file!!) }
-            ?.map { obj: WorkspaceSymbolData -> obj.name }
+            ?.filter { data: LeanWorkspaceSymbolData -> scope.accept(data.file!!) }
+            ?.map { obj: LeanWorkspaceSymbolData -> obj.name }
             ?.forEach { t: String? ->
                 processor.process(t)
             }
@@ -79,13 +76,13 @@ abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
         items?.stream()
             ?.filter { data -> data.file != null && data.file.extension == "lean"}
             ?.filter { data -> filter(data) }
-            ?.filter { ni: WorkspaceSymbolData -> parameters.searchScope.accept(ni.file!!) }
-            ?.forEach { t: WorkspaceSymbolData? ->
+            ?.filter { ni: LeanWorkspaceSymbolData -> parameters.searchScope.accept(ni.file!!) }
+            ?.forEach { t: LeanWorkspaceSymbolData? ->
                 processor.process(t)
             }
     }
 
-    private fun getWorkspaceSymbols(key: String, project: Project): List<WorkspaceSymbolData>? {
+    private fun getWorkspaceSymbols(key: String, project: Project): List<LeanWorkspaceSymbolData>? {
         val workspaceCache = project.service<WorkspaceSymbolsCache>()
         val items = workspaceCache.getWorkspaceSymbols(key)
         return items
@@ -94,20 +91,20 @@ abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
 }
 
 class Lean4WorkspaceSymbolContributor : Lean4ChooseByNameContributorEx() {
-    override fun filter(data: WorkspaceSymbolData): Boolean {
+    override fun filter(data: LeanWorkspaceSymbolData): Boolean {
         return true
     }
 }
 
 class Lean4WorkspaceClassContributor : Lean4ChooseByNameContributorEx() {
-    override fun filter(data: WorkspaceSymbolData): Boolean {
-        return data.name?.split(".")?.last()?.let { it[0].isUpperCase() } == true
+    override fun filter(data: LeanWorkspaceSymbolData): Boolean {
+        return data.name.split(".").last().let { it[0].isUpperCase() }
     }
 }
 
-class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<String, List<WorkspaceSymbolData>?>() {
+class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<String, List<LeanWorkspaceSymbolData>?>() {
 
-    override fun load(key: String): List<WorkspaceSymbolData>? {
+    override fun load(key: String): List<LeanWorkspaceSymbolData>? {
         thisLogger().info("loading symbols for $key")
 
         // TODO very fuzzy this way...
@@ -126,15 +123,12 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<St
         }
         val ls = languageServerItem.server
         val params = WorkspaceSymbolParams(key)
-        val symbols = ls.workspaceService.symbol(params).get()
-        if (symbols == null) {
-            return listOf()
-        }
-        val items: MutableList<WorkspaceSymbolData> = ArrayList()
+        val symbols = ls.workspaceService.symbol(params).get() ?: return listOf()
+        val items: MutableList<LeanWorkspaceSymbolData> = ArrayList()
         if (symbols.isLeft) {
             val s = symbols.left
             for (si in s) {
-                items.add(WorkspaceSymbolData(si?.name!!, si.kind!!, si.location!!, FileUriSupport.DEFAULT, project))
+                items.add(LeanWorkspaceSymbolData(si?.name!!, si.kind!!, si.location!!, project))
             }
         } else if (symbols.isRight) {
             val ws = symbols.right
@@ -146,22 +140,22 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<St
         return items
     }
 
-    fun createItem(si: WorkspaceSymbol, project: Project): WorkspaceSymbolData {
+    fun createItem(si: WorkspaceSymbol, project: Project): LeanWorkspaceSymbolData {
         val name = si.name
         val symbolKind = si.kind
         if (si.location.isLeft) {
-            return WorkspaceSymbolData(
-                name, symbolKind, si.location.left, FileUriSupport.DEFAULT, project
+            return LeanWorkspaceSymbolData(
+                name, symbolKind, si.location.left, project
             )
         }
-        return WorkspaceSymbolData(
-            name, symbolKind, si.location.right.uri, null, FileUriSupport.DEFAULT, project
+        return LeanWorkspaceSymbolData(
+            name, symbolKind, si.location.right.uri, null, project
         )
     }
 }
 
 @Service(Service.Level.PROJECT)
-class WorkspaceSymbolsCache(private val project: Project) {
+class WorkspaceSymbolsCache(project: Project) {
 
     private val requestCounter = AtomicLong(0)
 
@@ -169,20 +163,11 @@ class WorkspaceSymbolsCache(private val project: Project) {
 
     private val SLEEP_TIME : Long = 100
 
-    private val symbolsCache : LoadingCache<String, List<WorkspaceSymbolData>?> = CacheBuilder.newBuilder()
+    private val symbolsCache : LoadingCache<String, List<LeanWorkspaceSymbolData>?> = CacheBuilder.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(1))
         .build(WorkspaceSymbolsCacheLoader(project))
 
-    /**
-     * This is cache for concrete symbol entry like `CategoryTheory.ActionCategory` which
-     * is usually query by the IDE itself after some query invoking by the user
-     */
-    private val symbolEntryCache : Cache<String, List<WorkspaceSymbolData>?> = CacheBuilder.newBuilder()
-        .expireAfterWrite(Duration.ofMinutes(1))
-        .build()
-
-
-    fun getWorkspaceSymbols(queryString: String): List<WorkspaceSymbolData>? {
+    fun getWorkspaceSymbols(queryString: String): List<LeanWorkspaceSymbolData>? {
         // immediately return if the cache contains it
         symbolsCache.getIfPresent(queryString)?.let {
             return it
@@ -205,7 +190,7 @@ class WorkspaceSymbolsCache(private val project: Project) {
             for (symbolData in symbolDataList) {
                 // put all entries in the symbolsCache, for IJ seems making request to the returned entries
                 // too
-                symbolData.name?.let { symbolsCache.put(it, listOf(symbolData)) }
+                symbolData.name.let { symbolsCache.put(it, listOf(symbolData)) }
             }
             return symbolDataList
         } catch (e: Exception) {

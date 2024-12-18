@@ -1,5 +1,7 @@
 package lean4ij.language
 
+// it is removed
+// import com.redhat.devtools.lsp4ij.features.workspaceSymbol.LSPWorkspaceSymbolContributor
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -21,10 +23,8 @@ import com.intellij.util.Processor
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import com.redhat.devtools.lsp4ij.LanguageServerManager
-// it is removed
-// import com.redhat.devtools.lsp4ij.features.workspaceSymbol.LSPWorkspaceSymbolContributor
+import com.redhat.devtools.lsp4ij.client.features.FileUriSupport
 import com.redhat.devtools.lsp4ij.features.workspaceSymbol.WorkspaceSymbolData
-import lean4ij.lsp.LeanLanguageServerFactory
 import lean4ij.project.LeanProjectService
 import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.WorkspaceSymbol
@@ -42,6 +42,8 @@ import java.util.concurrent.atomic.AtomicLong
  * TODO maybe do some PR to Lean4 and move back to LSPWorkspaceSymbolContributor
  * TODO the order seems incorrect and cannot rewrite
  * TODO cannot open result in find tool window, don't know why
+ * TODO if possible remove this and move back to lsp4ij
+ * TODO remove using the class WorkspaceSymbolData, the involvement
  */
 abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
 
@@ -132,7 +134,7 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<St
         if (symbols.isLeft) {
             val s = symbols.left
             for (si in s) {
-                items.add(WorkspaceSymbolData(si?.name!!, si.kind!!, si.location!!, project))
+                items.add(WorkspaceSymbolData(si?.name!!, si.kind!!, si.location!!, FileUriSupport.DEFAULT, project))
             }
         } else if (symbols.isRight) {
             val ws = symbols.right
@@ -149,11 +151,11 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<St
         val symbolKind = si.kind
         if (si.location.isLeft) {
             return WorkspaceSymbolData(
-                name, symbolKind, si.location.left, project
+                name, symbolKind, si.location.left, FileUriSupport.DEFAULT, project
             )
         }
         return WorkspaceSymbolData(
-            name, symbolKind, si.location.right.uri, null, project
+            name, symbolKind, si.location.right.uri, null, FileUriSupport.DEFAULT, project
         )
     }
 }

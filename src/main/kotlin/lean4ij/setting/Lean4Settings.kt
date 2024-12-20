@@ -41,7 +41,9 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var fileProgressTriggeringStrategy = "OnlySelectedEditor"
 
     var maxInlayHintWaitingMillis = 100
-    var debouncingMillisForWorkspaceSymbol = 1000
+
+    var workspaceSymbolTriggerSuffix = ",,"
+
     var commentPrefixForGoalHint = "---"
 
     var enableDiagnosticsLens = true
@@ -136,7 +138,7 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Enable the lean language server log (restart to take effect)", settings::enableLeanServerLog) {
             comment("<a href='https://github.com/leanperrover/lean4/tree/master/src/Lean/Server#in-general'>ref</a>")
         }
-        int("Debouncing millis for sending workspace/symbol request to the language server(multiple of 100)", settings::debouncingMillisForWorkspaceSymbol, 0, 3000, 100)
+        string("Suffix string for triggering workspace symbol/class request", settings::workspaceSymbolTriggerSuffix)
         boolean("Enable lsp completion", settings::enableLspCompletion)
     }
     group("Infoview Settings") {

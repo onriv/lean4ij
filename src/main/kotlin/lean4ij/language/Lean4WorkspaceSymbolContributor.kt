@@ -5,8 +5,6 @@ package lean4ij.language
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import com.google.common.util.concurrent.ExecutionError
-import com.google.common.util.concurrent.UncheckedExecutionException
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
@@ -27,8 +25,6 @@ import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.WorkspaceSymbol
 import org.eclipse.lsp4j.WorkspaceSymbolParams
 import java.time.Duration
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.atomic.AtomicLong
 
 
 /**
@@ -155,53 +151,31 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<St
 }
 
 @Service(Service.Level.PROJECT)
-class WorkspaceSymbolsCache(project: Project) {
-
-    private val requestCounter = AtomicLong(0)
-
+class WorkspaceSymbolsCache(private val project: Project) {
     private val lean4Settings = service<Lean4Settings>()
 
-    private val SLEEP_TIME : Long = 100
-
+    // TODO here every output should also be cache
     private val symbolsCache : LoadingCache<String, List<LeanWorkspaceSymbolData>?> = CacheBuilder.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(1))
         .build(WorkspaceSymbolsCacheLoader(project))
 
-    fun getWorkspaceSymbols(queryString: String): List<LeanWorkspaceSymbolData>? {
-        // immediately return if the cache contains it
-        symbolsCache.getIfPresent(queryString)?.let {
-            return it
-        }
-        val currentCnt = requestCounter.incrementAndGet()
-        for (i in 1..50) {
-            if (i * SLEEP_TIME > lean4Settings.debouncingMillisForWorkspaceSymbol) {
-                break
-            }
-            Thread.sleep(SLEEP_TIME)
-            val newCnt = requestCounter.get()
-            if (currentCnt != newCnt) {
-                thisLogger().info("current cnt $currentCnt != new cnt $newCnt for $queryString")
-                return listOf()
-            }
-        }
-        try {
-            // TODO here it in fact cannot be null
-            val symbolDataList = symbolsCache.get(queryString) ?: return null
-            for (symbolData in symbolDataList) {
-                // put all entries in the symbolsCache, for IJ seems making request to the returned entries
-                // too
-                symbolData.name.let { symbolsCache.put(it, listOf(symbolData)) }
-            }
-            return symbolDataList
-        } catch (e: Exception) {
-            when {
-                e is ExecutionException || e is UncheckedExecutionException || e is ExecutionError ->
-                    thisLogger().info(e)
-                else ->
-                    thisLogger().error(e)
-            }
+    private fun canTrigger(queryString: String) = queryString.endsWith(lean4Settings.workspaceSymbolTriggerSuffix)
+
+    private fun normalize(queryString: String) = queryString.removeSuffix(lean4Settings.workspaceSymbolTriggerSuffix)
+
+    fun getWorkspaceSymbols(queryString: String): List<LeanWorkspaceSymbolData> {
+        if (canTrigger(queryString)) {
+            symbolsCache.get(normalize(queryString))
             return listOf()
         }
+        // immediately return if the cache contains it
+        val data = symbolsCache.getIfPresent(normalize(queryString))
+        if (data != null) {
+            for (entry in data) {
+                symbolsCache.put(entry.name, listOf(entry))
+            }
+        }
+        return data ?: listOf()
     }
 
 }

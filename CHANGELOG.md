@@ -6,6 +6,7 @@
 
 - fix the wrongly implemented getOptions for [LeanRunConfiguration.getOptions]
 - remove a dependent log in CHANGELOG.md in build.gradle.kts
+- replace the debouncing of goto workspace symbol/class to triggering suffix
 
 ## [0.1.9] - 2024-12-16
 

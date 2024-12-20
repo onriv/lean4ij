@@ -50,7 +50,7 @@ class LeanWorkspaceSymbolData(name: String,
                 project: Project) : this(name, symbolKind, location.uri, location.range.start, project)
 
     init {
-        val locationString: String = if (file != null) getLocationString(project, file) else fileUri
+        val locationString: String? = if (file != null) getLocationString(project, file) else fileUri
         this.presentation = LSPItemPresentation(name, symbolKind, locationString)
     }
 
@@ -85,9 +85,9 @@ class LeanWorkspaceSymbolData(name: String,
          * @param file
          * @return
          */
-        private fun getLocationString(project: Project, file: VirtualFile): String {
+        private fun getLocationString(project: Project, file: VirtualFile): String? {
             return Optional.ofNullable<VirtualFile>(project.guessProjectDir())
-                .map<String> { projectDir: VirtualFile ->
+                .map<String?> { projectDir: VirtualFile ->
                     VfsUtilCore.getRelativePath(
                         file,
                         projectDir,

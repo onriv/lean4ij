@@ -5,6 +5,8 @@ package lean4ij.language
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.util.concurrent.ExecutionError
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
@@ -12,19 +14,19 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.psi.ElementDescriptionLocation
-import com.intellij.psi.ElementDescriptionProvider
-import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
+import com.jetbrains.rd.util.AtomicInteger
 import com.redhat.devtools.lsp4ij.LanguageServerManager
+import kotlinx.coroutines.FlowPreview
 import lean4ij.project.LeanProjectService
 import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.WorkspaceSymbol
 import org.eclipse.lsp4j.WorkspaceSymbolParams
 import java.time.Duration
+import java.util.concurrent.ExecutionException
 
 
 /**
@@ -40,7 +42,7 @@ import java.time.Duration
  */
 abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
 
-    abstract fun filter(data: LeanWorkspaceSymbolData) : Boolean
+    abstract fun filter(data: LeanWorkspaceSymbolData): Boolean
 
     override fun processNames(
         processor: Processor<in String?>,
@@ -54,7 +56,7 @@ abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
         }
         val items = getWorkspaceSymbols(queryString, project)
         items?.stream()
-            ?.filter { data -> data.file != null && data.file.extension == "lean"}
+            ?.filter { data -> data.file != null && data.file.extension == "lean" }
             ?.filter { data -> filter(data) }
             ?.filter { data: LeanWorkspaceSymbolData -> scope.accept(data.file!!) }
             ?.map { obj: LeanWorkspaceSymbolData -> obj.name }
@@ -70,7 +72,7 @@ abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
     ) {
         val items = getWorkspaceSymbols(name, parameters.project)
         items?.stream()
-            ?.filter { data -> data.file != null && data.file.extension == "lean"}
+            ?.filter { data -> data.file != null && data.file.extension == "lean" }
             ?.filter { data -> filter(data) }
             ?.filter { ni: LeanWorkspaceSymbolData -> parameters.searchScope.accept(ni.file!!) }
             ?.forEach { t: LeanWorkspaceSymbolData? ->
@@ -98,7 +100,8 @@ class Lean4WorkspaceClassContributor : Lean4ChooseByNameContributorEx() {
     }
 }
 
-class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<String, List<LeanWorkspaceSymbolData>?>() {
+class WorkspaceSymbolsCacheLoader(private val project: Project) :
+    CacheLoader<String, List<LeanWorkspaceSymbolData>?>() {
 
     override fun load(key: String): List<LeanWorkspaceSymbolData>? {
         thisLogger().info("loading symbols for $key")
@@ -150,12 +153,13 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) : CacheLoader<St
     }
 }
 
+@OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
 class WorkspaceSymbolsCache(private val project: Project) {
     private val lean4Settings = service<Lean4Settings>()
 
     // TODO here every output should also be cache
-    private val symbolsCache : LoadingCache<String, List<LeanWorkspaceSymbolData>?> = CacheBuilder.newBuilder()
+    private val symbolsCache: LoadingCache<String, List<LeanWorkspaceSymbolData>?> = CacheBuilder.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(1))
         .build(WorkspaceSymbolsCacheLoader(project))
 
@@ -163,7 +167,7 @@ class WorkspaceSymbolsCache(private val project: Project) {
 
     private fun normalize(queryString: String) = queryString.removeSuffix(lean4Settings.workspaceSymbolTriggerSuffix)
 
-    fun getWorkspaceSymbols(queryString: String): List<LeanWorkspaceSymbolData> {
+    fun getWorkspaceSymbolsTriggeredBySuffix(queryString: String): List<LeanWorkspaceSymbolData> {
         if (canTrigger(queryString)) {
             symbolsCache.get(normalize(queryString))
             return listOf()
@@ -178,16 +182,51 @@ class WorkspaceSymbolsCache(private val project: Project) {
         return data ?: listOf()
     }
 
-}
+    private val requestCounter = AtomicInteger(0)
+    private val SLEEP_TIME = 10L
 
-/**
- * TODO https://plugins.jetbrains.com/docs/intellij/find-usages.html says it is requires for showing result in
- *      "show in tool window" button, but it in fact does not work.
- */
-class Lean4ElementDescriptionProvider : ElementDescriptionProvider {
+    fun getWorkspaceSymbolsTriggeredByDebounce(queryString: String): List<LeanWorkspaceSymbolData> {
+        // immediately return if the cache contains it
+        symbolsCache.getIfPresent(queryString)?.let {
+            return it
+        }
+        val currentCnt = requestCounter.incrementAndGet()
+        for (i in 1..1000) {
+            if (i * SLEEP_TIME > lean4Settings.workspaceSymbolTriggerDebouncingTime) {
+                break
+            }
+            Thread.sleep(SLEEP_TIME)
+            val newCnt = requestCounter.get()
+            if (currentCnt != newCnt) {
+                thisLogger().info("current cnt $currentCnt != new cnt $newCnt for $queryString")
+                return listOf()
+            }
+        }
+        try {
+            // TODO here it in fact cannot be null
+            val symbolDataList = symbolsCache.get(queryString) ?: return listOf()
+            for (symbolData in symbolDataList) {
+                // put all entries in the symbolsCache, for IJ seems making request to the returned entries too
+                symbolData.name.let { symbolsCache.put(it, listOf(symbolData)) }
+            }
+            return symbolDataList
+        } catch (e: Exception) {
+            when {
+                e is ExecutionException || e is UncheckedExecutionException || e is ExecutionError ->
+                    thisLogger().info(e)
+                else ->
+                    thisLogger().error(e)
+            }
+            return listOf()
+        }
+    }
 
-    override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
-        TODO("Not yet implemented")
+    fun getWorkspaceSymbols(queryString: String): List<LeanWorkspaceSymbolData> {
+        if (lean4Settings.strategyForTriggeringSymbolsOrClassesRequests == "suffix") {
+            return getWorkspaceSymbolsTriggeredBySuffix(queryString)
+        } else {
+            return getWorkspaceSymbolsTriggeredByDebounce(queryString)
+        }
     }
 
 }

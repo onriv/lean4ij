@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selected
+import com.intellij.ui.layout.selectedValueMatches
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
@@ -30,12 +31,22 @@ class BooleanSetting(private val row: Row, private val checkbox: JBCheckBox) {
 
     fun enabledIf(predicate: ComponentPredicate): BooleanSetting {
         row.enabledIf(predicate)
-        checkbox.selected
         return this
     }
 
     val selected: ComponentPredicate = checkbox.selected
 
+}
+
+class SelectSetting(private val row: Row, private val comboBox: ComboBox<String>) {
+    fun enabledIf(predicate: ComponentPredicate) : SelectSetting {
+        row.enabledIf(predicate)
+        return this
+    }
+
+    fun selectedItem(): String = comboBox.selectedItem as String
+
+    fun isSelecting(target: String) : ComponentPredicate = comboBox.selectedValueMatches { it == target }
 }
 
 class Lean4SettingsView {
@@ -99,17 +110,20 @@ class Lean4SettingsView {
 
     fun Panel.select(text: String, options: Array<String>, prop: KMutableProperty0<String>) = select(text, options, prop, null)
 
-    fun Panel.select(text: String, options: Array<String>, prop: KMutableProperty0<String>, toolTips: List<String>?) = row {
+    fun Panel.select(text: String, options: Array<String>, prop: KMutableProperty0<String>, toolTips: List<String>?) : SelectSetting {
         val comboBox = ComboBox(options)
-        if (toolTips?.isNotEmpty() == true) {
-            comboBox.apply {
-                renderer = ToolTipListCellRenderer(toolTips)
+        val row = row {
+            if (toolTips?.isNotEmpty() == true) {
+                comboBox.apply {
+                    renderer = ToolTipListCellRenderer(toolTips)
+                }
             }
+            cell(comboBox).label(text)
+            applyActions.add { prop.set(comboBox.selectedItem as String) }
+            resetActions.add { comboBox.selectedItem = prop.get() }
+            isChangedPredicates.add { comboBox.selectedItem != prop.get() }
         }
-        cell(comboBox).label(text)
-        applyActions.add { prop.set(comboBox.selectedItem as String) }
-        resetActions.add { comboBox.selectedItem = prop.get() }
-        isChangedPredicates.add { comboBox.selectedItem != prop.get() }
+        return SelectSetting(row, comboBox)
     }
 
     // TODO maybe it should not be public, but currently still no api for combos

@@ -5,9 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.selected
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 /**
@@ -41,8 +39,9 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var fileProgressTriggeringStrategy = "OnlySelectedEditor"
 
     var maxInlayHintWaitingMillis = 100
-
+    var strategyForTriggeringSymbolsOrClassesRequests = "debounce"
     var workspaceSymbolTriggerSuffix = ",,"
+    var workspaceSymbolTriggerDebouncingTime = 1000
 
     var commentPrefixForGoalHint = "---"
 
@@ -138,7 +137,18 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Enable the lean language server log (restart to take effect)", settings::enableLeanServerLog) {
             comment("<a href='https://github.com/leanperrover/lean4/tree/master/src/Lean/Server#in-general'>ref</a>")
         }
+        val workspaceSymbolsOrClassesRequestsStrategy = select("Strategy for triggering workspace symbols/classes request",
+            arrayOf("debounce", "suffix"),
+            settings::strategyForTriggeringSymbolsOrClassesRequests,
+            listOf(
+                "use debounce, request is triggering after idle for configured time",
+                "use suffix string, request is trigger after certain suffix string entered (and delete them for the final result)"
+            )
+        )
         string("Suffix string for triggering workspace symbol/class request", settings::workspaceSymbolTriggerSuffix)
+            .enabledIf(workspaceSymbolsOrClassesRequestsStrategy.isSelecting("suffix"))
+        int("Debouncing time for triggering workspace symbol/class request", settings::workspaceSymbolTriggerDebouncingTime, 200, 3000)
+            .enabledIf(workspaceSymbolsOrClassesRequestsStrategy.isSelecting("debounce"))
         boolean("Enable lsp completion", settings::enableLspCompletion)
     }
     group("Infoview Settings") {

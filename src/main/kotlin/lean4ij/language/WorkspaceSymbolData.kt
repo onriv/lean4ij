@@ -6,6 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.FakePsiElement
 import com.redhat.devtools.lsp4ij.LSPIJUtils
 import com.redhat.devtools.lsp4ij.ui.IconMapper
 import org.eclipse.lsp4j.Location
@@ -22,7 +25,7 @@ class LeanWorkspaceSymbolData(name: String,
                            private val symbolKind: SymbolKind,
                            private val fileUri: String,
                            private val position: Position?,
-                           private val project: Project) : NavigationItem {
+                           private val project: Project) : FakePsiElement() {
     val file: VirtualFile? = LSPIJUtils.findResourceFor(fileUri)
     private val presentation: LSPItemPresentation
 
@@ -64,6 +67,12 @@ class LeanWorkspaceSymbolData(name: String,
 
     override fun getPresentation(): ItemPresentation {
         return presentation
+    }
+
+    override fun getParent(): PsiElement? {
+        val file = file?:return null
+        val psiFile = PsiManager.getInstance(project).findFile(file)
+        return psiFile
     }
 
     override fun navigate(requestFocus: Boolean) {

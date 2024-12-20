@@ -6,7 +6,8 @@
 
 - fix the wrongly implemented getOptions for [LeanRunConfiguration.getOptions]
 - remove a dependent log in CHANGELOG.md in build.gradle.kts
-- replace the debouncing of goto workspace symbol/class to triggering suffix
+- replace the debouncing of goto workspace symbols/classes to triggering suffix
+- make "open in find tool window" of "goto workspace symbols/classes" work
 
 ## [0.1.9] - 2024-12-16
 

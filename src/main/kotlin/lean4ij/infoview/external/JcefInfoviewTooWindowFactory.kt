@@ -37,6 +37,12 @@ import java.awt.BorderLayout
  */
 @Service(Service.Level.PROJECT)
 class JcefInfoviewService(private val project: Project) {
+    val searchTextField : SearchTextField = SearchTextField()
+
+    init {
+        searchTextField.isVisible = false
+    }
+
     var actionToolbar: ActionToolbar? = null
     private var _url: String? = null
     val url get() = _url
@@ -181,7 +187,7 @@ class JcefInfoviewTooWindowFactory : ToolWindowFactory {
             // see: https://plugins.jetbrains.com/docs/intellij/search-field.html#icons
             // and maybe things like com.intellij.ui.speedSearch.SpeedSearchSupply
             // and com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
-            browser.component.add(SearchTextField(), BorderLayout.NORTH)
+            browser.component.add(jcefService.searchTextField, BorderLayout.NORTH)
             jcefInfoview.add(browser.component)
         } else {
             jcefInfoview.add(panel {
@@ -204,6 +210,7 @@ class JcefInfoviewTooWindowFactory : ToolWindowFactory {
         actions.add(manager.getAction("DecreaseZoomLevelForLeanInfoViewJcef"))
         actions.add(manager.getAction("ResetZoomLevelForLeanInfoViewJcef"))
         actions.add(manager.getAction("ToggleLeanInfoviewJcefToolbarVisibility"))
+        actions.add(manager.getAction("FindInExternalInfoview"))
 
         // TODO what is place for?
         val tb = manager.createActionToolbar("Lean Jcef Infoview", actions, true)

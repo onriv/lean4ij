@@ -240,3 +240,20 @@ class ToggleInfoviewPreferred : AnAction() {
         }
     }
 }
+
+class FindInExternalInfoview : AnAction() {
+
+    init {
+        templatePresentation.icon = AllIcons.Actions.Find
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
+        val jcefInfoviewService = project.service<JcefInfoviewService>()
+        jcefInfoviewService.searchTextField.isVisible = !jcefInfoviewService.searchTextField.isVisible
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT;
+    }
+}

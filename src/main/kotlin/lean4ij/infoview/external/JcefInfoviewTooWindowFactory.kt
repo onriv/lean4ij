@@ -1,7 +1,6 @@
 package lean4ij.infoview.external
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -14,6 +13,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.jcef.JBCefApp
@@ -31,13 +31,18 @@ import org.cef.misc.BoolRef
 import org.cef.network.CefRequest
 import org.cef.security.CefSSLInfo
 import java.awt.BorderLayout
-import javax.swing.JComponent
 
 /**
  * TODO the name like infoview and infoView is inconsistent in the whole codebase...
  */
 @Service(Service.Level.PROJECT)
 class JcefInfoviewService(private val project: Project) {
+    val searchTextField : SearchTextField = SearchTextField()
+
+    init {
+        searchTextField.isVisible = false
+    }
+
     var actionToolbar: ActionToolbar? = null
     private var _url: String? = null
     val url get() = _url
@@ -178,6 +183,11 @@ class JcefInfoviewTooWindowFactory : ToolWindowFactory {
         val jcefService = project.service<JcefInfoviewService>()
         val browser = jcefService.browser
         if (browser != null) {
+            // There is a concept named speed search built in list or tree etc.
+            // see: https://plugins.jetbrains.com/docs/intellij/search-field.html#icons
+            // and maybe things like com.intellij.ui.speedSearch.SpeedSearchSupply
+            // and com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
+            browser.component.add(jcefService.searchTextField, BorderLayout.NORTH)
             jcefInfoview.add(browser.component)
         } else {
             jcefInfoview.add(panel {
@@ -200,6 +210,7 @@ class JcefInfoviewTooWindowFactory : ToolWindowFactory {
         actions.add(manager.getAction("DecreaseZoomLevelForLeanInfoViewJcef"))
         actions.add(manager.getAction("ResetZoomLevelForLeanInfoViewJcef"))
         actions.add(manager.getAction("ToggleLeanInfoviewJcefToolbarVisibility"))
+        actions.add(manager.getAction("FindInExternalInfoview"))
 
         // TODO what is place for?
         val tb = manager.createActionToolbar("Lean Jcef Infoview", actions, true)

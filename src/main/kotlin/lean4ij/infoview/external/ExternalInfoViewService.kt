@@ -38,6 +38,7 @@ import java.nio.file.Paths
 /**
  * External infoview service, bridging the http service and the lean project service
  * TODO maybe switch to intellij's extension point to remove ktor for reducing plugin size
+ * TODO should this be merged with [JcefInfoviewService]?
  */
 @Service(Service.Level.PROJECT)
 class ExternalInfoViewService(val project: Project) {

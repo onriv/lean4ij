@@ -35,8 +35,6 @@ import javax.swing.JEditorPane
  * for some cleaner way to write ui stuff
  */
 class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(true) {
-    private val goals = JEditorPane()
-
     /**
      * TODO make this private
      */
@@ -79,19 +77,6 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
             return ""
         }
         return ""
-    }
-
-    /**
-     * check the following links about thread and ui
-     * - https://intellij-support.jetbrains.com/hc/en-us/community/posts/360009458040-Error-writing-data-in-a-tree-provided-by-a-background-thread
-     * - https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html
-     * Once it's not update but now the method revalidate and updateUI seem not required now.
-     */
-    fun updateGoal(goal: String) {
-        leanProject.scope.launch {
-            editor.await().document.setText(goal)
-            goals.text = goal
-        }
     }
 
     /**

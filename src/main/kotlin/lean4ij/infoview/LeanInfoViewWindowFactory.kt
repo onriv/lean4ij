@@ -8,10 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,8 +19,15 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import lean4ij.infoview.dsl.*
-import lean4ij.lsp.data.*
+import lean4ij.infoview.dsl.info
+import lean4ij.lsp.data.FoldingData
+import lean4ij.lsp.data.InfoviewRender
+import lean4ij.lsp.data.InteractiveDiagnostics
+import lean4ij.lsp.data.InteractiveGoals
+import lean4ij.lsp.data.InteractiveTermGoal
+import lean4ij.lsp.data.MsgUnsupported
+import lean4ij.lsp.data.Position
+import lean4ij.lsp.data.TaggedTextTag
 import lean4ij.project.LeanProjectService
 import java.awt.BorderLayout
 

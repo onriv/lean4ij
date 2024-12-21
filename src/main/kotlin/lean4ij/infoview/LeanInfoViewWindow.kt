@@ -130,7 +130,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
      * // TODO this should add some UT for the rendering
      * TODO this in fact can be static
      */
-    fun updateEditorMouseMotionListenerV1(
+    fun updateEditorMouseMotionListener(
         context: LeanInfoviewContext
     ) {
         val editorEx: EditorEx = context.infoviewEditor
@@ -150,25 +150,25 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         //      it seems so, otherwise the hyperlinks seems mixed and requires remove
         //      but still, maybe only one is better, try to remove old hyperlinks
         //      check if multiple editors would leak or not
-        if (mouseMotionListenerV1 != null) {
-            editorEx.removeEditorMouseMotionListener(mouseMotionListenerV1!!)
+        if (mouseMotionListener != null) {
+            editorEx.removeEditorMouseMotionListener(mouseMotionListener!!)
         }
         // TODO this can be refactored to the InfoviewRender class, in that way the definition of hovering
         //      can be done in the same time when the rendering is defined
-        mouseMotionListenerV1 = InfoviewMouseMotionListenerV1(context)
-        editorEx.addEditorMouseMotionListener(mouseMotionListenerV1!!)
+        mouseMotionListener = InfoviewMouseMotionListener(context)
+        editorEx.addEditorMouseMotionListener(mouseMotionListener!!)
 
         // mouse listener
-        if (mouseListenerV1 != null) {
-            editorEx.removeEditorMouseListener(mouseListenerV1!!)
+        if (mouseListener != null) {
+            editorEx.removeEditorMouseListener(mouseListener!!)
         }
-        mouseListenerV1 = InfoviewMouseListenerV1(context)
-        editorEx.addEditorMouseListener(mouseListenerV1!!)
+        mouseListener = InfoviewMouseListener(context)
+        editorEx.addEditorMouseListener(mouseListener!!)
     }
 
-    private var mouseMotionListenerV1 : EditorMouseMotionListener? = null
+    private var mouseMotionListener : EditorMouseMotionListener? = null
 
-    private var mouseListenerV1 : EditorMouseListener? = null
+    private var mouseListener : EditorMouseListener? = null
 
     fun restartEditor() {
         leanProject.scope.launch(Dispatchers.EDT) {

@@ -19,7 +19,7 @@ class LeanInfoviewService(private val project: Project) {
    var caretIsOverText: Boolean? = null
 
    /**
-    * This is almost same as [InfoviewMouseMotionListenerV1.offsetsFlow],
+    * This is almost same as [InfoviewMouseMotionListener.offsetsFlow],
     * just with different types
     */
    var contextInfo : Triple<ContextInfo, VirtualFile, Position>? = null

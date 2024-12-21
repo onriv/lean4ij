@@ -258,7 +258,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val interactiveTermGoal = interactiveTermGoalAsync.await()
             val interactiveDiagnostics = interactiveDiagnosticsAsync.await()
             // TODO the arguments are passing very deep, need some refactor
-            LeanInfoViewWindowFactory.updateInteractiveGoalV1(editor, project, virtualFile!!, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
+            LeanInfoViewWindowFactory.updateInteractiveGoal(editor, project, virtualFile!!, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
         }
     }
 

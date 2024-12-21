@@ -22,7 +22,7 @@ class LeanInfoviewContext(
 ) {
     fun refresh() {
         leanProject.scope.launch(Dispatchers.EDT) {
-            leanInfoViewWindow.updateEditorMouseMotionListenerV1(this@LeanInfoviewContext)
+            leanInfoViewWindow.updateEditorMouseMotionListener(this@LeanInfoviewContext)
         }
     }
 }

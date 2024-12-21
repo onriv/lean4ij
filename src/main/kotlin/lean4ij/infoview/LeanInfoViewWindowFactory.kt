@@ -124,7 +124,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
          * TODO passing things like editor etc seems cumbersome, maybe add some implement for context
          * @param editor Editor that is currently selected. It's not the infoview tool window editor.
          */
-        fun updateInteractiveGoalV1(
+        fun updateInteractiveGoal(
             editor: Editor,
             project: Project,
             file: VirtualFile?, // TODO this should add some UT for the rendering
@@ -151,7 +151,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
             // TODO minimize the invoke later range
             scope.launch(Dispatchers.EDT) {
                 val context = LeanInfoviewContext(leanProjectService, infoViewWindow, infoViewWindow.getEditor(), file, position, infoObjectModel)
-                infoViewWindow.updateEditorMouseMotionListenerV1(context)
+                infoViewWindow.updateEditorMouseMotionListener(context)
             }
         }
 

@@ -7,80 +7,76 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import lean4ij.lsp.data.ContextInfo
-import lean4ij.lsp.data.InteractiveDiagnostics
-import lean4ij.lsp.data.InteractiveGoals
-import lean4ij.lsp.data.InteractiveTermGoal
-import lean4ij.lsp.data.Position
-import lean4ij.project.LeanProjectService
 import lean4ij.setting.Lean4Settings
 import java.awt.Color
 
-/**
- * TODO this class should require some refactor
- */
-class InfoviewMouseMotionListener(
-    private val leanProjectService: LeanProjectService,
-    private val infoViewWindow: LeanInfoViewWindow,
-    private val editor: EditorEx,
-    private val file: VirtualFile,
-    private val position: Position,
-    private val interactiveGoals: InteractiveGoals?,
-    private val interactiveTermGoal: InteractiveTermGoal?,
-    private val interactiveDiagnostics: List<InteractiveDiagnostics>?,
-    private val interactiveDiagnosticsAllMessages: List<InteractiveDiagnostics>?
-) : EditorMouseMotionListener {
+class InfoviewMouseMotionListener(val context: LeanInfoviewContext) : EditorMouseMotionListener {
+
     private val lean4Settings = service<Lean4Settings>()
+    private val offsetsFlow = Channel<InfoviewPopupDocumentation?>()
     private var hyperLink: RangeHighlighter? = null
-    private val support = EditorHyperlinkSupport.get(editor)
+    private val support = EditorHyperlinkSupport.get(context.infoviewEditor)
+
+    init {
+        context.leanProject.scope.launch {
+            tryEmitHover()
+        }
+    }
+
+    private val leanInfoviewService
+        get() = context.leanProject.project.service<LeanInfoviewService>()
+
+    private suspend fun tryEmitHover() {
+        var oldHovering: InfoviewPopupDocumentation? = null
+        var hovering: InfoviewPopupDocumentation? = null
+        // TODO is it OK here using infinite loop?
+        //      should it be some disposal behavior?
+        while (true) {
+            try {
+                // TODO the time control here seems problematic
+                //      it seems longer than the setting
+                hovering = withTimeout(lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc.toLong()) {
+                    offsetsFlow.receive()
+                }
+                if (oldHovering != null && oldHovering.contextInfo != hovering?.contextInfo) {
+                    oldHovering.cancel()
+                    oldHovering = null
+                }
+            } catch (e: TimeoutCancellationException) {
+                if (hovering != null && hovering != oldHovering && hovering.contextInfo != oldHovering?.contextInfo) {
+                    oldHovering?.cancel()
+                    oldHovering = hovering
+                    hovering.navigate(context.leanProject.project)
+                }
+            }
+        }
+    }
     override fun mouseMoved(e: EditorMouseEvent) {
         if (hyperLink != null) {
             support.removeHyperlink(hyperLink!!)
         }
         if (!e.isOverText) {
-            leanProjectService.scope.launch {
+            context.leanProject.scope.launch {
                 offsetsFlow.send(null)
+                leanInfoviewService.contextInfo = null
             }
             return
         }
-        var c: Triple<ContextInfo, Int, Int>? = null
-        if (interactiveGoals != null) {
-            c = interactiveGoals.getCodeText(e.offset)
-        }
-        if (c == null && interactiveTermGoal != null) {
-            c = interactiveTermGoal.getCodeText(e.offset)
-        }
-        if (c == null && interactiveDiagnostics != null) {
-            for (diagnostic in interactiveDiagnostics) {
-                c = diagnostic.message.getCodeText(e.offset, null)
-                if (c != null) {
-                    break
-                }
-            }
-        }
-        if (c == null && interactiveDiagnosticsAllMessages != null) {
-            for (diagnostic in interactiveDiagnosticsAllMessages) {
-                // TODO why passing null?
-                c = diagnostic.message.getCodeText(e.offset, null)
-                if (c != null) {
-                    break
-                }
-            }
-        }
+        val c : Triple<ContextInfo, Int, Int>? = context.rootObjectModel.getCodeContext(e.offset)
         if (c == null) {
-            leanProjectService.scope.launch {
+            context.leanProject.scope.launch {
                 offsetsFlow.send(null)
+                leanInfoviewService.contextInfo = null
             }
             return
         }
@@ -107,10 +103,12 @@ class InfoviewMouseMotionListener(
             }
         }
         createPopup(c, attr)
-        leanProjectService.scope.launch {
+        context.leanProject.scope.launch {
+            leanInfoviewService.contextInfo = Triple(c.first, context.file, context.position)
             offsetsFlow.send(
+                // TODO move argument of popup document to context too
                 InfoviewPopupDocumentation(
-                    leanProjectService.scope, infoViewWindow, file, position, c.first,
+                    context.leanProject.scope, context.leanInfoViewWindow, context.file, context.position, c.first,
                     RelativePoint(e.mouseEvent)
                 )
             )
@@ -121,7 +119,7 @@ class InfoviewMouseMotionListener(
      * this is some kind copy from [com.intellij.execution.impl.EditorHyperlinkSupport.createHyperlink]
      */
     private fun createPopup(c: Triple<ContextInfo, Int, Int>, attr: TextAttributes) {
-        hyperLink = editor.markupModel.addRangeHighlighterAndChangeAttributes(
+        hyperLink = context.infoviewEditor.markupModel.addRangeHighlighterAndChangeAttributes(
             CodeInsightColors.HYPERLINK_ATTRIBUTES,
             c.second,
             c.third,
@@ -132,39 +130,4 @@ class InfoviewMouseMotionListener(
             ex.textAttributes = attr
         }
     }
-
-    private var offsetsFlow = Channel<InfoviewPopupDocumentation?>()
-
-    init {
-        leanProjectService.scope.launch {
-            tryEmitHover()
-        }
-    }
-
-    private suspend fun tryEmitHover() {
-        var oldHovering: InfoviewPopupDocumentation? = null
-        var hovering: InfoviewPopupDocumentation? = null
-        // TODO is it OK here using infinite loop?
-        //      should it be some disposal behavior?
-        while (true) {
-            try {
-                // TODO the time control here seems problematic
-                //      it seems longer than the setting
-                hovering = withTimeout(lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc.toLong()) {
-                    offsetsFlow.receive()
-                }
-                if (oldHovering != null && oldHovering.contextInfo != hovering?.contextInfo) {
-                    oldHovering.cancel()
-                    oldHovering = null
-                }
-            } catch (e: TimeoutCancellationException) {
-                if (hovering != null && hovering != oldHovering && hovering.contextInfo != oldHovering?.contextInfo) {
-                    oldHovering?.cancel()
-                    oldHovering = hovering
-                    hovering.navigate(leanProjectService.project)
-                }
-            }
-        }
-    }
-
 }

@@ -2,9 +2,8 @@ package lean4ij.infoview
 
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
-import lean4ij.lsp.data.InfoviewRender
 
-class InfoviewMouseListenerV1(private val context: LeanInfoviewContext) : EditorMouseListener {
+class InfoviewMouseListener(private val context: LeanInfoviewContext) : EditorMouseListener {
 
     override fun mousePressed(event: EditorMouseEvent) {
         super.mousePressed(event)

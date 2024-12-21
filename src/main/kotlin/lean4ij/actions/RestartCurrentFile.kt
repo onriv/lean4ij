@@ -2,12 +2,12 @@ package lean4ij.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import lean4ij.project.LeanProjectService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import kotlinx.coroutines.launch
+import lean4ij.project.LeanProjectService
 
 class RestartCurrentFile : AnAction() {
 
@@ -31,3 +31,4 @@ class RestartCurrentFile : AnAction() {
         }
     }
 }
+

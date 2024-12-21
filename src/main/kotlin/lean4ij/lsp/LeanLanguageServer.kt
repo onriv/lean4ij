@@ -1,10 +1,48 @@
 package lean4ij.lsp
 
-import com.google.gson.*
-import lean4ij.lsp.data.*
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
 import lean4ij.util.Constants
 import com.google.gson.reflect.TypeToken
+import com.google.gson.JsonElement
 import kotlinx.coroutines.future.await
+import lean4ij.lsp.data.ContextInfo
+import lean4ij.lsp.data.DefinitionTarget
+import lean4ij.lsp.data.GetGoToLocationParams
+import lean4ij.lsp.data.InfoPopup
+import lean4ij.lsp.data.InfoViewContent
+import lean4ij.lsp.data.InteractiveDiagnostics
+import lean4ij.lsp.data.InteractiveDiagnosticsParams
+import lean4ij.lsp.data.InteractiveGoal
+import lean4ij.lsp.data.InteractiveGoals
+import lean4ij.lsp.data.InteractiveGoalsParams
+import lean4ij.lsp.data.InteractiveInfoParams
+import lean4ij.lsp.data.InteractiveTermGoal
+import lean4ij.lsp.data.InteractiveTermGoalParams
+import lean4ij.lsp.data.LazyTraceChildrenToInteractiveParams
+import lean4ij.lsp.data.MsgEmbed
+import lean4ij.lsp.data.MsgEmbedExpr
+import lean4ij.lsp.data.MsgEmbedGoal
+import lean4ij.lsp.data.MsgEmbedTrace
+import lean4ij.lsp.data.MsgUnsupported
+import lean4ij.lsp.data.PlainGoal
+import lean4ij.lsp.data.PlainGoalParams
+import lean4ij.lsp.data.PlainTermGoal
+import lean4ij.lsp.data.RpcCallParams
+import lean4ij.lsp.data.PlainTermGoalParams
+import lean4ij.lsp.data.RpcConnectParams
+import lean4ij.lsp.data.RpcConnected
+import lean4ij.lsp.data.RpcKeepAliveParams
+import lean4ij.lsp.data.StrictOrLazy
+import lean4ij.lsp.data.StrictOrLazyLazy
+import lean4ij.lsp.data.StrictOrLazyStrict
+import lean4ij.lsp.data.SubexprInfo
+import lean4ij.lsp.data.TaggedText
+import lean4ij.lsp.data.TaggedTextAppend
+import lean4ij.lsp.data.TaggedTextTag
+import lean4ij.lsp.data.TaggedTextText
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.DidOpenTextDocumentParams
 import java.lang.reflect.Type
@@ -53,6 +91,10 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
 
     suspend fun lazyTraceChildrenToInteractive(params: LazyTraceChildrenToInteractiveParams): List<TaggedText<MsgEmbed>>? {
         return lazyTraceChildrenToInteractiveAsync(params).await()
+    }
+
+    suspend fun getGotoLocation(params: GetGoToLocationParams) : List<DefinitionTarget>? {
+        return getGotoLocationAsync(params).await()
     }
 
 
@@ -104,6 +146,12 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
      * the rpc call for showing trace in infoview
      */
     fun lazyTraceChildrenToInteractiveAsync(params: LazyTraceChildrenToInteractiveParams): CompletableFuture<List<TaggedText<MsgEmbed>>?> {
+        return languageServer.rpcCall(params).thenApply {
+            gson.fromJson(it)
+        }
+    }
+
+    fun getGotoLocationAsync(params: GetGoToLocationParams) : CompletableFuture<List<DefinitionTarget>?> {
         return languageServer.rpcCall(params).thenApply {
             gson.fromJson(it)
         }

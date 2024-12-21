@@ -2,7 +2,6 @@ package lean4ij.infoview.external
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -12,11 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
@@ -35,14 +30,10 @@ import lean4ij.infoview.external.data.InfoviewEvent
 import lean4ij.lsp.LeanLanguageServer
 import lean4ij.lsp.data.RpcCallParamsRaw
 import lean4ij.lsp.data.RpcConnectParams
-import lean4ij.lsp.data.Target
+import lean4ij.lsp.data.DefinitionTarget
 import lean4ij.lsp.fromJson
 import lean4ij.project.LeanProjectService
-import lean4ij.util.LspUtil
 import java.awt.Color
-import java.net.URL
-import java.nio.charset.StandardCharsets
-import java.nio.file.Path
 
 private val logger = logger<ExternalInfoViewService>()
 
@@ -197,7 +188,7 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                                     val params: RpcCallParamsRaw = fromJson(data)
                                     val ret = service.rpcCallRaw(params)
                                     if (params.method == "Lean.Widget.getGoToLocation") {
-                                        val targets : List<Target> = LeanLanguageServer.gson.fromJson(ret)
+                                        val targets : List<DefinitionTarget> = LeanLanguageServer.gson.fromJson(ret)
                                         project.service<LeanProjectService>().getGoToLocation(targets)
                                     }
                                     val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)

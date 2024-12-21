@@ -17,13 +17,14 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import lean4ij.lsp.data.ContextInfo
+import lean4ij.project.LeanProjectService
 import lean4ij.setting.Lean4Settings
 import java.awt.Color
 
 class InfoviewMouseMotionListenerV1(val context: LeanInfoviewContext) : EditorMouseMotionListener {
 
     private val lean4Settings = service<Lean4Settings>()
-    private var offsetsFlow = Channel<InfoviewPopupDocumentation?>()
+    private val offsetsFlow = Channel<InfoviewPopupDocumentation?>()
     private var hyperLink: RangeHighlighter? = null
     private val support = EditorHyperlinkSupport.get(context.infoviewEditor)
 
@@ -32,6 +33,9 @@ class InfoviewMouseMotionListenerV1(val context: LeanInfoviewContext) : EditorMo
             tryEmitHover()
         }
     }
+
+    private val leanInfoviewService
+        get() = context.leanProject.project.service<LeanInfoviewService>()
 
     private suspend fun tryEmitHover() {
         var oldHovering: InfoviewPopupDocumentation? = null
@@ -65,6 +69,7 @@ class InfoviewMouseMotionListenerV1(val context: LeanInfoviewContext) : EditorMo
         if (!e.isOverText) {
             context.leanProject.scope.launch {
                 offsetsFlow.send(null)
+                leanInfoviewService.contextInfo = null
             }
             return
         }
@@ -72,6 +77,7 @@ class InfoviewMouseMotionListenerV1(val context: LeanInfoviewContext) : EditorMo
         if (c == null) {
             context.leanProject.scope.launch {
                 offsetsFlow.send(null)
+                leanInfoviewService.contextInfo = null
             }
             return
         }
@@ -99,6 +105,7 @@ class InfoviewMouseMotionListenerV1(val context: LeanInfoviewContext) : EditorMo
         }
         createPopup(c, attr)
         context.leanProject.scope.launch {
+            leanInfoviewService.contextInfo = Triple(c.first, context.file, context.position)
             offsetsFlow.send(
                 // TODO move argument of popup document to context too
                 InfoviewPopupDocumentation(

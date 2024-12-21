@@ -34,6 +34,7 @@ import lean4ij.setting.Lean4Settings
 import lean4ij.infoview.LeanInfoViewWindowFactory
 import lean4ij.infoview.external.data.ApplyEditChange
 import lean4ij.lsp.data.FileProgressProcessingInfo
+import lean4ij.lsp.data.GetGoToLocationParams
 import lean4ij.lsp.data.InteractiveDiagnostics
 import lean4ij.lsp.data.InteractiveDiagnosticsParams
 import lean4ij.lsp.data.InteractiveGoals
@@ -51,6 +52,7 @@ import lean4ij.lsp.data.RpcCallParamsRaw
 import lean4ij.lsp.data.RpcConnectParams
 import lean4ij.lsp.data.RpcKeepAliveParams
 import lean4ij.lsp.data.TaggedText
+import lean4ij.lsp.data.DefinitionTarget
 import lean4ij.util.Constants
 import lean4ij.util.LspUtil
 import lean4ij.util.step
@@ -332,6 +334,12 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         return rpcCallWithRetry(params) {
             leanProjectService.languageServer.await().getInteractiveDiagnostics(it)
         }
+    }
+
+    suspend fun getGotoLocation(params: GetGoToLocationParams) : List<DefinitionTarget>? {
+         return rpcCallWithRetry(params) {
+             leanProjectService.languageServer.await().getGotoLocation(it)
+         }
     }
 
     private suspend fun <Params, Resp> rpcCallWithRetry(params: Params, action: suspend (Params) -> Resp): Resp?

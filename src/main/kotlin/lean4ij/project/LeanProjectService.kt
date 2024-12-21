@@ -31,16 +31,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import lean4ij.lsp.data.Target
+import lean4ij.lsp.data.DefinitionTarget
 import lean4ij.setting.Lean4Settings
 import lean4ij.util.LeanUtil
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.services.LanguageServer
-import java.io.File
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path
@@ -228,7 +226,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      *  }
      * ```
      */
-    fun getGoToLocation(targets: List<Target>) {
+    fun getGoToLocation(targets: List<DefinitionTarget>) {
         targets.firstOrNull().let { target ->
             if (target == null) {
                 return@let

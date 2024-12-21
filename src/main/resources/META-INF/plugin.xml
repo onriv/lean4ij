@@ -212,6 +212,12 @@
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
 
+        <group id="lean4ij.infoview.rightClickGroup" text="Infoview Right click Actions" popup="true"/>
+
+        <action id="InternalInfoviewGotoDefinition" class="lean4ij.actions.InternalInfoviewGotoDefinition" text="Go to Definition" description="InternalInfoviewGotoDefinition">
+            <add-to-group group-id="lean4ij.infoview.rightClickGroup" anchor="last"/>
+        </action>
+
     </actions>
 
     <applicationListeners>

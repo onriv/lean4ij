@@ -57,20 +57,32 @@ class JcefInfoviewService(private val project: Project) {
             }
         })
         searchTextField.addKeyboardListener(object : KeyAdapter() {
+            private fun searchDown() {
+                val text = searchTextField.text
+                if (text.isNotEmpty()) {
+                    browser?.cefBrowser?.find(text, true, false, true)
+                }
+            }
+
+            private fun searchUp() {
+                val text = searchTextField.text
+                if (text.isNotEmpty()) {
+                    browser?.cefBrowser?.find(text, false, false, true)
+                }
+                return
+            }
+
             override fun keyReleased(e: KeyEvent) {
                 when {
-                    e.keyCode == KeyEvent.VK_ENTER && !e.isShiftDown -> {
-                        val text = searchTextField.text
-                        if (text.isNotEmpty()) {
-                            browser?.cefBrowser?.find(text, true, false, true)
+                    e.keyCode == KeyEvent.VK_ENTER && !e.isShiftDown -> searchDown()
+                    e.keyCode == KeyEvent.VK_DOWN -> searchDown()
+                    e.keyCode == KeyEvent.VK_ENTER && e.isShiftDown -> searchUp()
+                    e.keyCode == KeyEvent.VK_UP -> searchUp()
+                    e.keyCode == KeyEvent.VK_ESCAPE -> {
+                        searchTextField.isVisible = false
+                        project.leanProjectScope.launch {
+                            searchTextFlow.send("")
                         }
-                    }
-                    e.keyCode == KeyEvent.VK_ENTER && e.isShiftDown -> {
-                        val text = searchTextField.text
-                        if (text.isNotEmpty()) {
-                            browser?.cefBrowser?.find(text, false, false, true)
-                        }
-                        return
                     }
                 }
             }

@@ -44,6 +44,13 @@ import javax.swing.event.DocumentEvent
  */
 @Service(Service.Level.PROJECT)
 class JcefInfoviewService(private val project: Project) {
+    /**
+     * Still cannot add case-sensitive, up and down search
+     * - https://github.com/JetBrains/intellij-plugins/blob/master/qodana/core/src/org/jetbrains/qodana/ui/link/LinkCloudProjectView.kt
+     * - https://github.com/plaskowski/EmbeddedBrowserIntellijPlugin/blob/main/src/main/kotlin/com/github/plaskowski/embeddedbrowserintellijplugin/ui/TextFieldAction.kt
+     *
+     * may help
+     */
     val searchTextField : SearchTextField = SearchTextField()
     val searchTextFlow: Channel<String> = Channel()
 

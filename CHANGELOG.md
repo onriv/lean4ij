@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+## [0.1.10] - 2024-12-22
+
+Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20241218-185137
+
 - fix the wrongly implemented getOptions for [LeanRunConfiguration.getOptions]
 - remove a dependent log in CHANGELOG.md in build.gradle.kts
 - add suffix triggering or debounce triggering strategies for "goto workspace symbols/classes" in settings
@@ -170,7 +174,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.10...HEAD
+[0.1.10]: https://github.com/onriv/lean4ij/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/onriv/lean4ij/compare/v0.1.9-beta.2...v0.1.9
 [0.1.9-beta.2]: https://github.com/onriv/lean4ij/compare/v0.1.8...v0.1.9-beta.2
 [0.1.8]: https://github.com/onriv/lean4ij/compare/v0.1.7...v0.1.8

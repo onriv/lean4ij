@@ -105,12 +105,8 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
                 additionalLinesCount = 0
                 additionalColumnsCount = 1
                 isVirtualSpace = false
-                if (isPopupDoc) {
-                    // for popup doc of inline infoview, the folding outline should not be shown
-                    isFoldingOutlineShown = false
-                } else {
-                    isFoldingOutlineShown = true
-                }
+                // for popup doc of inline infoview, the folding outline should not be shown
+                isFoldingOutlineShown = !isPopupDoc
             }
             headerComponent = null
             setCaretEnabled(true)

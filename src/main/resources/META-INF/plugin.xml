@@ -212,13 +212,17 @@
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
 
-        <action id="FindInExternalInfoview" class="lean4ij.actions.FindInExternalInfoview" text="Find in external infoview" description="Find in external infoview">
+        <action id="FindInExternalInfoview" class="lean4ij.actions.FindInExternalInfoview" text="Lean4 Actions: Find in external infoview" description="Find in external infoview">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+        </action>
+
+        <action id="FindInInternalInfoview" class="lean4ij.actions.FindInInternalInfoview" text="Lean4 Actions: Find in internal infoview" description="Find in internal infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
 
         <group id="lean4ij.infoview.rightClickGroup" text="Infoview Right click Actions" popup="true"/>
 
-        <action id="InternalInfoviewGotoDefinition" class="lean4ij.actions.InternalInfoviewGotoDefinition" text="Go to Definition" description="InternalInfoviewGotoDefinition">
+        <action id="InternalInfoviewGotoDefinition" class="lean4ij.actions.InternalInfoviewGotoDefinition" text="Lean4 Actions: Go to Definition" description="InternalInfoviewGotoDefinition">
             <add-to-group group-id="lean4ij.infoview.rightClickGroup" anchor="last"/>
         </action>
 

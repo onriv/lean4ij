@@ -196,6 +196,7 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
         // actions.add(manager.getAction("ResetZoomLevelForLeanInfoView"))
         actions.add(manager.getAction("ToggleLeanInfoviewToolbarVisibility"))
         actions.add(manager.getAction("ToggleInternalInfoviewSoftWrap"))
+        actions.add(manager.getAction("FindInInternalInfoview"))
 
         // TODO what is place for?
         val tb = manager.createActionToolbar("Lean Infoview", actions, true)

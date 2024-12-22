@@ -21,6 +21,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.FormBuilder
 import lean4ij.project.ToolchainService
 import javax.swing.JComponent
@@ -79,7 +80,7 @@ class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, nam
         return object : CommandLineState(environment) {
             override fun startProcess(): ProcessHandler {
                 val toolchainService = project.service<ToolchainService>()
-                val commandLine: GeneralCommandLine = toolchainService.commandLineForRunningLeanFile(options.fileName)
+                val commandLine: GeneralCommandLine = toolchainService.commandLineForRunningLeanFile(options.fileName, options.arguments)
                 val processHandler = ProcessHandlerFactory.getInstance()
                     .createColoredProcessHandler(commandLine)
                 ProcessTerminatedListener.attach(processHandler)
@@ -93,24 +94,28 @@ class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, nam
 
 class LeanRunSettingsEditor : SettingsEditor<LeanRunConfiguration>() {
     private val myPanel: JPanel
-    private val leanPathField: TextFieldWithBrowseButton = TextFieldWithBrowseButton()
+    private val leanFilePathField: TextFieldWithBrowseButton = TextFieldWithBrowseButton()
+    private val argumentsField: EditorTextField = EditorTextField()
 
     init {
-        leanPathField.addBrowseFolderListener(
+        leanFilePathField.addBrowseFolderListener(
             "Select Script File", null, null,
             FileChooserDescriptorFactory.createSingleFileDescriptor()
         )
         myPanel = FormBuilder.createFormBuilder()
-            .addLabeledComponent("Script file", leanPathField)
+            .addLabeledComponent("Script file", leanFilePathField)
+            .addLabeledComponent("Arguments", argumentsField)
             .panel
     }
 
     override fun resetEditorFrom(leanRunConfiguration: LeanRunConfiguration) {
-        leanPathField.text = leanRunConfiguration.options.fileName
+        leanFilePathField.text = leanRunConfiguration.options.fileName
+        argumentsField.text = leanRunConfiguration.options.arguments
     }
 
     override fun applyEditorTo(leanRunConfiguration: LeanRunConfiguration) {
-        leanRunConfiguration.options.fileName = leanPathField.text
+        leanRunConfiguration.options.fileName = leanFilePathField.text
+        leanRunConfiguration.options.arguments = argumentsField.text
     }
 
     override fun createEditor(): JComponent {
@@ -126,9 +131,17 @@ class LeanRunConfigurationOptions : RunConfigurationOptions() {
 
     private var fileNameOption = string("").provideDelegate(this, "fileName")
 
+    private var argumentsOption = string("").provideDelegate(this, "arguments")
+
     var fileName : String
         get() = fileNameOption.getValue(this) ?: ""
         set(value) = fileNameOption.setValue(this, value)
 
-    // TODO add arguments and working directory
+    var arguments : String
+        get() = argumentsOption.getValue(this) ?: ""
+        set(value) = argumentsOption.setValue(this, value)
+
+    // working directory is not applicable here, so not adding it
+    // checking lake it seems the command must be run from the root of the project
+    // TODO add environments
 }

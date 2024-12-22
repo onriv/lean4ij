@@ -10,6 +10,8 @@
 - make "open in find tool window" of "goto workspace symbols/classes" work
 - goto definition for internal infoview
 - add search for external infoview
+- search button also for internal infoview
+- support arguments in run configuration
 
 ## [0.1.9] - 2024-12-16
 

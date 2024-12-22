@@ -13,12 +13,16 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import lean4ij.util.leanProjectScope
 import lean4ij.util.notify
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -31,6 +35,9 @@ import org.cef.misc.BoolRef
 import org.cef.network.CefRequest
 import org.cef.security.CefSSLInfo
 import java.awt.BorderLayout
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import javax.swing.event.DocumentEvent
 
 /**
  * TODO the name like infoview and infoView is inconsistent in the whole codebase...
@@ -38,9 +45,47 @@ import java.awt.BorderLayout
 @Service(Service.Level.PROJECT)
 class JcefInfoviewService(private val project: Project) {
     val searchTextField : SearchTextField = SearchTextField()
+    val searchTextFlow: Channel<String> = Channel()
 
     init {
         searchTextField.isVisible = false
+        searchTextField.addDocumentListener(object: DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+                project.leanProjectScope.launch {
+                    searchTextFlow.send(searchTextField.text)
+                }
+            }
+        })
+        searchTextField.addKeyboardListener(object : KeyAdapter() {
+            override fun keyReleased(e: KeyEvent) {
+                when {
+                    e.keyCode == KeyEvent.VK_ENTER && !e.isShiftDown -> {
+                        val text = searchTextField.text
+                        if (text.isNotEmpty()) {
+                            browser?.cefBrowser?.find(text, true, false, true)
+                        }
+                    }
+                    e.keyCode == KeyEvent.VK_ENTER && e.isShiftDown -> {
+                        val text = searchTextField.text
+                        if (text.isNotEmpty()) {
+                            browser?.cefBrowser?.find(text, false, false, true)
+                        }
+                        return
+                    }
+                }
+            }
+        })
+        project.leanProjectScope.launch {
+            // TODO should this be stopped sometime? like many other infinite loops
+            while (true) {
+                val text = searchTextFlow.receive()
+                if (text.isEmpty()) {
+                    browser?.cefBrowser?.stopFinding(true)
+                } else {
+                    browser?.cefBrowser?.find(text, true, false, false)
+                }
+            }
+        }
     }
 
     var actionToolbar: ActionToolbar? = null

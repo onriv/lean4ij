@@ -240,3 +240,4 @@ class ToggleInfoviewPreferred : AnAction() {
         }
     }
 }
+

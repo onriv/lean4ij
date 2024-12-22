@@ -1,10 +1,11 @@
 package lean4ij.util
 
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationGroupManager.*
+import com.intellij.notification.NotificationGroupManager.getInstance
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import lean4ij.project.LeanProjectService
 
 
 /**
@@ -41,3 +42,7 @@ fun Project.notify(content: String, action: (Notification) -> Notification) {
         .createNotification(content, NotificationType.INFORMATION)
     action(notification)
 }
+
+val Project.leanProjectService get(): LeanProjectService = service()
+
+val Project.leanProjectScope get() = leanProjectService.scope

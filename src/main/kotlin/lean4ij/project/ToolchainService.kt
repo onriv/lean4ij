@@ -22,12 +22,23 @@ class ToolchainService(val project: Project) {
      * TODO test arguments and working directory
      */
     fun commandLineForRunningLeanFile(filePath: String, arguments: String = ""): GeneralCommandLine {
-        var command = mutableListOf(lakePath.toString(), "env", "lean", "--run", filePath)
+        val command = mutableListOf(lakePath.toString(), "env", "lean", "--run", filePath)
         if (arguments.isNotEmpty()) {
             command.addAll(arguments.split(ARGUMENT_SEPARATOR))
         }
         return GeneralCommandLine(*command.toTypedArray()).apply {
             // TODO it seems that running a file with lake requires the project root as the work directory
+            this.workDirectory = Path.of(project.basePath!!).toFile()
+        }
+    }
+
+    fun commandForRunningLake(arguments: String): GeneralCommandLine {
+        val command = mutableListOf(lakePath.toString())
+        // TODO what if it's empty?
+        if (arguments.isNotEmpty()) {
+            command.addAll(arguments.split(ARGUMENT_SEPARATOR))
+        }
+        return GeneralCommandLine(*command.toTypedArray()).apply {
             this.workDirectory = Path.of(project.basePath!!).toFile()
         }
     }

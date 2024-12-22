@@ -12,6 +12,7 @@
 - add search for external infoview
 - search button also for internal infoview
 - support arguments in run configuration
+- support lake run configuration
 
 ## [0.1.9] - 2024-12-16
 

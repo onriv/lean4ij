@@ -122,6 +122,7 @@
 
         <!-- <elementDescriptionProvider implementation="lean4ij.language.Lean4ElementDescriptionProvider"/> -->
         <configurationType implementation="lean4ij.run.LeanRunConfigurationType"/>
+        <configurationType implementation="lean4ij.run.LakeRunConfigurationType"/>
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="lean"
@@ -219,6 +220,10 @@
         <action id="FindInInternalInfoview" class="lean4ij.actions.FindInInternalInfoview" text="Lean4 Actions: Find in internal infoview" description="Find in internal infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
         </action>
+
+        <!-- <action id="LakeBuild" class="lean4ij.actions.LakeBuild" text="Lean4 Actions: lake build" description="Lake build current project"> -->
+        <!--     <add-to-group group-id="MainMenu" anchor="last"/> -->
+        <!-- </action> -->
 
         <group id="lean4ij.infoview.rightClickGroup" text="Infoview Right click Actions" popup="true"/>
 

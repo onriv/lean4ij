@@ -4,54 +4,41 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/25104.svg)](https://plugins.jetbrains.com/plugin/25104)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/25104.svg)](https://plugins.jetbrains.com/plugin/25104)
 
-![image](https://github.com/user-attachments/assets/4cca8ddd-f336-4f8c-b5f4-b16b9e725675)
-(The screenshot is taken from [mathematics_in_lean](https://github.com/leanprover-community/mathematics_in_lean))
-and some video:
-
-https://github.com/user-attachments/assets/25757345-0249-4999-adc7-7dadf94c8b0e
-
 <!-- Plugin description -->
-A [Lean4](https://lean-lang.org/) plugin for the Intellij Platform.
+A [Lean4](https://lean-lang.org/) plugin for Jetbrains IDES with the following features:
+- Interactive info view
+- Inlay type and goal hints
+- Autocompletion
+- Unicode abbreviations
+- Symbol Information
+
+![Demo image](.github/media/example.png)
+
+Demo video:
+https://github.com/user-attachments/assets/25757345-0249-4999-adc7-7dadf94c8b0e
 
 # Installation
 
-This plugin uses [LSP4IJ](https://github.com/redhat-developer/lsp4ij) for connecting to the Lean4 language server.
-Please install that first.
+First, [install Lean]( https://lean-lang.org/lean4/doc/setup.html)
 
-- Using the IDE built-in plugin system: `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
+You have two options for installing Lean4ij:
+1. Using the IDE built-in plugin system (recommended): `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
   `Install`
-
-- Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually
+2. Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually
   using
   `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...` For nightly builds go
-  to [Actions/build](https://github.com/onriv/lean4ij/actions/workflows/build.yml), click the latest success run and
-  scroll to the buttom.
-
-The plugin should be compatible from version 2024.1 and can not support the earlier versions for depending some
-experimental api)
+  to [Actions/build](https://github.com/onriv/lean4ij/actions/workflows/build.yml), find the latest successful run and
+  scroll to the bottom.
 
 ## Usage
 
-For currently there is no functionality of creating a project or setting up a project. Before open any lean project with
-it please first testing if the project has set up the toolchain correctly. Run any command like `elan which lake` or
-`lake exe cache get`, or `lake build` etc.
-
-The LSP server is start as any lean file is open in the Editor and the editor gets focus. If it not behaves correctly,
-try firing a restart action.
-
-Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. For the limitation of live
-templates, the `<SPACE>` keypress is always required.
-
-Infoview is supported using [lean4-infoview,](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview) and
-currently it can be started from a browser or the internal [JCEF](https://plugins.jetbrains.com/docs/intellij/jcef.html)
-infoview toolwindow. If it not behaves correctly, try firing a restart action too. There is also an infoview implemented
-in swing that's native in Jetbrains platform, it contains some basic functionally. Currently, some terminologies are
-messed up here: all the terminologies like "jcef", "external", "browser", "vscode" refer to the first one and
-terminologies like "swing", "internal", "native" refer to the second one.
-
-Messages and logs about the lean lsp server can be found in the language server tool window after setting the level to
-message or trace, check more information about this
-in [redhat-developer/lsp4ij](https://github.com/redhat-developer/lsp4ij).
+1. Create a new lean project using `lake new example`
+   - Verify toolchain by running `elan which lake`, `lake exe cache get`, or `lake build`,  in the project directory
+2. Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. Note that the `<SPACE>` keypress is always required.
+3. To display the infoview, open any lean file and click the `∀`. Otherwise, open find action (Control Shift A) and search for `Lean4 Actions: toggle lean infoview (internal) toolbar visibility`
+   - If it ever misbehaves, try clicking the restart button
+4. Enable goal hints by pressing Control I on the line that you want to see the goal for (Control Shift I to remove). You will see something like this:
+    ![Inlay Hint](.github/media/inlay_hint.png)
 
 ### Actions
 

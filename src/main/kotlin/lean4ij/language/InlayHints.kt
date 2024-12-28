@@ -575,28 +575,6 @@ class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
     }
 }
 
-class DiagInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
-
-    override suspend fun computeFor(file: LeanFile, content: String): HintSet {
-        if (project == null) {
-            return HintSet()
-        }
-
-        // reference https://github.com/JetBrains/intellij-community/blob/b4e6a7dc1c9adb1a0b622a75ebaec5a3d4a3475e/platform/lang-impl/src/com/intellij/codeInsight/daemon/impl/TrafficLightRenderer.java#L209
-
-
-        val hints = HintSet()
-    val leanProject = project.service<LeanProjectService>()
-
-        return hints
-    }
-
-    override fun getId(): String {
-        TODO("Not yet implemented")
-    }
-}
-
-
 /**
  * TODO what's DumbAware for?
  * A try for using custom folding
@@ -606,9 +584,6 @@ class DiagInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
 class PlaceholderFolding : FoldingBuilderEx(), DumbAware {
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
         val placeholders = Regex("""\b_\b""").findAll(document.text)
-        for (m in placeholders) {
-            println(m)
-        }
         return emptyArray()
     }
 

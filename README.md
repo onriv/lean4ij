@@ -20,10 +20,10 @@ https://github.com/user-attachments/assets/25757345-0249-4999-adc7-7dadf94c8b0e
 
 First, [install Lean]( https://lean-lang.org/lean4/doc/setup.html)
 
-You have two options for installing Lean4ij:
+Afterwards, you have two options for installing Lean4ij:
 1. Using the IDE built-in plugin system (recommended): `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
   `Install`
-2. Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it manually
+2. Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it
   using
   `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...` For nightly builds go
   to [Actions/build](https://github.com/onriv/lean4ij/actions/workflows/build.yml), find the latest successful run and
@@ -31,11 +31,11 @@ You have two options for installing Lean4ij:
 
 ## Usage
 
-1. Create a new lean project using `lake new example`
-   - Verify toolchain by running `elan which lake`, `lake exe cache get`, or `lake build`,  in the project directory
-2. Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`. Note that the `<SPACE>` keypress is always required.
-3. To display the infoview, open any lean file and click the `∀`. Otherwise, open find action (Control Shift A) and search for `Lean4 Actions: toggle lean infoview (internal) toolbar visibility`
-   - If it ever misbehaves, try clicking the restart button
+1. Create a new lean project using `lake new example`. Then, open the project in IntelliJ (or any other Jetbrains IDE with the lean4ij plugin).
+   - Verify the toolchain by running `lake exe cache get` in the project directory
+2. Unicode is supported via live templates, for example typing `\b1<SPACE>` would result in `𝟙`.
+3. To display the infoview, open any lean file and click the `∀` at the top toolbar. Otherwise, open find action (Control Shift A) and search for `Lean4 Actions: toggle lean infoview (internal) toolbar visibility`
+   - If the infoview or anything else seems to be misbehaving, try clicking the restart button at the top of the infoview
 4. Enable goal hints by pressing Control I on the line that you want to see the goal for (Control Shift I to remove). You will see something like this:
    - ![Inlay Hint](.github/media/inlay_hint.png)
 

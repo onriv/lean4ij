@@ -14,7 +14,6 @@ A [Lean4](https://lean-lang.org/) plugin for Jetbrains IDES with the following f
 
 ![Demo image](.github/media/example.png)
 
-Demo video:
 https://github.com/user-attachments/assets/25757345-0249-4999-adc7-7dadf94c8b0e
 
 # Installation
@@ -38,7 +37,7 @@ You have two options for installing Lean4ij:
 3. To display the infoview, open any lean file and click the `∀`. Otherwise, open find action (Control Shift A) and search for `Lean4 Actions: toggle lean infoview (internal) toolbar visibility`
    - If it ever misbehaves, try clicking the restart button
 4. Enable goal hints by pressing Control I on the line that you want to see the goal for (Control Shift I to remove). You will see something like this:
-    ![Inlay Hint](.github/media/inlay_hint.png)
+   - ![Inlay Hint](.github/media/inlay_hint.png)
 
 ### Actions
 

@@ -48,8 +48,16 @@ Currently, the code is still very badly organized for requiring further developm
 
 ### Build/Run/Debug the external infoview
 
+If the gradle plugin cannot download the Node.js toolchains, then try change the option
+```properties
+download = false
+```
+to
+```properties
+download = true
+```
 
-
+and try to run the command `npm install` manually in the directory `browser-infoview`. Currently the Node.js version in used is 19.9.0
 
 ## The swing infoview
 the swing infoview is a raw infoview implemented using intellij platform's swing component.

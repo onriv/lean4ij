@@ -46,6 +46,11 @@ There is two infoview implementations currently:
 the external infoview is adapting [lean4-infoview](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview). The frontend source code is in the folder `browser-infoview`. The api is bridged to editor via a websocket connection. Check `Route.kt` file for this. The external infoview can be opened in a web browser and using [JCEF](https://plugins.jetbrains.com/docs/intellij/jcef.html) embedding into the editor.
 Currently, the code is still very badly organized for requiring further development.
 
+### Build/Run/Debug the external infoview
+
+
+
+
 ## The swing infoview
 the swing infoview is a raw infoview implemented using intellij platform's swing component.
 Currently, the code is still very badly organized for requiring further development.
@@ -106,6 +111,14 @@ If the runPlugin task requires some proxy, create a file named `local.properties
 https.proxyHost=...
 https.proxyPort=...
 ```
+
+if using socks5 proxy then try the following code. Note that there is 
+
+```properties
+socksProxyHost=127.0.0.1
+socksProxyPort=7890
+```
+
 For first (and while require updating the frontend, run a `gradle buildBrowserInfoview` before run `runIde`)
 
 # Debug and troubleshooting

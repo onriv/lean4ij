@@ -1,3 +1,4 @@
+import com.github.gradle.node.npm.proxy.ProxySettings
 import com.github.gradle.node.npm.task.NpmTask
 import java.net.URI
 import java.net.http.HttpClient
@@ -299,6 +300,7 @@ processResources {
     from("$rootDir/browser-infoview/dist")
 }
 
+// ref: https://github.com/node-gradle/gradle-node-plugin/blob/main/docs/usage.md
 node {
     // Whether to download and install a specific Node.js version or not
     // If false, it will use the globally installed Node.js
@@ -308,7 +310,7 @@ node {
 
     // Version of node to download and install (only used if download is true)
     // It will be unpacked in the workDir
-    version = "18.18.1"
+    version = "19.9.0"
 
     // Version of npm to use
     // If specified, installs it in the npmWorkDir
@@ -349,5 +351,11 @@ node {
     // This is where the package.json file and node_modules directory are located
     // By default it is at the root of the current project
     nodeProjectDir = file("${project.projectDir}/browser-infoview")
+
+    // Whether the plugin automatically should add the proxy configuration to npm and yarn commands
+    // according the proxy configuration defined for Gradle
+    // Disable this option if you want to configure the proxy for npm or yarn on your own
+    // (in the .npmrc file for instance)
+    nodeProxySettings = ProxySettings.FORCED
 }
 

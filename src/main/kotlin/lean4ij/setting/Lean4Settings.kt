@@ -83,6 +83,11 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 class Lean4NonPersistentSetting {
     var commentPrefixForGoalHintRegex : Regex? = null
 
+    init {
+        // The startup requires update from the persistent setting
+        updateFromSetting(service())
+    }
+
     fun updateFromSetting(setting: Lean4Settings) {
         commentPrefixForGoalHintRegex = Regex("""(\n\s*${Regex.escape(setting.commentPrefixForGoalHint)})\s*?\n\s*\S""")
     }

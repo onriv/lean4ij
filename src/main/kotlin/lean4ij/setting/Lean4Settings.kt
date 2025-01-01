@@ -78,6 +78,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
 /**
  * This is for settings that in fact is converted from other settings, for keeping [Lean4Settings] in a simple POJO we add a new service here
+ * TODO this is kind of intuitive, maybe we can add some transient fields in [Lean4Settings] for this
  */
 @Service
 class Lean4NonPersistentSetting {

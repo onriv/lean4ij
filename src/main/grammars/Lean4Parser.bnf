@@ -16,6 +16,12 @@
 
 tokens ::= (
     LINE_COMMENT|
+    // WHITE_SPACE is context sensitive in lean4 and hence we will not use the default
+    // com.intellij.psi.TokenType.WHITE_SPACE which is ignored by the lexer
+    // but define our own
+    // Originally this comes from the need for hovering over the white space to show
+    // the documentation and content range
+    WHITE_SPACE|
     STRING|
     KEYWORD_COMMAND1|
     KEYWORD_COMMAND_PREFIX|

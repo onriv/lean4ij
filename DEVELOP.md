@@ -1,3 +1,13 @@
+# Quick development with GitHub actions
+
+For small change and quick development without Intellij Idea, you can use the GitHub actions to build and test the project. The following steps are required:
+
+1. Fork the project or connect [@onriv](https://github.com/onriv)/[@enigmurl](https://github.com/enigmurl) for the privileges for this repo.
+2. make any change in the forked repo and make a Pull Request to this repo, or push directly to the main branch in this repo if privileges for this repo are gained.
+3. In the actions page, download the zip artifact for the latest successful build, and install it with the Intellij Idea.
+
+This way it requires no local develop environment and can be done on any machine with internet access. But it requires some more time for the build and test process and hence it's only recommend for small changes.
+
 # Project and package structure
 
 A brief description of current project and package structure
@@ -127,7 +137,7 @@ socksProxyHost=127.0.0.1
 socksProxyPort=7890
 ```
 
-For first (and while require updating the frontend, run a `gradle buildBrowserInfoview` before run `runIde`)
+For first (and while require updating the frontend, run a `gradle buildBrowserInfoview` before run `runIde`). If the above way does not fix error in building the frontend, try remove `nodeProxySettings = ProxySettings.FORCED` too in `build.gradle.kts`.
 
 # Debug and troubleshooting
 

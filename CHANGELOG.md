@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+- default inlay hints to true if null
+- update doc with new features
+- implement editor hover highlight
+
 ## [0.1.10] - 2024-12-22
 
 Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20241218-185137

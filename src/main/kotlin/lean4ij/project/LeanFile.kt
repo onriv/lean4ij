@@ -72,12 +72,6 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
 
     private val lean4Settings = service<Lean4Settings>()
 
-    companion object {
-        val progressingLineMarker = DefaultLineMarkerRenderer(
-            TextAttributesKey.createTextAttributesKey("LINE_PARTIAL_COVERAGE"), 8, 0, LineMarkerRendererEx.Position.LEFT
-        )
-    }
-
     /**
      * TODO this should be better named
      */
@@ -90,14 +84,6 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private val buildWindowService: BuildWindowService = project.service()
     private val scope = leanProjectService.scope
     private val scopeIO = CoroutineScope(Dispatchers.IO)
-    // private val customScope = CoroutineScope(Executors.newFixedThreadPool(10, object : ThreadFactory {
-    //     private val counter = AtomicInteger(0)
-    //     override fun newThread(r: Runnable): Thread {
-    //         val thread = Thread()
-    //         thread.name = "Lean Plugin Thread ${counter.getAndIncrement()}"
-    //         return thread
-    //     }
-    // }).asCoroutineDispatcher())
 
     init {
         scope.launch {

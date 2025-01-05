@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import lean4ij.util.notifyErr
 
 open class BuildEvent(val file: String)
 class BuildStart(file: String): BuildEvent(file)

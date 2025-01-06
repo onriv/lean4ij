@@ -278,7 +278,12 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
             val markupModel = editor.markupModel
 
             if (hoverListener != null) {
-                editor.removeEditorMouseMotionListener(hoverListener!!)
+                try {
+                    editor.removeEditorMouseMotionListener(hoverListener!!)
+                } catch (e: Throwable) {
+                    // There are cases that we remove non-exist listener
+                    // Here we just ignore it
+                }
             }
             if (hoverRangeHighlighter != null) {
                 markupModel.removeHighlighter(hoverRangeHighlighter!!)

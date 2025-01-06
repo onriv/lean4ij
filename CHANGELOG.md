@@ -6,7 +6,7 @@
 
 - default inlay hints to true if null
 - update doc with new features
-- implement editor hover highlight
+- implement editor hover highlight, and the setting for disable it
 
 ## [0.1.10] - 2024-12-22
 

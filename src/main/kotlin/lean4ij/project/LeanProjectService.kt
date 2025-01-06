@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -318,7 +319,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
             hoverRangeHighlighter = markupModel.addRangeHighlighter(
                 StringUtil.lineColToOffset(document.charsSequence, hover.range.start.line, hover.range.start.character),
                 StringUtil.lineColToOffset(document.charsSequence, hover.range.end.line, hover.range.end.character),
-                0,
+                HighlighterLayer.LAST,
                 attr,
                 HighlighterTargetArea.EXACT_RANGE
             )

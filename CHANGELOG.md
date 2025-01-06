@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [0.1.11] - 2025-01-06
+
+Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250101-174134
+
+- default inlay hints to true if null
+- update doc with new features
+- implement editor hover highlight, and the setting for disable it
+
 ## [0.1.11-beta.0] - 2025-01-06
 
 Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250101-174134
@@ -182,7 +190,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.11-beta.0...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.11...HEAD
+[0.1.11]: https://github.com/onriv/lean4ij/compare/v0.1.11-beta.0...v0.1.11
 [0.1.11-beta.0]: https://github.com/onriv/lean4ij/compare/v0.1.10...v0.1.11-beta.0
 [0.1.10]: https://github.com/onriv/lean4ij/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/onriv/lean4ij/compare/v0.1.9-beta.2...v0.1.9

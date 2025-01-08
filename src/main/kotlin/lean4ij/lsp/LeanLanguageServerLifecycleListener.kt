@@ -7,11 +7,14 @@ import com.redhat.devtools.lsp4ij.ServerStatus
 import com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleListener
 import lean4ij.project.LeanProjectService
 import lean4ij.util.Constants
+import org.eclipse.lsp4j.Hover
+import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
+import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
 
 class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServerLifecycleListener {
@@ -32,13 +35,25 @@ class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServer
         }
     }
 
+    private val hoverRequests = mutableSetOf<String>()
+
     override fun handleLSPMessage(message: Message, consumer: MessageConsumer, languageServer: LanguageServerWrapper) {
         if (languageServer.serverDefinition.id != Constants.LEAN_LANGUAGE_SERVER_ID) {
             return
         }
+        if (message is RequestMessage) {
+            if (message.params is HoverParams) {
+               hoverRequests.add(message.id)
+            }
+        }
         if (message is ResponseMessage) {
             if (message.result is InitializeResult) {
                 leanProjectService.setInitializedResult(message.result as InitializeResult)
+            }
+            if (message.id in hoverRequests) {
+                // get current hover results for showing highlight of current content
+                hoverRequests.remove(message.id)
+                leanProjectService.highlightCurrentContent(message.result as Hover?)
             }
             // This is not customize used in yet
             // if (message.result is SemanticTokens) {

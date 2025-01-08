@@ -322,7 +322,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
         val hints = HintSet()
 
-        for (m in lean4Settings.nonPersistent().commentPrefixForGoalHintRegex!!.findAll(content)) {
+        for (m in lean4Settings.commentPrefixForGoalHintRegex!!.findAll(content)) {
             val session = file.getSession()
 
             val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last)

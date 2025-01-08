@@ -1,12 +1,11 @@
 package lean4ij.setting
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.xmlb.XmlSerializerUtil
+import kotlin.properties.Delegates
 
 /**
  * TODO this in fact can be different to implement the immutable state directly rather than using an
@@ -26,6 +25,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableHeuristicField = true
     var enableHeuristicAttributes = true
     var enableHeuristicDefinition = true
+    var enableHoverHighlight = true
 
     /**
      * TODO add project level configuration for this
@@ -43,7 +43,14 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var workspaceSymbolTriggerSuffix = ",,"
     var workspaceSymbolTriggerDebouncingTime = 1000
 
-    var commentPrefixForGoalHint = "---"
+    // ref: https://kotlinlang.org/docs/delegated-properties.html#observable-properties
+    var commentPrefixForGoalHint: String by Delegates.observable("---") {
+        prop, old, new ->
+        updateCommentPrefixForGoalHintRegex(new)
+    }
+
+    @Transient
+    var commentPrefixForGoalHintRegex : Regex? = null
 
     var enableDiagnosticsLens = true
     var enableLspCompletion = true
@@ -70,21 +77,11 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     }
 
     fun updateNonPersistent() {
-        nonPersistent().updateFromSetting(this)
+        updateCommentPrefixForGoalHintRegex(commentPrefixForGoalHint)
     }
 
-    fun nonPersistent() = service<Lean4NonPersistentSetting>()
-}
-
-/**
- * This is for settings that in fact is converted from other settings, for keeping [Lean4Settings] in a simple POJO we add a new service here
- */
-@Service
-class Lean4NonPersistentSetting {
-    var commentPrefixForGoalHintRegex : Regex? = null
-
-    fun updateFromSetting(setting: Lean4Settings) {
-        commentPrefixForGoalHintRegex = Regex("""(\n\s*${Regex.escape(setting.commentPrefixForGoalHint)})\s*?\n\s*\S""")
+    fun updateCommentPrefixForGoalHintRegex(prefix: String) {
+        commentPrefixForGoalHintRegex = Regex("""(\n\s*${Regex.escape(prefix)})\s*?\n\s*\S""")
     }
 }
 
@@ -96,6 +93,7 @@ class Lean4NonPersistentSetting {
 fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
     group("General Settings") {
         boolean("Enable the vertical file progress bar on the left of editor", settings::enableFileProgressBar)
+        boolean("Enable hover highlight for current term", settings::enableHoverHighlight)
         boolean("Enable heuristic definition highlighting", settings::enableHeuristicDefinition)
         boolean("Enable heuristic tactic highlighting", settings::enableHeuristicTactic)
         boolean("Enable heuristic field highlighting", settings::enableHeuristicField)

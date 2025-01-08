@@ -1,3 +1,13 @@
+# Quick development with GitHub actions
+
+For small change and quick development without Intellij Idea, you can use the GitHub actions to build and test the project. The following steps are required:
+
+1. Fork the project or connect [@onriv](https://github.com/onriv)/[@enigmurl](https://github.com/enigmurl) for the privileges for this repo.
+2. make any change in the forked repo and make a Pull Request to this repo, or push directly to the main branch in this repo if privileges for this repo are gained.
+3. In the actions page, download the zip artifact for the latest successful build, and install it with the Intellij Idea.
+
+This way it requires no local develop environment and can be done on any machine with internet access. But it requires some more time for the build and test process and hence it's only recommend for small changes.
+
 # Project and package structure
 
 A brief description of current project and package structure
@@ -45,6 +55,19 @@ There is two infoview implementations currently:
 ## The external infoview
 the external infoview is adapting [lean4-infoview](https://github.com/leanprover/vscode-lean4/tree/master/lean4-infoview). The frontend source code is in the folder `browser-infoview`. The api is bridged to editor via a websocket connection. Check `Route.kt` file for this. The external infoview can be opened in a web browser and using [JCEF](https://plugins.jetbrains.com/docs/intellij/jcef.html) embedding into the editor.
 Currently, the code is still very badly organized for requiring further development.
+
+### Build/Run/Debug the external infoview
+
+If the gradle plugin cannot download the Node.js toolchains, then try change the option
+```properties
+download = false
+```
+to
+```properties
+download = true
+```
+
+and try to run the command `npm install` manually in the directory `browser-infoview`. Currently the Node.js version in used is 19.9.0
 
 ## The swing infoview
 the swing infoview is a raw infoview implemented using intellij platform's swing component.
@@ -106,7 +129,15 @@ If the runPlugin task requires some proxy, create a file named `local.properties
 https.proxyHost=...
 https.proxyPort=...
 ```
-For first (and while require updating the frontend, run a `gradle buildBrowserInfoview` before run `runIde`)
+
+if using socks5 proxy then try the following code. Note that there is 
+
+```properties
+socksProxyHost=127.0.0.1
+socksProxyPort=7890
+```
+
+For first (and while require updating the frontend, run a `gradle buildBrowserInfoview` before run `runIde`). If the above way does not fix error in building the frontend, try remove `nodeProxySettings = ProxySettings.FORCED` too in `build.gradle.kts`.
 
 # Debug and troubleshooting
 

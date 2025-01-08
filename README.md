@@ -22,7 +22,7 @@ First, [install Lean]( https://lean-lang.org/lean4/doc/setup.html)
 
 Afterwards, you have two options for installing Lean4ij:
 1. Using the IDE built-in plugin system (recommended): `Settings/Preferences` > `Plugins` > `Marketplace` > `Search for "lean4ij"` >
-  `Install`
+  `Install`. You can also download the beta versions by adding the beta channel `https://plugins.jetbrains.com/plugins/beta/list` to the plugin repository via `Manage Plugin Repositories...` in the setting options of the plugin page.
 2. Manually: Download the [latest release](https://github.com/onriv/lean4ij/releases/latest) and install it
   using
   `Settings/Preferences` > `Plugins` > `⚙️` > `Install plugin from disk...` For nightly builds go

@@ -15,6 +15,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -34,9 +42,11 @@ import kotlinx.coroutines.launch
 import lean4ij.lsp.data.DefinitionTarget
 import lean4ij.setting.Lean4Settings
 import lean4ij.util.LeanUtil
+import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.services.LanguageServer
+import java.awt.Color
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
@@ -246,6 +256,81 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                     true
                 )
             }
+        }
+    }
+
+    private var hoverListener : EditorMouseMotionListener? = null
+    private var hoverRangeHighlighter : RangeHighlighter? = null
+
+    /**
+     * Try to add highlight for current hover content in current selected editor
+     * Since the returned type [Hover] does not contain the concrete hovering file,
+     * we implement it here rather than the [LeanFile] class.
+     * Although we can also match the request using the response in [LeanLanguageServerLifecycleListener]
+     * we do not do it this way yet though
+     */
+    fun highlightCurrentContent(hover: Hover?) {
+        if (!service<Lean4Settings>().enableHoverHighlight) {
+            return
+        }
+
+        FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
+            val document = editor.document
+            val markupModel = editor.markupModel
+
+            if (hoverListener != null) {
+                try {
+                    editor.removeEditorMouseMotionListener(hoverListener!!)
+                } catch (e: Throwable) {
+                    // There are cases that we remove non-exist listener
+                    // Here we just ignore it
+                }
+            }
+            if (hoverRangeHighlighter != null) {
+                markupModel.removeHighlighter(hoverRangeHighlighter!!)
+            }
+
+            if (hover == null) {
+                return
+            }
+
+            // TODO duplicated with
+            //      lean4ij.infoview.InfoviewMouseMotionListener.mouseMoved
+            val attr = object : TextAttributes() {
+                override fun getBackgroundColor(): Color {
+                    // TODO document this
+                    // TODO should scheme be cache?
+                    val scheme = EditorColorsManager.getInstance().globalScheme
+                    // TODO customize attr? or would backgroundColor null?
+                    //      indeed here it can be null, don't know why Kotlin does not mark it as error
+                    // TODO there is cases here the background of identifier under current caret is null
+                    // TODO do this better in a way
+                    var color = scheme.getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES).backgroundColor
+                    if (color != null) {
+                        return color
+                    }
+                    color = scheme.getColor(EditorColors.CARET_COLOR)
+                    if (color != null) {
+                        return color
+                    }
+                    return scheme.defaultBackground
+                }
+            }
+            hoverRangeHighlighter = markupModel.addRangeHighlighter(
+                StringUtil.lineColToOffset(document.charsSequence, hover.range.start.line, hover.range.start.character),
+                StringUtil.lineColToOffset(document.charsSequence, hover.range.end.line, hover.range.end.character),
+                HighlighterLayer.LAST,
+                attr,
+                HighlighterTargetArea.EXACT_RANGE
+            )
+            hoverListener = object : EditorMouseMotionListener {
+                override fun mouseMoved(e: EditorMouseEvent) {
+                    if (!e.isOverText) {
+                        editor.markupModel.removeHighlighter(hoverRangeHighlighter!!)
+                    }
+                }
+            }
+            editor.addEditorMouseMotionListener(hoverListener!!)
         }
     }
 }

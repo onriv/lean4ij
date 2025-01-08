@@ -157,7 +157,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
             return
         }
         val inlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
-        val isEnabled = inlayHintsSettings.isProviderEnabled(getId()) != false;
+        val isEnabled = inlayHintsSettings.isProviderEnabled(getId()) ?: return;
         if (!isEnabled) {
             return
         }

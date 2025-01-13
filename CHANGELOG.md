@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+- fix [#83](https://github.com/onriv/lean4ij/issues/83) that non-lean files invoke lsp from goto symbol/class
+- revert inlay hints back to default false
+
 ## [0.1.11] - 2025-01-06
 
 Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250101-174134

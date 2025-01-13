@@ -50,6 +50,10 @@ abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
         filter: IdFilter?
     ) {
         val project = scope.project ?: return
+        // TODO is it better way for this?
+        if (!project.service<LeanProjectService>().isLeanProject()) {
+            return
+        }
         var queryString = project.getUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN)
         if (queryString == null) {
             queryString = ""

@@ -4,8 +4,12 @@
 
 ## [Unreleased]
 
+## [0.1.12] - 2025-01-13
+
+Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250112-190958
+
 - fix [#83](https://github.com/onriv/lean4ij/issues/83) that non-lean files invoke lsp from goto symbol/class
-- revert inlay hints back to default false
+- @enigmurl revert inlay hints back to default false
 
 ## [0.1.11] - 2025-01-06
 
@@ -193,7 +197,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.11...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.12...HEAD
+[0.1.12]: https://github.com/onriv/lean4ij/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/onriv/lean4ij/compare/v0.1.11-beta.0...v0.1.11
 [0.1.11-beta.0]: https://github.com/onriv/lean4ij/compare/v0.1.10...v0.1.11-beta.0
 [0.1.10]: https://github.com/onriv/lean4ij/compare/v0.1.9...v0.1.10

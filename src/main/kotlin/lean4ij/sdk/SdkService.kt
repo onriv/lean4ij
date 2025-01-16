@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import lean4ij.language.Lean4SdkType
+import lean4ij.project.ToolchainService
 import lean4ij.util.notifyErr
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -29,16 +30,16 @@ class SdkService(private val project: Project) {
      * TODO this is duplicated with [lean4ij.lsp.LeanLanguageServerProvider.setServerCommand]
      */
     fun getLeanVersion(): String? {
-        val toolchainFile = Path.of(project.basePath!!, "lean-toolchain")
+        val toolchainFile = ToolchainService.expectedToolchainPath(project);
         if (!toolchainFile.exists()) {
-            val content =
-                "File $toolchainFile does not exist in the project root. Please check if this is a lean project."
-            project.notifyErr(content)
+            // error only shown
+            // if they open a lean file
+            // see LeanFileOpenedListener
             return null
         }
         if (!toolchainFile.isRegularFile()) {
             val content =
-                "File $toolchainFile lean-toolchain seems not a regular file. Please check if the project setup correctly"
+                "File $toolchainFile lean-toolchain is not a regular file. Please check if the project is setup correctly"
             project.notifyErr(content)
             return null
         }

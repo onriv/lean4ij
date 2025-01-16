@@ -156,7 +156,8 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      * TODO [lean4ij.lsp.LeanLanguageServerProvider.setServerCommand] contains some duplicated logic for this
      */
     fun isLeanProject(): Boolean {
-        return Path(project.basePath!!, "lean-toolchain").toFile().isFile
+        return ToolchainService.expectedToolchainPath(project)
+            .toFile().isFile
     }
 
     fun updateInfoviewFor(document: Document) {

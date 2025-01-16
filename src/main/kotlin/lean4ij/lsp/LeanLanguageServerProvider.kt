@@ -45,14 +45,22 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
      * TODO almost all these should be extracted to [ToolchainService] and refactor
      */
     private fun setServerCommand() {
-        val toolchainFile = Path.of(project.basePath!!, "lean-toolchain")
+
+        val toolchainFile = ToolchainService.expectedToolchainPath(project);
         if (!toolchainFile.exists()) {
-            val content = "File $toolchainFile does not exist in the project root. Please check if this is a lean project."
-            project.notifyErr(content)
+            // more than likely this means that
+            // the user is using an intellij ide
+            // so it's annoying to notify the user about this
+            // 'error'
+            //
+            // if ever the user does open a lean file
+            // and we're not in a lean project,
+            // then we notify the error there instead
+            // (see LeanFileOpenedListener)
             return
         }
         if (!toolchainFile.isRegularFile()) {
-            val content = "File $toolchainFile lean-toolchain seems not a regular file. Please check if the project setup correctly"
+            val content = "File $toolchainFile lean-toolchain is not a regular file. Please check if the project is setup correctly"
             project.notifyErr(content)
             return
         }
@@ -91,6 +99,7 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
         val leanName = if (OsUtil.isWindows()) {"lean.exe"} else {"lean"}
         val lean = Path.of(toolchainPath.toString(), "bin", leanName)
 
+        // succesfully created
         val toolchainService = project.service<ToolchainService>()
         toolchainService.toolChainPath = toolchainPath
         toolchainService.lakePath = lake

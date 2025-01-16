@@ -37,7 +37,7 @@ object LeanUtil {
     }
 
     fun isLeanFile(file: VirtualFile) : Boolean {
-        return file.extension?.let { it == "lean" || it == "lean4"} ?: false
+        return file.extension?.let { it == "lean" || it == "lean4"} == true
     }
 
     fun isLeanFile(url: String) : Boolean {

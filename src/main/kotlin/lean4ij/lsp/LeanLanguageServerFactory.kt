@@ -33,7 +33,7 @@ class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablemen
      * set it to always true if no language server return while debugging
      */
     override fun isEnabled(project: Project): Boolean {
-        return lean4Settings.enableLanguageServer && project.service<LeanProjectService>().isEnable.get()
+        return lean4Settings.state.enableLanguageServer && project.service<LeanProjectService>().isEnable.get()
     }
 
     override fun setEnabled(enabled: Boolean, project: Project) {

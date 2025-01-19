@@ -68,7 +68,6 @@ class Lean4SettingsView {
         for (action in applyActions) {
             action()
         }
-        lean4Settings.updateNonPersistent()
     }
 
     fun reset() {
@@ -90,6 +89,14 @@ class Lean4SettingsView {
             others()
         }
         return BooleanSetting(row, component)
+    }
+
+    fun Panel.string(text: String, setter: (String)->Unit, getter: ()->String) = row {
+        val component = JBTextField(getter())
+        applyActions.add { setter(component.text) }
+        resetActions.add { component.text = getter() }
+        isChangedPredicates.add { component.text != getter() }
+        cell(component).label(text)
     }
 
     fun Panel.string(text: String, prop: KMutableProperty0<String>) = row {

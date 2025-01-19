@@ -167,9 +167,9 @@ class WorkspaceSymbolsCache(private val project: Project) {
         .expireAfterWrite(Duration.ofMinutes(1))
         .build(WorkspaceSymbolsCacheLoader(project))
 
-    private fun canTrigger(queryString: String) = queryString.endsWith(lean4Settings.workspaceSymbolTriggerSuffix)
+    private fun canTrigger(queryString: String) = queryString.endsWith(lean4Settings.state.workspaceSymbolTriggerSuffix)
 
-    private fun normalize(queryString: String) = queryString.removeSuffix(lean4Settings.workspaceSymbolTriggerSuffix)
+    private fun normalize(queryString: String) = queryString.removeSuffix(lean4Settings.state.workspaceSymbolTriggerSuffix)
 
     fun getWorkspaceSymbolsTriggeredBySuffix(queryString: String): List<LeanWorkspaceSymbolData> {
         if (canTrigger(queryString)) {
@@ -196,7 +196,7 @@ class WorkspaceSymbolsCache(private val project: Project) {
         }
         val currentCnt = requestCounter.incrementAndGet()
         for (i in 1..1000) {
-            if (i * SLEEP_TIME > lean4Settings.workspaceSymbolTriggerDebouncingTime) {
+            if (i * SLEEP_TIME > lean4Settings.state.workspaceSymbolTriggerDebouncingTime) {
                 break
             }
             Thread.sleep(SLEEP_TIME)
@@ -226,7 +226,7 @@ class WorkspaceSymbolsCache(private val project: Project) {
     }
 
     fun getWorkspaceSymbols(queryString: String): List<LeanWorkspaceSymbolData> {
-        if (lean4Settings.strategyForTriggeringSymbolsOrClassesRequests == "suffix") {
+        if (lean4Settings.state.strategyForTriggeringSymbolsOrClassesRequests == "suffix") {
             return getWorkspaceSymbolsTriggeredBySuffix(queryString)
         } else {
             return getWorkspaceSymbolsTriggeredByDebounce(queryString)

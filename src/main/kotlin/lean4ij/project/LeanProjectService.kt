@@ -71,7 +71,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      * TODO it's back to true, inconsistent with readme
      * TODO this is not per project...
      */
-    val isEnable : AtomicBoolean = AtomicBoolean(lean4Settings.languageServerStartingStrategy == "Eager")
+    val isEnable : AtomicBoolean = AtomicBoolean(lean4Settings.state.languageServerStartingStrategy == "Eager")
 
     private val _caretEvent = MutableSharedFlow<PlainGoalParams>()
     val caretEvent: Flow<PlainGoalParams> get() = _caretEvent.asSharedFlow()
@@ -271,7 +271,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      * we do not do it this way yet though
      */
     fun highlightCurrentContent(hover: Hover?) {
-        if (!service<Lean4Settings>().enableHoverHighlight) {
+        if (!service<Lean4Settings>().state.enableHoverHighlight) {
             return
         }
 

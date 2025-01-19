@@ -41,14 +41,14 @@ class AddInlayGoalHint : AnAction() {
         if (lineCol.line != 0) {
             val prevStart = StringUtil.lineColToOffset(text, lineCol.line - 1, 0);
             val prev = text.substring(prevStart, at).trim();
-            if (prev == settings.commentPrefixForGoalHint) {
+            if (prev == settings.state.commentPrefixForGoalHintRegex!!.pattern) {
                 return;
             }
         }
 
         WriteAction.run<Throwable> {
             CommandProcessor.getInstance().executeCommand(e.project, {
-                editor.document.insertString(at, "${whitespacePrefix}${settings.commentPrefixForGoalHint}\n")
+                editor.document.insertString(at, "${whitespacePrefix}${settings.state.commentPrefixForGoalHintRegex!!.pattern}\n")
             }, "Insert Goal Hint", "lean4ij.insertGoalHintCommand");
         }
     }

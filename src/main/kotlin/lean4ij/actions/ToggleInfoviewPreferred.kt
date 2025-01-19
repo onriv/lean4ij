@@ -21,7 +21,7 @@ class ToggleInfoviewPreferred : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         when {
-            lean4Settings.preferredInfoview == "Jcef" ->
+            lean4Settings.state.preferredInfoview == "Jcef" ->
                     toggleLeanInfoViewJcef.actionPerformed(e)
             else ->
                     toggleLeanInfoViewInternal.actionPerformed(e)

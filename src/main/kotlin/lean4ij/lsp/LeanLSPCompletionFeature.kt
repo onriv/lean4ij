@@ -13,6 +13,6 @@ class LeanLSPCompletionFeature : LSPCompletionFeature() {
     private val lean4Settings = service<Lean4Settings>()
 
     override fun isEnabled(file: PsiFile): Boolean {
-        return lean4Settings.enableLspCompletion
+        return lean4Settings.state.enableLspCompletion
     }
 }

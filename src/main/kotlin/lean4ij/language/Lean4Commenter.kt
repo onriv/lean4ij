@@ -23,9 +23,9 @@ import lean4ij.setting.Lean4Settings
 data class CommentHolder(val file: PsiFile) : CommenterDataHolder() {
     // TODO should use code style
     // fun useSpaceAfterLineComment(): Boolean = CodeStyle.getLanguageSettings(file, Lean4Language.INSTANCE).LINE_COMMENT_ADD_SPACE
-    fun useSpaceAfterLineComment(): Boolean = service<Lean4Settings>().useSpaceAfterLineComment
-    fun commentAtFirstColumn() : Boolean = service<Lean4Settings>().commentAtFirstColumn
-    fun commentEmptyLine() : Boolean = service<Lean4Settings>().commentEmptyLine
+    fun useSpaceAfterLineComment(): Boolean = service<Lean4Settings>().state.useSpaceAfterLineComment
+    fun commentAtFirstColumn() : Boolean = service<Lean4Settings>().state.commentAtFirstColumn
+    fun commentEmptyLine() : Boolean = service<Lean4Settings>().state.commentEmptyLine
 }
 /**
  * TODO don't know if lsp4ij and the lean language server

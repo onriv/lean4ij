@@ -76,10 +76,10 @@ class InfoviewPopupEditorPane(text: String, maxWidth: Int, maxHeight: Int) : JTe
         // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
         // 200 chars and less is 300px, 1000 chars and more is 500px.
         // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
-        val width1 = lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound
-        val width2 = lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound
-        val minWidth = lean4Settings.nativeInfoviewPopupPreferredMinWidth
-        val maxWidth = lean4Settings.nativeInfoviewPopupPreferredMaxWidth
+        val width1 = lean4Settings.state.nativeInfoviewPopupMinWidthTextLengthUpperBound
+        val width2 = lean4Settings.state.nativeInfoviewPopupMaxWidthTextLengthLowerBound
+        val minWidth = lean4Settings.state.nativeInfoviewPopupPreferredMinWidth
+        val maxWidth = lean4Settings.state.nativeInfoviewPopupPreferredMaxWidth
         val contentLengthPreferredSize = if (textLength < width1) {
             minWidth
         } else if (textLength in (width1 + 1) until width2) {

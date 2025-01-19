@@ -42,7 +42,7 @@ class DelInlayGoalHint : AnAction() {
                 val lineStart = StringUtil.lineColToOffset(text, i, 0);
                 val lineEnd = StringUtil.lineColToOffset(text, i + 1, 0);
                 val line = text.substring(lineStart, lineEnd).trim();
-                if (line == settings.commentPrefixForGoalHint) {
+                if (line == settings.state.commentPrefixForGoalHintRegex!!.pattern) {
                     CommandProcessor.getInstance().executeCommand(e.project, {
                         editor.document.deleteString(lineStart, lineEnd)
                     }, "Delete Goal Hint", "lean4ij.deleteGoalHintCommand");

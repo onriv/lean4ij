@@ -153,7 +153,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
         // if the language server is not start, return directly
-        if (!lean4Settings.enableLanguageServer) {
+        if (!lean4Settings.state.enableLanguageServer) {
             return
         }
         val inlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
@@ -202,7 +202,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
         var its = 0
         while (!hints.isDone) {
             its += 1
-            if (element.containingFile.modificationStamp != computeTime || its * TIMEOUT_MAX_ITS >= lean4Settings.maxInlayHintWaitingMillis) {
+            if (element.containingFile.modificationStamp != computeTime || its * TIMEOUT_MAX_ITS >= lean4Settings.state.maxInlayHintWaitingMillis) {
                 return
             }
 
@@ -322,7 +322,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
         val hints = HintSet()
 
-        for (m in lean4Settings.commentPrefixForGoalHintRegex!!.findAll(content)) {
+        for (m in lean4Settings.state.commentPrefixForGoalHintRegex!!.regex.findAll(content)) {
             val session = file.getSession()
 
             val lineColumn = StringUtil.offsetToLineColumn(content, m.range.last)
@@ -568,7 +568,7 @@ class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
 
         fun register(editor: TextEditor) {
             val settings = service<Lean4Settings>()
-            if (settings.enableDiagnosticsLens) {
+            if (settings.state.enableDiagnosticsLens) {
                 DiagInlayManager(editor)
             }
         }

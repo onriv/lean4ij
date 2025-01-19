@@ -138,7 +138,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      */
     private fun tryAddLineMarker(info: FileProgressProcessingInfo, highlighters: MutableList<RangeHighlighter>): MutableList<RangeHighlighter> {
         val ret = mutableListOf<RangeHighlighter>()
-        if (!lean4Settings.enableFileProgressBar) return ret
+        if (!lean4Settings.state.enableFileProgressBar) return ret
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             if (editor.virtualFile.path == unquotedFile) {
                 val document = editor.document
@@ -204,12 +204,12 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         val position = Position(line = logicalPosition.line, character = logicalPosition.column)
         val textDocument = TextDocumentIdentifier(LspUtil.quote(file))
         val params = PlainGoalParams(textDocument, position)
-        if (lean4Settings.enableVscodeInfoview) {
+        if (lean4Settings.state.enableVscodeInfoview) {
             // TODO this is in fact not fully controlling the behavior for the vscode/internal/jcef infoview
             leanProjectService.updateCaret(params)
         }
-        if (lean4Settings.enableNativeInfoview) {
-            if (!lean4Settings.autoUpdateInternalInfoview && !forceUpdate) return
+        if (lean4Settings.state.enableNativeInfoview) {
+            if (!lean4Settings.state.autoUpdateInternalInfoview && !forceUpdate) return
             updateInternalInfoview(editor, params)
         } else {
             LeanInfoViewWindowFactory.getLeanInfoview(project)?.let { leanInfoviewWindow ->

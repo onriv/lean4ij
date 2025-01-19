@@ -168,7 +168,7 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
     private val tempLogDir = Files.createTempDirectory(Path.of(PathManager.getTempPath()), "lean-lsp").toString()
 
     override fun getUserEnvironmentVariables(): MutableMap<String, String> {
-        if (lean4Settings.enableLeanServerLog) {
+        if (lean4Settings.state.enableLeanServerLog) {
             thisLogger().info("lean lsp log dir set to $tempLogDir")
             project.notify("lean lsp log dir set to $tempLogDir")
             return mutableMapOf("LEAN_SERVER_LOG_DIR" to tempLogDir)

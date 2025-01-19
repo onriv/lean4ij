@@ -45,7 +45,7 @@ class InfoviewMouseMotionListener(val context: LeanInfoviewContext) : EditorMous
             try {
                 // TODO the time control here seems problematic
                 //      it seems longer than the setting
-                hovering = withTimeout(lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc.toLong()) {
+                hovering = withTimeout(lean4Settings.state.hoveringTimeBeforePopupNativeInfoviewDoc.toLong()) {
                     offsetsFlow.receive()
                 }
                 if (oldHovering != null && oldHovering.contextInfo != hovering?.contextInfo) {

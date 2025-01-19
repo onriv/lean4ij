@@ -70,6 +70,10 @@
                     icon="/icons/jcef_icon.svg"
         />
 
+        <!-- It seems currently there is some method in this extension point to hide icon -->
+        <!-- but I did not find it -->
+        <!-- <library.toolWindow/> -->
+
         <postStartupActivity implementation="lean4ij.project.LeanProjectActivity"/>
 
         <!-- ref: https://plugins.jetbrains.com/docs/intellij/notifications.html#balloons -->

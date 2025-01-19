@@ -34,7 +34,7 @@ class Lean4LSPClientFeatures : LSPClientFeatures() {
     }
 
     override fun isEnabled(file: VirtualFile): Boolean {
-        if (lean4Settings.fileProgressTriggeringStrategy == "AllOpenedEditor") {
+        if (lean4Settings.state.fileProgressTriggeringStrategy == "AllOpenedEditor") {
             return true
         }
         val selectedFile = FileEditorManager.getInstance(project)

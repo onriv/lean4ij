@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+- fix error notification in non-lean project
+- fix [#104](https://github.com/onriv/lean4ij/issues/104) that icons not welly displayed in the toolbar
+
 ## [0.1.12] - 2025-01-13
 
 Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250112-190958

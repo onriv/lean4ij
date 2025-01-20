@@ -44,13 +44,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var workspaceSymbolTriggerDebouncingTime = 1000
 
     // ref: https://kotlinlang.org/docs/delegated-properties.html#observable-properties
-    var commentPrefixForGoalHint: String by Delegates.observable("---") {
-        prop, old, new ->
-        updateCommentPrefixForGoalHintRegex(new)
-    }
-
-    @Transient
-    var commentPrefixForGoalHintRegex : Regex? = null
+    var commentPrefixForGoalHint: String = "---"
 
     var enableDiagnosticsLens = true
     var enableLspCompletion = true
@@ -73,15 +67,10 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
     override fun loadState(state: Lean4Settings) {
         XmlSerializerUtil.copyBean(state, this)
-        updateNonPersistent()
     }
 
-    fun updateNonPersistent() {
-        updateCommentPrefixForGoalHintRegex(commentPrefixForGoalHint)
-    }
-
-    fun updateCommentPrefixForGoalHintRegex(prefix: String) {
-        commentPrefixForGoalHintRegex = Regex("""(\n\s*${Regex.escape(prefix)})\s*?\n\s*\S""")
+    fun getCommentPrefixForGoalHintRegex() : Regex {
+        return Regex("""(\n\s*${Regex.escape(commentPrefixForGoalHint)})\s*?\n\s*\S""")
     }
 }
 

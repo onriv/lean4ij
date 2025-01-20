@@ -285,6 +285,10 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                 } catch (e: Throwable) {
                     // There are cases that we remove non-exist listener
                     // Here we just ignore it
+                    // Some concrete exception is:
+                    //   java.lang.Throwable: Assertion failed
+                    //   	at com.intellij.openapi.diagnostic.Logger.assertTrue(Logger.java:469)
+                    //   	at com.intellij.openapi.diagnostic.Logger.assertTrue(Logger.java:478)
                 }
             }
             if (hoverRangeHighlighter != null) {

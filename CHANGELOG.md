@@ -6,6 +6,7 @@
 
 - fix error notification in non-lean project
 - fix [#104](https://github.com/onriv/lean4ij/issues/104) that icons not welly displayed in the toolbar
+- simply the Regex used in settings
 
 ## [0.1.12] - 2025-01-13
 

@@ -212,6 +212,14 @@ Running it from gradle seems working fine currently, but for running a selected 
 
 # Ref
 
+## Some ref on intellij plugin development
+
+The general docs is at [Intellij Platform SDK](https://plugins.jetbrains.com/docs/intellij/welcome.html)
+
+For docs about extension points, check [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html) 
+and [IntelliJ Platform Extension Point and Listener List](https://plugins.jetbrains.com/docs/intellij/intellij-platform-extension-point-list.html)
+
+## Related thread in zulip
 - Some threads in zulip during the developments:
   - [Would lsp server quit anomaly?](https://leanprover.zulipchat.com/#narrow/stream/270676-lean4/topic/Would.20lsp.20server.20quit.20anomaly.3F)
   - [`elan which lake` downloads lean if it not exist](https://leanprover.zulipchat.com/#narrow/stream/270676-lean4/topic/.60elan.20which.20lake.60.20downloads.20lean.20if.20it.20not.20exist) This is why currently the way to find the toolchain is manually done

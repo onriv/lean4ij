@@ -4,7 +4,11 @@
 
 ## [Unreleased]
 
-- fix error notification in non-lean project
+## [0.1.13-beta.1] - 2025-01-20
+
+Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250116-013135
+
+- @enigmurl fix error notification in non-lean project
 - fix [#104](https://github.com/onriv/lean4ij/issues/104) that icons not welly displayed in the toolbar
 - simply the Regex used in settings
 
@@ -201,7 +205,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.12...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.13-beta.1...HEAD
+[0.1.13-beta.1]: https://github.com/onriv/lean4ij/compare/v0.1.12...v0.1.13-beta.1
 [0.1.12]: https://github.com/onriv/lean4ij/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/onriv/lean4ij/compare/v0.1.11-beta.0...v0.1.11
 [0.1.11-beta.0]: https://github.com/onriv/lean4ij/compare/v0.1.10...v0.1.11-beta.0

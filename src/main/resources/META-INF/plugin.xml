@@ -11,6 +11,11 @@
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
+    <!-- check the document: -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html#declaring-extensions -->
+    <!-- and -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/intellij-platform-extension-point-list.html -->
+    <!-- for knowledge about extensions -->
     <extensions defaultExtensionNs="com.intellij">
         <defaultLiveTemplates file="/liveTemplates/Lean4.xml"/>
         <liveTemplateContext
@@ -61,13 +66,15 @@
         <annotator language="lean4" implementationClass="lean4ij.language.Lean4Annotator"/>
 
         <!-- check https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries for making icons to respect theme -->
-        <toolWindow factoryClass="lean4ij.infoview.LeanInfoViewWindowFactory"
+        <library.toolWindow factoryClass="lean4ij.infoview.InfoViewWindowFactory"
                     id="LeanInfoViewWindow"
                     icon="/icons/infoview_icon.svg"
+                    librarySearchClass="lean4ij.infoview.InfoviewLibrarySearchHelper"
         />
-        <toolWindow factoryClass="lean4ij.infoview.external.JcefInfoviewTooWindowFactory"
+        <library.toolWindow factoryClass="lean4ij.infoview.external.JcefInfoviewTooWindowFactory"
                     id="LeanInfoviewJcef"
                     icon="/icons/jcef_icon.svg"
+                    librarySearchClass="lean4ij.infoview.InfoviewLibrarySearchHelper"
         />
 
         <postStartupActivity implementation="lean4ij.project.LeanProjectActivity"/>

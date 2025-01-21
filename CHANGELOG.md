@@ -12,6 +12,14 @@ Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250116-013135
 - fix [#104](https://github.com/onriv/lean4ij/issues/104) that icons not welly displayed in the toolbar
 - simply the Regex used in settings
 
+## [0.1.13-beta.1] - 2025-01-20
+
+Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250116-013135
+
+- @enigmurl fix error notification in non-lean project
+- fix [#104](https://github.com/onriv/lean4ij/issues/104) that icons not welly displayed in the toolbar
+- simply the Regex used in settings
+
 ## [0.1.12] - 2025-01-13
 
 Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250112-190958
@@ -207,6 +215,7 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 
 [Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.13...HEAD
 [0.1.13]: https://github.com/onriv/lean4ij/compare/v0.1.12...v0.1.13
+[0.1.13-beta.1]: https://github.com/onriv/lean4ij/compare/v0.1.12...v0.1.13-beta.1
 [0.1.12]: https://github.com/onriv/lean4ij/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/onriv/lean4ij/compare/v0.1.11-beta.0...v0.1.11
 [0.1.11-beta.0]: https://github.com/onriv/lean4ij/compare/v0.1.10...v0.1.11-beta.0

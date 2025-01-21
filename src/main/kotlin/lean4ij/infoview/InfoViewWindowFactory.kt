@@ -26,12 +26,11 @@ import lean4ij.lsp.data.Position
 import lean4ij.project.LeanProjectService
 import java.awt.BorderLayout
 
-
 /**
  * TODO do not show this if indexing, the doc seems saying it's an option for it
  *      maybe dumb-aware or something
  */
-class LeanInfoViewWindowFactory : ToolWindowFactory {
+class InfoViewWindowFactory : ToolWindowFactory {
 
     companion object {
 

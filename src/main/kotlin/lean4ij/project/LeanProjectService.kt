@@ -47,6 +47,7 @@ import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.services.LanguageServer
 import java.awt.Color
+import java.lang.AssertionError
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
@@ -271,6 +272,13 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      * we do not do it this way yet though
      * TODO MAYBE this should be refactor out to some editor related service or other stuff
      *      too many things in [LeanProjectService]
+     * The catch in the following definition in fact cannot block the plugin notifying an
+     * error when we are trying to remove a non-exist listener
+     * check [com.intellij.openapi.editor.impl.EditorImpl.removeEditorMouseMotionListener] and
+     * [com.intellij.openapi.diagnostic.Logger.assertTrue]
+     * The error is notified at the point the error is created not the point it's caught
+     * Removing non-existent listener may be caused by duplicated removal, we try to fix
+     * this by set it to null after removal
      */
     fun highlightCurrentContent(hover: Hover?) {
         if (!service<Lean4Settings>().enableHoverHighlight) {
@@ -284,6 +292,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
             if (hoverListener != null) {
                 try {
                     editor.removeEditorMouseMotionListener(hoverListener!!)
+                    hoverListener = null
                 } catch (e: Throwable) {
                     // There are cases that we remove non-exist listener
                     // Here we just ignore it
@@ -324,21 +333,35 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                     return scheme.defaultBackground
                 }
             }
-            hoverRangeHighlighter = markupModel.addRangeHighlighter(
-                StringUtil.lineColToOffset(document.charsSequence, hover.range.start.line, hover.range.start.character),
-                StringUtil.lineColToOffset(document.charsSequence, hover.range.end.line, hover.range.end.character),
-                HighlighterLayer.LAST,
-                attr,
-                HighlighterTargetArea.EXACT_RANGE
-            )
-            hoverListener = object : EditorMouseMotionListener {
-                override fun mouseMoved(e: EditorMouseEvent) {
-                    if (!e.isOverText) {
-                        editor.markupModel.removeHighlighter(hoverRangeHighlighter!!)
+            try {
+                hoverRangeHighlighter = markupModel.addRangeHighlighter(
+                    StringUtil.lineColToOffset(document.charsSequence, hover.range.start.line, hover.range.start.character),
+                    StringUtil.lineColToOffset(document.charsSequence, hover.range.end.line, hover.range.end.character),
+                    HighlighterLayer.LAST,
+                    attr,
+                    HighlighterTargetArea.EXACT_RANGE
+                )
+                hoverListener = object : EditorMouseMotionListener {
+                    override fun mouseMoved(e: EditorMouseEvent) {
+                        if (!e.isOverText) {
+                            editor.markupModel.removeHighlighter(hoverRangeHighlighter!!)
+                        }
                     }
                 }
+                editor.addEditorMouseMotionListener(hoverListener!!)
+            } catch (e: AssertionError) {
+                // There may be the following exception, it may be caused by concurrently changing the content in the editor and the hover event is triggered
+                // TODO Nevertheless when editing the content the hover event should not be triggered theoretically, throttled the hover event when editing rather than
+                //      simply catching the exception
+                /**
+                 * java.lang.AssertionError: 446 (class com.intellij.openapi.editor.impl.RangeHighlighterTree); this: 902(class com.intellij.openapi.editor.impl.RangeHighlighterTree)
+                 * 	at com.intellij.openapi.editor.impl.IntervalTreeImpl.checkBelongsToTheTree(IntervalTreeImpl.java:938)
+                 * 	at com.intellij.openapi.editor.impl.IntervalTreeImpl.removeInterval(IntervalTreeImpl.java:969)
+                 * 	at com.intellij.openapi.editor.impl.MarkupModelImpl.removeHighlighter(MarkupModelImpl.java:200)
+                 * 	at lean4ij.project.LeanProjectService$highlightCurrentContent$1$1.mouseMoved(LeanProjectService.kt:337)
+                 * 	at com.intellij.openapi.editor.impl.EditorImpl$MyMouseMotionListener.mouseMoved(EditorImpl.java:4857)
+                 */
             }
-            editor.addEditorMouseMotionListener(hoverListener!!)
         }
     }
 }

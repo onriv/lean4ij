@@ -82,9 +82,9 @@ class InfoViewWindowFactory : ToolWindowFactory {
                                 h3("${file.name}:${i.fullRange.start.line + 1}:${i.fullRange.start.character}")
                                 add(i.toInfoObjectModel())
                                 size++
-                                if (idx != interactiveDiagnostics.lastIndex) {
-                                    br()
-                                }
+                            }
+                            if (idx != interactiveDiagnostics.lastIndex) {
+                                br()
                             }
                         }
                     }

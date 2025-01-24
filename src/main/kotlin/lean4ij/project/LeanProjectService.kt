@@ -269,6 +269,8 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      * we implement it here rather than the [LeanFile] class.
      * Although we can also match the request using the response in [LeanLanguageServerLifecycleListener]
      * we do not do it this way yet though
+     * TODO MAYBE this should be refactor out to some editor related service or other stuff
+     *      too many things in [LeanProjectService]
      */
     fun highlightCurrentContent(hover: Hover?) {
         if (!service<Lean4Settings>().enableHoverHighlight) {
@@ -299,8 +301,9 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                 return
             }
 
-            // TODO duplicated with
+            // TODO DRY DRY, duplicated with
             //      lean4ij.infoview.InfoviewMouseMotionListener.mouseMoved
+            // TODO this should add some setting page for it too
             val attr = object : TextAttributes() {
                 override fun getBackgroundColor(): Color {
                     // TODO document this
@@ -310,7 +313,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                     //      indeed here it can be null, don't know why Kotlin does not mark it as error
                     // TODO there is cases here the background of identifier under current caret is null
                     // TODO do this better in a way
-                    var color = scheme.getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES).backgroundColor
+                    var color = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
                     if (color != null) {
                         return color
                     }

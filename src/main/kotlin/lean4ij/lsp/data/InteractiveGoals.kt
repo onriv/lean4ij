@@ -198,35 +198,6 @@ class InteractiveGoals(
     }
 
     /**
-     * This is from https://github.com/Julian/lean.nvim/blob/03f7437/lua/lean/infoview/components.lua
-     * TODO implement the fold/open logic
-     * TODO should this return a string?
-     */
-    fun toInfoViewString(sb: InfoviewRender) {
-        val header = "Tactic state"
-        val start = sb.length
-        sb.append("$header\n")
-        if (goals.isEmpty()) {
-            sb.append("No goals\n")
-            return
-        }
-        val haveMultiGoals = goals.size > 1
-        if (haveMultiGoals) {
-            sb.append("${goals.size} goals\n")
-        } else {
-            sb.append("1 goal\n")
-        }
-        for (goal in goals) {
-            goal.toInfoViewString(sb, haveMultiGoals)
-        }
-        // The last line break should not be folded, here the impl seems kind of adhoc
-        sb.deleteLastChar()
-        val end = sb.length
-        sb.addFoldingOperation(start, end, header)
-        sb.append('\n')
-    }
-
-    /**
      * TODO add unittest for this and the above
      * TODO this should be DRY with [lean4ij.lsp.data.InteractiveTermGoal.getCodeText]
      */

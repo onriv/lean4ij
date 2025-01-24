@@ -260,7 +260,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             //      will it hang and leak?
             val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams) ?: continue
             // TODO can here project be null?, the InfoviewRender mainly keeps nullable for it
-            val inlayHintType = ": ${termGoal.type.toInfoViewString(InfoviewRender(project, file.virtualFile), null)}"
+            val inlayHintType = ": ${termGoal.type.toInfoObjectModel()}"
             var hintPos = m.range.last - m.groupValues[3].length
             // anonymous have is slightly weird
             if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
@@ -339,7 +339,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
             val termGoals = file.getInteractiveGoals(interactiveGoalParams)
             if (termGoals != null && !termGoals.goals.isEmpty()) {
                 // TODO can here project be null?, the InfoviewRender mainly keeps nullable for it
-                typeHint = termGoals.goals[0].type.toInfoViewString(InfoviewRender(project, file.virtualFile), null)
+                typeHint = termGoals.goals[0].type.toInfoObjectModel().toString()
             }
             else {
                 // non tactic mode
@@ -348,7 +348,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
                     InteractiveTermGoalParams(session, params, textDocument, position)
                 val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams)
                 // TODO can here project be null?, the InfoviewRender mainly keeps nullable for it
-                typeHint = termGoal?.type?.toInfoViewString(InfoviewRender(project, file.virtualFile), null) ?: continue
+                typeHint = termGoal?.type?.toInfoObjectModel()?.toString() ?: continue
             }
 
             var hintPos = m.range.first + m.groupValues[1].length

@@ -1,14 +1,10 @@
 package lean4ij.lsp.data
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import lean4ij.infoview.Lean4TextAttributesKeys
 import lean4ij.infoview.LeanInfoviewContext
 import lean4ij.infoview.dsl.InfoObjectModel
 import lean4ij.infoview.dsl.info
-import lean4ij.project.LeanProjectService
 import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
@@ -20,7 +16,6 @@ import org.eclipse.lsp4j.TextDocumentIdentifier
  * TODO this maybe should be renamed
  */
 interface InfoViewContent {
-    fun toInfoViewString(render: InfoviewRender): String
     fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>?
     fun mayHighlight(sb: InfoviewRender, startOffset: Int, endOffset: Int) {}
     fun toInfoObjectModel(): InfoObjectModel
@@ -34,8 +29,6 @@ interface InfoViewContent {
  * https://discuss.kotlinlang.org/t/reified-generics-on-class-level/16711/4
  */
 abstract class TaggedText<T> where T : InfoViewContent {
-    abstract fun toInfoViewString(sb: InfoviewRender, parent: TaggedText<T>?): String
-
     @Transient
     var startOffset: Int = -1
 
@@ -69,15 +62,6 @@ class TaggedTextText<T>(val text: String) : TaggedText<T>() where T : InfoViewCo
         }
     }
 
-    override fun toInfoViewString(sb: InfoviewRender, parent: TaggedText<T>?): String {
-        this.parent = parent
-        startOffset = sb.length
-        sb.append(text)
-        endOffset = sb.length
-        this.codeText = text
-        return text
-    }
-
     override fun getCodeText(offset: Int, t: T?): Triple<ContextInfo, Int, Int>? {
         // TODO find why here allow null
         if (t == null) return null
@@ -105,19 +89,6 @@ class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where
         setContextInfo(model.contextInfo)
     }
 
-    override fun toInfoViewString(sb: InfoviewRender, parent: TaggedText<T>?): String {
-        this.parent = parent
-        // TODO handle events
-        startOffset = sb.length
-        f0.toInfoViewString(sb)
-        f1.toInfoViewString(sb, this)
-        endOffset = sb.length
-        f0.mayHighlight(sb, startOffset, endOffset)
-        // TODO when does this happen? Mostly when error happens
-        codeText = sb.substring(startOffset, endOffset)
-        return codeText
-    }
-
     override fun getCodeText(offset: Int, t: T?): Triple<ContextInfo, Int, Int>? {
         // TODO Here it must be very wrong for message
         return f1.getCodeText(offset, f0)
@@ -130,17 +101,6 @@ class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<
         for (c in append) {
             add(c.toInfoObjectModel())
         }
-    }
-
-    override fun toInfoViewString(sb: InfoviewRender, parent: TaggedText<T>?): String {
-        this.parent = parent
-        this.startOffset = sb.length
-        for (c in append) {
-            c.toInfoViewString(sb, this)
-        }
-        this.endOffset = sb.length
-        this.codeText = sb.substring(startOffset, endOffset)
-        return this.codeText
     }
 
     override fun getCodeText(offset: Int, t: T?): Triple<ContextInfo, Int, Int>? {
@@ -156,10 +116,6 @@ class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<
 abstract class MsgEmbed : InfoViewContent
 
 class MsgEmbedExpr(val expr: TaggedText<SubexprInfo>) : MsgEmbed() {
-    override fun toInfoViewString(render: InfoviewRender): String {
-        return expr.toInfoViewString(render, null)
-    }
-
     override fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>? {
         return expr.getCodeText(offset, null)
     }
@@ -170,10 +126,6 @@ class MsgEmbedExpr(val expr: TaggedText<SubexprInfo>) : MsgEmbed() {
 }
 
 class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
-    override fun toInfoViewString(render: InfoviewRender): String {
-        return goal.toInfoViewString(render, false)
-    }
-
     override fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>? {
         // TODO when does this happen? Mostly when error happens
         //      This happened on MIL/C07/S03_Subojects.lean:148
@@ -198,36 +150,6 @@ class MsgEmbedTrace(
     private val children: StrictOrLazy<List<TaggedText<MsgEmbed>>, ContextInfo>,
     private val msg: TaggedTextAppend<MsgEmbed>
 ) : MsgEmbed() {
-
-    override fun toInfoViewString(render: InfoviewRender): String {
-        val start = render.length
-        render.append("[$cls] ")
-        msg.toInfoViewString(render, null)
-        render.append(" ▶")
-        render.addClickAction(start, render.length) {
-            val project = render.project ?: return@addClickAction
-            val file = render.file ?: return@addClickAction
-            val contextInfo = (children as? StrictOrLazyLazy)?.lazy ?: return@addClickAction
-            val leanProjectService = project.service<LeanProjectService>()
-            val logicalPosition = it.logicalPosition
-            val position = Position(logicalPosition.line, logicalPosition.column)
-            leanProjectService.scope.launch {
-                val languageServer = leanProjectService.languageServer.await()
-                val session = leanProjectService.file(file).getSession()
-                val textDocument = TextDocumentIdentifier(LspUtil.quote(file.path))
-                val rpcParams = LazyTraceChildrenToInteractiveParams(
-                    sessionId = session,
-                    params = contextInfo,
-                    textDocument = textDocument,
-                    position = position
-                )
-                val resp = languageServer.lazyTraceChildrenToInteractive(rpcParams)
-                TODO()
-            }
-
-        }
-        return render.substring(start, render.length)
-    }
 
     private suspend fun lazyTraceChildrenToInteractive(context: LeanInfoviewContext): List<TaggedText<MsgEmbed>>? {
         val contextInfo = (children as? StrictOrLazyLazy)?.lazy ?: return null
@@ -299,11 +221,6 @@ class MsgEmbedTrace(
 }
 
 class MsgUnsupported(val message: String) : MsgEmbed() {
-    override fun toInfoViewString(render: InfoviewRender): String {
-        render.append(message)
-        return message
-    }
-
     override fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>? {
         return null
     }

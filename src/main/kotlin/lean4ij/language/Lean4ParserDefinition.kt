@@ -3,24 +3,16 @@ package lean4ij.language
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
-import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
-import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lexer.FlexAdapter
 import com.intellij.lexer.Lexer
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import com.intellij.util.IncorrectOperationException
-import lean4ij.language.psi.TokenType
 import lean4ij.language.psi.TokenType.*
 
 class Lean4TokenType(debugName: String) : IElementType(debugName, Lean4Language.INSTANCE)
@@ -38,7 +30,9 @@ class Lean4ParserDefinition : ParserDefinition {
         val FILE = IFileElementType(Lean4Language.INSTANCE)
         val COMMENTS = TokenSet.create(LINE_COMMENT, DOC_COMMENT, BLOCK_COMMENT)
         val STRINGS = TokenSet.create(STRING)
-        val WHITESPACE = TokenSet.create(WHITE_SPACE)
+        // Lean is whitespace sensitive, we make here an empty token set to make the hovering related
+        // stuffs work
+        val WHITESPACE = TokenSet.create()
     }
 
     override fun createLexer(project: Project?): Lexer = Lean4LexerAdapter()

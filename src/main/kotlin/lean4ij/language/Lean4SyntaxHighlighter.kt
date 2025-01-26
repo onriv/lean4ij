@@ -16,11 +16,11 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 import lean4ij.setting.Lean4Settings
 import lean4ij.language.psi.TokenType
+import lean4ij.language.psi.TokenType.WHITE_SPACE
 import java.nio.charset.StandardCharsets
 
 

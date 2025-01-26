@@ -1,4 +1,4 @@
-Lean4PsiFile(LightVirtualFile: \ParsingDefinition.lean)(0,48)
+Lean4PsiFile(LightVirtualFile: /ParsingDefinition.lean)(0,48)
   Lean4DefinitionImpl(DEFINITION)(0,8)
     PsiElement(KEYWORD_COMMAND4)('def')(0,3)
     PsiElement(WHITE_SPACE)(' ')(3,4)

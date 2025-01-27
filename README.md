@@ -11,6 +11,7 @@ A [Lean4](https://lean-lang.org/) plugin for Jetbrains IDES with the following f
 - Autocompletion
 - Unicode abbreviations
 - Symbol Information
+- Run and build a lean file
 
 ![Demo image](.github/media/example.png)
 

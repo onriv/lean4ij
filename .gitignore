@@ -11,3 +11,7 @@ browser-infoview/host-config.json
 
 # this is for local properties like system proxy that should not be tracked by git
 local.properties
+
+# This is introduced by https://github.com/jenv/jenv
+.java-version
+

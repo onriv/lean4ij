@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+- add run content and gutter for the main function
+- show infoview and related actions only for lean project (#111)
+- update vite to 5.4.14 for the vscode-adapted infoview (#118)
+- switch the default color of hovering to selection (#120)
+- fix wrongly folding in the "Messages" part of internal infoview
+- fix heuristic highlight for definition and attribute (regression becuase version 0.1.11 introduce the context-sensitive whitespace)
+- try to fix error notified in hovering the editor
+- remove `toInfoViewString` (superseded by `toInfoModelObject`)
+- rewrite some unicode characters in the flex file for building on Windows
+- some unittests for the parser
+
 ## [0.1.13] - 2025-01-20
 
 Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250116-013135

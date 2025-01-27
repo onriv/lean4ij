@@ -209,6 +209,8 @@ Running it from gradle seems working fine currently, but for running a selected 
 -ea
 ```
 
+If a test failed in the pipeline, an artifact named "tests-result" will be generated at the part of artifacts and
+there is the detail for the failure of tests in it. Download and unzip to see the concrete error if necessary.
 
 # Ref
 

@@ -27,6 +27,10 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableHeuristicDefinition = true
     var enableHoverHighlight = true
 
+    var addSpaceAfterLiveTemplates = true
+    var autoCompletePairLiveTemplates = true
+    var enableBothSpaceAndNonSpaceLiveTemplates = false
+
     /**
      * TODO add project level configuration for this
      */
@@ -90,6 +94,9 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Comment at first column", settings::commentAtFirstColumn)
         boolean("Use space after line comment", settings::useSpaceAfterLineComment)
         boolean("Comment empty line", settings::commentEmptyLine)
+        boolean("Add whitespace after live templates for unicode", settings::addSpaceAfterLiveTemplates)
+        boolean("Autocomplete live templates for pair unicode", settings::autoCompletePairLiveTemplates)
+        boolean("Enable both spaced and non spaced live templates", settings::enableBothSpaceAndNonSpaceLiveTemplates)
     }
     group("Inlay Hints Settings ") {
         boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)

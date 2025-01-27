@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+## [0.1.14] - 2025-01-27
+
+Depend on the latest approved nightly build of LSP4IJ: 0.10.0-20250127-013201
+
 - add run content and gutter for the main function
 - show infoview and related actions only for lean project (#111)
 - update vite to 5.4.14 for the vscode-adapted infoview (#118)
@@ -224,8 +228,9 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.13...HEAD
-[0.1.13]: https://github.com/onriv/lean4ij/compare/v0.1.12...v0.1.13
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.14...HEAD
+[0.1.14]: https://github.com/onriv/lean4ij/compare/v0.1.13...v0.1.14
+[0.1.13]: https://github.com/onriv/lean4ij/compare/v0.1.13-beta.1...v0.1.13
 [0.1.13-beta.1]: https://github.com/onriv/lean4ij/compare/v0.1.12...v0.1.13-beta.1
 [0.1.12]: https://github.com/onriv/lean4ij/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/onriv/lean4ij/compare/v0.1.11-beta.0...v0.1.11

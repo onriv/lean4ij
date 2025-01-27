@@ -77,19 +77,19 @@ class LeanRunConfiguration( project: Project, factory: ConfigurationFactory, nam
         executor: Executor,
         environment: ExecutionEnvironment
     ): RunProfileState {
-        return object : CommandLineState(environment) {
-            override fun startProcess(): ProcessHandler {
-                val toolchainService = project.service<ToolchainService>()
-                val commandLine: GeneralCommandLine = toolchainService.commandLineForRunningLeanFile(options.fileName, options.arguments)
-                val processHandler = ProcessHandlerFactory.getInstance()
-                    .createColoredProcessHandler(commandLine)
-                ProcessTerminatedListener.attach(processHandler)
-                return processHandler
-            }
-
-        }
+        val toolchainService = project.service<ToolchainService>()
+        val commandLine: GeneralCommandLine = toolchainService.commandLineForRunningLeanFile(options.fileName, options.arguments)
+        return LeanRunState(commandLine, environment)
     }
+}
 
+class LeanRunState(private val commandLine: GeneralCommandLine, environment: ExecutionEnvironment) : CommandLineState(environment) {
+    override fun startProcess(): ProcessHandler {
+        val processHandler = ProcessHandlerFactory.getInstance()
+            .createColoredProcessHandler(commandLine)
+        ProcessTerminatedListener.attach(processHandler)
+        return processHandler
+    }
 }
 
 class LeanRunSettingsEditor : SettingsEditor<LeanRunConfiguration>() {

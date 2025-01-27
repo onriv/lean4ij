@@ -130,6 +130,12 @@
         <!-- <elementDescriptionProvider implementation="lean4ij.language.Lean4ElementDescriptionProvider"/> -->
         <configurationType implementation="lean4ij.run.LeanRunConfigurationType"/>
         <configurationType implementation="lean4ij.run.LakeRunConfigurationType"/>
+
+        <runLineMarkerContributor language="lean4"
+                                  implementationClass="lean4ij.run.MainRunLineMarkerContributor"/>
+        <programRunner implementation="lean4ij.run.MainRunner"/>
+        <runConfigurationProducer implementation="lean4ij.run.MainRunConfigurationProducer"/>
+
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="lean"

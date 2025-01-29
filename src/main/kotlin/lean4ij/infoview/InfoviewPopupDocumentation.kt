@@ -190,6 +190,7 @@ class InfoviewPopupDocumentation(
         return docPanel
     }
 
+
     /**
      * TODO the width is still not the best
      * check com.intellij.codeInsight.documentation.DocumentationEditorPane#getPreferredContentWidth ...

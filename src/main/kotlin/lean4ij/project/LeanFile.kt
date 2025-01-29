@@ -208,6 +208,10 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             // TODO this is in fact not fully controlling the behavior for the vscode/internal/jcef infoview
             leanProjectService.updateCaret(params)
         }
+
+
+
+        // update info view
         if (lean4Settings.enableNativeInfoview) {
             if (!lean4Settings.autoUpdateInternalInfoview && !forceUpdate) return
             updateInternalInfoview(editor, params)

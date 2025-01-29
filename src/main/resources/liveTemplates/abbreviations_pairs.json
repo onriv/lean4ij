@@ -1,0 +1,15 @@
+{
+    "{": "{$CURSOR}",
+    "{_": "{$CURSOR}_",
+    "{{": "⦃$CURSOR⦄",
+    "[": "[$CURSOR]",
+    "[_": "[$CURSOR]_",
+    "[[": "⟦$CURSOR⟧",
+    "<": "⟨$CURSOR⟩",
+    "(": "($CURSOR)",
+    "(_": "($CURSOR)_",
+    "(['": "⟮$CURSOR⟯",
+    "f<": "‹$CURSOR›",
+    "f<<": "«$CURSOR»",
+    "[--": "⁅$CURSOR⁆"
+}

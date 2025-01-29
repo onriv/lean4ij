@@ -21,6 +21,20 @@
         <liveTemplateContext
                 contextId="Lean4"
                 implementation="lean4ij.language.Lean4Context"/>
+
+        <defaultLiveTemplates file="/liveTemplates/Lean4-space.xml"/>
+        <liveTemplateContext
+                contextId="Lean4Space"
+                implementation="lean4ij.language.Lean4SpaceContext"/>
+
+        <defaultLiveTemplates file="/liveTemplates/Lean4-pair.xml"/>
+        <liveTemplateContext
+                contextId="Lean4Pair"
+                implementation="lean4ij.language.Lean4PairContext"/>
+
+
+
+
         <!-- // from https://github.com/JetBrains/godot-support/blob/master/rider/src/main/resources/META-INF/plugin.xml-->
         <!-- https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/src/main/resources/META-INF/plugin.xml#L26-->
         <!-- <textmate.bundleProvider implementation="lean4ij.language.TextMateBundleProvider"/> -->

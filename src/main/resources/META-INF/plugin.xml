@@ -79,6 +79,13 @@
         <!-- we missed the second level -->
         <annotator language="lean4" implementationClass="lean4ij.language.Lean4Annotator"/>
 
+        <!-- module -->
+        <moduleType id="LEAN4_MODULE" implementationClass="lean4ij.module.Lean4ModuleType"/>
+        <moduleBuilder builderClass="lean4ij.module.Lean4ModuleBuilder"
+                       id="DEMO_STEP"
+                       order="first"/>
+
+
         <!-- check https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries for making icons to respect theme -->
         <library.toolWindow factoryClass="lean4ij.infoview.InfoViewWindowFactory"
                     id="LeanInfoViewWindow"

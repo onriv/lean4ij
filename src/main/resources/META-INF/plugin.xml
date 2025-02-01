@@ -8,6 +8,8 @@
 <!--    <depends>com.intellij.modules.ultimate</depends>-->
 <!--     <depends>org.jetbrains.plugins.textmate</depends> -->
     <depends>com.redhat.devtools.lsp4ij</depends>
+    <!-- For the creating new project feature the java dependence is necessary -->
+    <depends>com.intellij.java</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 

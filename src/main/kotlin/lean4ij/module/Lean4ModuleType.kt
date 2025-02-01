@@ -1,22 +1,35 @@
 package lean4ij.module
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.bindBooleanStorage
+import com.intellij.openapi.observable.util.joinCanonicalPath
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.util.text.StringUtil
 import lean4ij.language.Lean4Icons
 import javax.swing.JComponent
 import javax.swing.JLabel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.annotations.Nls
 import javax.swing.JTextField
 
 
@@ -27,13 +40,16 @@ fun <T : JComponent> Panel.aligned(text: String, component: T, init: Cell<T>.() 
 class Lean4ModuleBuilder : ModuleBuilder() {
 
     private val propertyGraph: PropertyGraph = PropertyGraph()
-    private val projectNameProperty: GraphProperty<String> = propertyGraph.lazyProperty (::untitledName)
+    private val projectNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::untitledName)
     private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::defaultLocation)
+    private val canonicalPathProperty = locationProperty.joinCanonicalPath(projectNameProperty)
+    private val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
+        .bindBooleanStorage(NewProjectWizardStep.GIT_PROPERTY_NAME)
 
-    private fun untitledName() : String = "Untitled"
+    private fun untitledName(): String = "Untitled"
 
     // TODO define default location
-    private fun defaultLocation() : String = "TODO"
+    private fun defaultLocation(): String = "TODO"
 
     override fun getModuleType() = Lean4ModuleType.INSTANCE
 
@@ -69,7 +85,7 @@ class Lean4ModuleBuilder : ModuleBuilder() {
 
 
     override fun getCustomOptionsStep(context: WizardContext?, parentDisposable: Disposable?): ModuleWizardStep {
-        return object: ModuleWizardStep() {
+        return object : ModuleWizardStep() {
             override fun getComponent(): JComponent {
                 return panel {
                     row(UIBundle.message("label.project.wizard.new.project.name")) {
@@ -78,9 +94,21 @@ class Lean4ModuleBuilder : ModuleBuilder() {
                             .gap(RightGap.SMALL)
                             .focused()
                     }.bottomGap(BottomGap.SMALL)
-                    row(UIBundle.message("label.project.wizard.new.project.location")) {
-
+                    val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
+                        projectLocationField(locationProperty, context!!)
+                            .align(AlignX.FILL)
+                            .comment(getLocationComment(context), 100)
                     }
+                    if (context!!.isCreatingNewProject) {
+                        // Git should not be enabled for single module
+                        row("") {
+                            checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
+                                .bindSelected(gitProperty)
+                        }.bottomGap(BottomGap.SMALL)
+                    } else {
+                        locationRow.bottomGap(BottomGap.SMALL)
+                    }
+                    addSdkUi()
                 }
             }
 
@@ -92,6 +120,51 @@ class Lean4ModuleBuilder : ModuleBuilder() {
     }
 
 
+    /**
+     * From intellij-arend, TODO add concrete link
+     * This is a literal copy... make sure it does not violate the license...
+     */
+    private fun Row.projectLocationField(
+        locationProperty: GraphProperty<String>,
+        wizardContext: WizardContext
+    ): Cell<TextFieldWithBrowseButton> {
+        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+            .withFileFilter { it.isDirectory }
+            .withPathToTextConvertor(::getPresentablePath)
+            .withTextToPathConvertor(::getCanonicalPath)
+        val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
+        val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
+        return textFieldWithBrowseButton(
+            null, wizardContext.project,
+            fileChooserDescriptor.withTitle(title)
+        )
+            .bindText(property)
+    }
+
+    /**
+     * From intellij-arend, and
+     * https://intellij-support.jetbrains.com/hc/en-us/community/posts/8536219607570-How-do-I-create-a-SDK-selector-ComboBox-in-an-IntelliJ-plugin
+     */
+    private fun Panel.addSdkUi() {
+        // row("lean version:") {
+        //     sdkComboBox =
+        //         sdkComboBox(wizardContext, sdkProperty, StdModuleTypes.JAVA.id, moduleBuilder::isSuitableSdkType)
+        //             .columns(COLUMNS_MEDIUM)
+        //             .component
+        // }.bottomGap(BottomGap.SMALL)
+        row {
+            comment("Project SDK is needed if you want to create a language extension or debug typechecking")
+        }.bottomGap(BottomGap.SMALL)
+    }
+
+    private fun getLocationComment(context: WizardContext): String {
+        val shortPath = StringUtil.shortenPathWithEllipsis(getPresentablePath(canonicalPathProperty.get()), 60)
+        return UIBundle.message(
+            "label.project.wizard.new.project.path.description",
+            context.isCreatingNewProjectInt,
+            shortPath
+        )
+    }
 
 
 }

@@ -28,9 +28,12 @@ class Lean4ModuleBuilder : ModuleBuilder() {
 
     private val propertyGraph: PropertyGraph = PropertyGraph()
     private val projectNameProperty: GraphProperty<String> = propertyGraph.lazyProperty (::untitledName)
+    private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::defaultLocation)
 
     private fun untitledName() : String = "Untitled"
 
+    // TODO define default location
+    private fun defaultLocation() : String = "TODO"
 
     override fun getModuleType() = Lean4ModuleType.INSTANCE
 
@@ -74,6 +77,9 @@ class Lean4ModuleBuilder : ModuleBuilder() {
                             .columns(COLUMNS_MEDIUM)
                             .gap(RightGap.SMALL)
                             .focused()
+                    }.bottomGap(BottomGap.SMALL)
+                    row(UIBundle.message("label.project.wizard.new.project.location")) {
+
                     }
                 }
             }
@@ -84,6 +90,10 @@ class Lean4ModuleBuilder : ModuleBuilder() {
 
         }
     }
+
+
+
+
 }
 
 

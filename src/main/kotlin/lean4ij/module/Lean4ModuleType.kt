@@ -24,13 +24,22 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.ComboboxWithBrowseButton
+import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import lean4ij.language.Lean4Icons
 import javax.swing.JComponent
 import javax.swing.JLabel
-import com.intellij.ui.UIBundle
-import com.intellij.ui.dsl.builder.*
-import org.jetbrains.annotations.Nls
-import javax.swing.JTextField
 
 
 fun <T : JComponent> Panel.aligned(text: String, component: T, init: Cell<T>.() -> Unit = {}) = row(text) {
@@ -142,16 +151,13 @@ class Lean4ModuleBuilder : ModuleBuilder() {
     }
 
     /**
-     * From intellij-arend, and
+     * From intellij-arend, and from the following link we know that we must depend on the java plugin
      * https://intellij-support.jetbrains.com/hc/en-us/community/posts/8536219607570-How-do-I-create-a-SDK-selector-ComboBox-in-an-IntelliJ-plugin
      */
-    private fun Panel.addSdkUi() {
-        // row("lean version:") {
-        //     sdkComboBox =
-        //         sdkComboBox(wizardContext, sdkProperty, StdModuleTypes.JAVA.id, moduleBuilder::isSuitableSdkType)
-        //             .columns(COLUMNS_MEDIUM)
-        //             .component
-        // }.bottomGap(BottomGap.SMALL)
+    private fun Panel.addSdkUi(context: WizardContext) {
+        row {
+
+        }
         row {
             comment("Project SDK is needed if you want to create a language extension or debug typechecking")
         }.bottomGap(BottomGap.SMALL)
@@ -185,4 +191,8 @@ class Lean4ModuleType : ModuleType<Lean4ModuleBuilder>("LEAN4_MODULE") {
         @JvmField
         val INSTANCE = Lean4ModuleType()
     }
+}
+
+class FlexSdkComboBoxWithBrowseButton : ComboboxWithBrowseButton() {
+
 }

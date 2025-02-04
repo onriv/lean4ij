@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.internal.ui.uiDslShowcase.demoComponents
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -15,11 +16,21 @@ import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.joinCanonicalPath
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.roots.ui.configuration.SdkComboBox
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.ide.util.projectWizard.ProjectJdkForModuleStep;
+
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
@@ -37,7 +48,10 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.CellBuilder
 import lean4ij.language.Lean4Icons
+import lean4ij.language.Lean4SdkType
+import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -54,6 +68,9 @@ class Lean4ModuleBuilder : ModuleBuilder() {
     private val canonicalPathProperty = locationProperty.joinCanonicalPath(projectNameProperty)
     private val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
         .bindBooleanStorage(NewProjectWizardStep.GIT_PROPERTY_NAME)
+
+    private val sdkModel: ProjectSdksModel = ProjectSdksModel()
+    private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null )
 
     private fun untitledName(): String = "Untitled"
 
@@ -117,7 +134,7 @@ class Lean4ModuleBuilder : ModuleBuilder() {
                     } else {
                         locationRow.bottomGap(BottomGap.SMALL)
                     }
-                    addSdkUi()
+                    addSdkUi(context)
                 }
             }
 
@@ -155,8 +172,10 @@ class Lean4ModuleBuilder : ModuleBuilder() {
      * https://intellij-support.jetbrains.com/hc/en-us/community/posts/8536219607570-How-do-I-create-a-SDK-selector-ComboBox-in-an-IntelliJ-plugin
      */
     private fun Panel.addSdkUi(context: WizardContext) {
-        row {
-
+        row("Lean Version") {
+            sdkComboBox(context, sdkProperty, Lean4SdkType.INSTANCE.name, {it is Lean4SdkType})
+                .columns(COLUMNS_MEDIUM)
+                .component
         }
         row {
             comment("Project SDK is needed if you want to create a language extension or debug typechecking")

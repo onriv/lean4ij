@@ -4,9 +4,12 @@
     <name>Lean4ij</name>
     <vendor>lean4ij</vendor>
 
+    <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.java</depends>
-<!--    <depends>com.intellij.modules.ultimate</depends>-->
+    <!-- ref: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules-specific-to-functionality -->
+    <!-- not sure com.intellij.modules.java or com.intellij.java -->
+    <!-- TODO it seems idea only -->
+    <depends>com.intellij.modules.java</depends>
 <!--     <depends>org.jetbrains.plugins.textmate</depends> -->
     <depends>com.redhat.devtools.lsp4ij</depends>
     <!-- For the creating new project feature the java dependence is necessary -->

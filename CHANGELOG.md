@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- Alternative live templates (see [docs](https://github.com/onriv/lean4ij/blob/main/docs/unicode-live-templates.md) for details)
+ 
 ## [0.1.14] - 2025-01-27
 
 Depend on the latest approved nightly build of LSP4IJ: 0.10.0-20250127-013201

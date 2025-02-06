@@ -5,7 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.internal.ui.uiDslShowcase.demoComponents
+import com.intellij.ide.wizard.withVisualPadding
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -16,26 +16,18 @@ import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.joinCanonicalPath
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import com.intellij.openapi.roots.ui.configuration.SdkComboBox
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
-import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.ide.util.projectWizard.ProjectJdkForModuleStep;
-
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.ComboboxWithBrowseButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
@@ -48,10 +40,8 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.CellBuilder
 import lean4ij.language.Lean4Icons
 import lean4ij.language.Lean4SdkType
-import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -110,6 +100,9 @@ class Lean4ModuleBuilder : ModuleBuilder() {
     }
 
 
+    /**
+     * This is shown in the generator sections. I suspect that only official plugins can be shown in the "New Project" section
+     */
     override fun getCustomOptionsStep(context: WizardContext?, parentDisposable: Disposable?): ModuleWizardStep {
         return object : ModuleWizardStep() {
             override fun getComponent(): JComponent {
@@ -135,7 +128,7 @@ class Lean4ModuleBuilder : ModuleBuilder() {
                         locationRow.bottomGap(BottomGap.SMALL)
                     }
                     addSdkUi(context)
-                }
+                }.withVisualPadding(topField = true)
             }
 
             override fun updateDataModel() {
@@ -210,8 +203,4 @@ class Lean4ModuleType : ModuleType<Lean4ModuleBuilder>("LEAN4_MODULE") {
         @JvmField
         val INSTANCE = Lean4ModuleType()
     }
-}
-
-class FlexSdkComboBoxWithBrowseButton : ComboboxWithBrowseButton() {
-
 }

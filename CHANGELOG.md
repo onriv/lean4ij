@@ -4,8 +4,12 @@
 
 ## [Unreleased]
 
+## [0.1.15] - 2025-02-05
+
+Depend on the latest approved nightly build of LSP4IJ: 0.10.0-20250204-132029
+
 - Alternative live templates (see [docs](https://github.com/onriv/lean4ij/blob/main/docs/unicode-live-templates.md) for details)
- 
+
 ## [0.1.14] - 2025-01-27
 
 Depend on the latest approved nightly build of LSP4IJ: 0.10.0-20250127-013201
@@ -230,7 +234,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.14...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.15...HEAD
+[0.1.15]: https://github.com/onriv/lean4ij/compare/v0.1.14...v0.1.15
 [0.1.14]: https://github.com/onriv/lean4ij/compare/v0.1.13...v0.1.14
 [0.1.13]: https://github.com/onriv/lean4ij/compare/v0.1.13-beta.1...v0.1.13
 [0.1.13-beta.1]: https://github.com/onriv/lean4ij/compare/v0.1.12...v0.1.13-beta.1

@@ -52,21 +52,6 @@ fun <T : JComponent> Panel.aligned(text: String, component: T, init: Cell<T>.() 
 
 class Lean4ModuleBuilder : ModuleBuilder() {
 
-    private val propertyGraph: PropertyGraph = PropertyGraph()
-    private val projectNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::untitledName)
-    private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::defaultLocation)
-    private val canonicalPathProperty = locationProperty.joinCanonicalPath(projectNameProperty)
-    private val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
-        .bindBooleanStorage(NewProjectWizardStep.GIT_PROPERTY_NAME)
-
-    private val sdkModel: ProjectSdksModel = ProjectSdksModel()
-    private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null )
-
-    private fun untitledName(): String = "Untitled"
-
-    // TODO define default location
-    private fun defaultLocation(): String = "TODO"
-
     override fun getModuleType() = Lean4ModuleType.INSTANCE
 
     /**
@@ -81,14 +66,16 @@ class Lean4ModuleBuilder : ModuleBuilder() {
         wizardContext: WizardContext,
         modulesProvider: ModulesProvider
     ): Array<ModuleWizardStep> {
-        return arrayOf(object : ModuleWizardStep() {
-            override fun getComponent(): JComponent {
-                return JLabel("Put your content here")
-            }
-
-            override fun updateDataModel() {
-            }
-        })
+        return arrayOf()
+        // TODO currently no next step
+        // return arrayOf(object : ModuleWizardStep() {
+        //     override fun getComponent(): JComponent {
+        //         return JLabel("Put your content here")
+        //     }
+        //
+        //     override fun updateDataModel() {
+        //     }
+        // })
     }
 
     override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
@@ -104,40 +91,71 @@ class Lean4ModuleBuilder : ModuleBuilder() {
      * This is shown in the generator sections. I suspect that only official plugins can be shown in the "New Project" section
      */
     override fun getCustomOptionsStep(context: WizardContext?, parentDisposable: Disposable?): ModuleWizardStep {
-        return object : ModuleWizardStep() {
-            override fun getComponent(): JComponent {
-                return panel {
-                    row(UIBundle.message("label.project.wizard.new.project.name")) {
-                        textField().bindText(projectNameProperty)
-                            .columns(COLUMNS_MEDIUM)
-                            .gap(RightGap.SMALL)
-                            .focused()
-                    }.bottomGap(BottomGap.SMALL)
-                    val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
-                        projectLocationField(locationProperty, context!!)
-                            .align(AlignX.FILL)
-                            .comment(getLocationComment(context), 100)
-                    }
-                    if (context!!.isCreatingNewProject) {
-                        // Git should not be enabled for single module
-                        row("") {
-                            checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
-                                .bindSelected(gitProperty)
-                        }.bottomGap(BottomGap.SMALL)
-                    } else {
-                        locationRow.bottomGap(BottomGap.SMALL)
-                    }
-                    addSdkUi(context)
-                }.withVisualPadding(topField = true)
-            }
-
-            override fun updateDataModel() {
-
-            }
-
-        }
+        return LeanModuleWizardStep(context!!)
     }
 
+
+}
+
+
+class Lean4ModuleType : ModuleType<Lean4ModuleBuilder>("LEAN4_MODULE") {
+    override fun getNodeIcon(isOpened: Boolean) = Lean4Icons.FILE
+
+    override fun createModuleBuilder() = Lean4ModuleBuilder()
+
+    override fun getDescription() = "Lean4 library"
+
+    override fun getName() = "Lean4"
+
+    companion object {
+        fun has(module: Module?) = module != null && `is`(module, INSTANCE)
+
+        @JvmField
+        val INSTANCE = Lean4ModuleType()
+    }
+}
+
+class LeanModuleWizardStep(private val context: WizardContext) : ModuleWizardStep() {
+
+    private val propertyGraph: PropertyGraph = PropertyGraph()
+    private val projectNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::untitledName)
+    private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::defaultLocation)
+    private val canonicalPathProperty = locationProperty.joinCanonicalPath(projectNameProperty)
+    private val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
+        .bindBooleanStorage(NewProjectWizardStep.GIT_PROPERTY_NAME)
+
+    private val sdkModel: ProjectSdksModel = ProjectSdksModel()
+    private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null )
+
+    override fun getComponent(): JComponent {
+        return panel {
+            row(UIBundle.message("label.project.wizard.new.project.name")) {
+                textField().bindText(projectNameProperty)
+                    .columns(COLUMNS_MEDIUM)
+                    .gap(RightGap.SMALL)
+                    .focused()
+            }.bottomGap(BottomGap.SMALL)
+            val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
+                projectLocationField(locationProperty, context!!)
+                    .align(AlignX.FILL)
+                    .comment(getLocationComment(context), 100)
+            }
+            if (context!!.isCreatingNewProject) {
+                // Git should not be enabled for single module
+                row("") {
+                    checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
+                        .bindSelected(gitProperty)
+                }.bottomGap(BottomGap.SMALL)
+            } else {
+                locationRow.bottomGap(BottomGap.SMALL)
+            }
+            addSdkUi(context)
+        }.withVisualPadding(topField = true)
+    }
+
+    override fun updateDataModel() {
+
+    }
 
     /**
      * From intellij-arend, TODO add concrete link
@@ -184,23 +202,11 @@ class Lean4ModuleBuilder : ModuleBuilder() {
         )
     }
 
+    private fun untitledName(): String = "Untitled"
 
-}
+    // TODO define default location
+    private fun defaultLocation(): String = context.projectFileDirectory
 
 
-class Lean4ModuleType : ModuleType<Lean4ModuleBuilder>("LEAN4_MODULE") {
-    override fun getNodeIcon(isOpened: Boolean) = Lean4Icons.FILE
 
-    override fun createModuleBuilder() = Lean4ModuleBuilder()
-
-    override fun getDescription() = "Lean4 library"
-
-    override fun getName() = "Lean4"
-
-    companion object {
-        fun has(module: Module?) = module != null && `is`(module, INSTANCE)
-
-        @JvmField
-        val INSTANCE = Lean4ModuleType()
-    }
 }

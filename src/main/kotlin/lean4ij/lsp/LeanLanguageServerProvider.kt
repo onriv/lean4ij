@@ -13,6 +13,7 @@ import lean4ij.setting.Lean4Settings
 import lean4ij.util.OsUtil
 import lean4ij.util.notify
 import lean4ij.util.notifyErr
+import lean4ij.util.runCommand
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -174,22 +175,6 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
             return mutableMapOf("LEAN_SERVER_LOG_DIR" to tempLogDir)
         }
         return mutableMapOf()
-    }
-
-    private fun String.runCommand(workingDir: File): String {
-        try {
-            val parts = this.split("\\s".toRegex())
-            val proc = ProcessBuilder(*parts.toTypedArray())
-                .directory(workingDir)
-                .redirectOutput(ProcessBuilder.Redirect.PIPE)
-                .redirectError(ProcessBuilder.Redirect.PIPE)
-                .start()
-
-            proc.waitFor(60, TimeUnit.MINUTES)
-            return proc.inputStream.bufferedReader().readText()
-        } catch (e: IOException) {
-            throw e
-        }
     }
 
     override fun getInitializationOptions(rootUri: VirtualFile?): Any {

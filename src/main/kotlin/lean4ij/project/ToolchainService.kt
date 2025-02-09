@@ -6,6 +6,23 @@ import com.intellij.openapi.project.Project
 import java.nio.file.Path
 import kotlin.io.path.exists
 
+@Service
+class ElanService {
+    fun getDefaultLakePath(): Path {
+        val elanBinPath = Path.of(System.getProperty("user.home"), ".elan", "bin")
+        return elanBinPath.resolve("lake")
+    }
+    fun getDefaultElanPath(): Path {
+        val elanBinPath = Path.of(System.getProperty("user.home"), ".elan", "bin")
+        return elanBinPath.resolve("elan")
+    }
+
+}
+
+/**
+ * TODO this is project level service
+ *      there should be a global service similar for system level elan/lake
+ */
 @Service(Service.Level.PROJECT)
 class ToolchainService(val project: Project) {
     // set to true when the toolchain could not properly be
@@ -13,6 +30,10 @@ class ToolchainService(val project: Project) {
     var toolChainPath: Path? = null
     var lakePath:  Path? = null
     var leanPath: Path? = null
+
+    // This is for creating new project
+    var defaultLakePath: Path? = null
+    var defaultElanPath: Path? = null
 
     companion object {
         private val ARGUMENT_SEPARATOR = Regex("\\s+")

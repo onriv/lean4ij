@@ -1,3 +1,14 @@
+/**
+ * Some of the code is from the tutorial
+ * https://plugins.jetbrains.com/docs/intellij/adding-new-steps.html
+ * and from the intellij-arend plugin
+ * and from https://github.com/vaadin/intellij-plugin
+ * for creating project directly without next
+ * check https://intellij-support.jetbrains.com/hc/en-us/community/posts/18353598849170-How-to-create-single-module-wizard-step-with-generic-Name-and-Location-direct-Create-no-wizard-steps
+ * for the related discussion
+ * The skeleton is from vaadin plugin
+ * TODO this file still requires BIG refactor
+ */
 package lean4ij.module
 
 import com.intellij.ide.IdeBundle
@@ -8,6 +19,7 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -21,9 +33,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -38,33 +52,31 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import lean4ij.language.Lean4Icons
-import lean4ij.util.PROJECT_MODEL_PROP_KEY
+import lean4ij.project.ElanService
+import lean4ij.util.runCommand
 import java.io.File
+import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComponent
 
+val QUICK_STARTER_MODEL_KEY = Key<GraphProperty<QuickStarterModel?>>("lean4_quick_starter_model")
 
 fun <T : JComponent> Panel.aligned(text: String, component: T, init: Cell<T>.() -> Unit = {}) = row(text) {
     cell(component).align(AlignX.FILL).init()
 }
 
-interface DownloadableModel {
-
-    fun getDownloadLink(project: Project): String
-
-    fun getProjectType(): String
-}
-
-class QuickStarterModel : BaseState(), DownloadableModel {
+class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wizardContext: WizardContext) : BaseState() {
 
     companion object {
         val TEMPLATES = listOf("std", "exe", "lib", "math")
         val LANGUAGES = listOf("lean", "toml")
     }
 
-    private val graph: PropertyGraph = PropertyGraph()
-    val templatesProperty = graph.property(TEMPLATES.first())
-    val languagesProperty = graph.property(LANGUAGES.first())
+    val entityNameProperty = propertyGraph.lazyProperty(::suggestName)
+    val locationProperty = propertyGraph.lazyProperty(::suggestLocationByName)
+    val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
+    val templatesProperty = propertyGraph.property(TEMPLATES.first())
+    val languagesProperty = propertyGraph.property(LANGUAGES.first())
     // val useAuthenticationProperty = graph.property(false)
     // val usePrereleaseProperty = graph.property(false)
 
@@ -73,12 +85,26 @@ class QuickStarterModel : BaseState(), DownloadableModel {
     // private val useAuthentication by useAuthenticationProperty
     // private val usePrerelease by usePrereleaseProperty
 
-    override fun getDownloadLink(project: Project): String {
-        TODO()
+    private fun suggestName(): String {
+        return suggestName("Untitled")
     }
 
-    override fun getProjectType(): String {
-        return "maven"
+    fun suggestName(prefix: String): String {
+        val projectFileDirectory = File(wizardContext.projectFileDirectory)
+        return FileUtil.createSequentFileName(projectFileDirectory, prefix, "")
+    }
+
+    private fun suggestLocationByName(): String {
+        return wizardContext.projectFileDirectory
+    }
+
+    fun getLocationComment(): String {
+        val shortPath = StringUtil.shortenPathWithEllipsis(getPresentablePath(canonicalPathProperty.get()), 60)
+        return UIBundle.message(
+            "label.project.wizard.new.project.path.description",
+            wizardContext.isCreatingNewProjectInt,
+            shortPath,
+        )
     }
 
     fun commentForTemplate() = when (templatesProperty.get()) {
@@ -94,6 +120,24 @@ class QuickStarterModel : BaseState(), DownloadableModel {
             ".toml" -> "a TOML version of the the configuration file"
             else -> "unrecognized language"
         }
+
+    fun lakeCommandForComment(): String = "Command to create project: ${lakeCommand()}"
+
+    fun lakeCommand() : String {
+        val commandBuilder = StringBuilder("lake new ${entityNameProperty.get()}")
+        val isDefaultTemplate = templatesProperty.get() == QuickStarterModel.TEMPLATES[0]
+        val isDefaultLanguage = languagesProperty.get() == QuickStarterModel.LANGUAGES[0]
+        if (!isDefaultTemplate) {
+            commandBuilder.append(" ${templatesProperty.get()}")
+        }
+        if (!isDefaultLanguage) {
+            if (isDefaultTemplate) {
+                commandBuilder.append(" ")
+            }
+            commandBuilder.append(".${languagesProperty.get()}")
+        }
+        return commandBuilder.toString()
+    }
 }
 
 class QuickStarterPanel(private val model: QuickStarterModel) {
@@ -124,33 +168,29 @@ class QuickStarterPanel(private val model: QuickStarterModel) {
 
 class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardContext, builder: Panel) {
 
-    private val entityNameProperty = propertyGraph.lazyProperty(::suggestName)
-    private val locationProperty = propertyGraph.lazyProperty(::suggestLocationByName)
-    private val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
-
     private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null )
 
     private var quickStarterGroup: CollapsibleRow? = null
 
-    private val quickStarterModel = QuickStarterModel()
+    private val quickStarterModel = QuickStarterModel(propertyGraph, wizardContext)
     private val quickStarterPanel = QuickStarterPanel(quickStarterModel)
 
     init {
         builder.panel {
-            row("Name:") { textField().bindText(entityNameProperty) }
+            row("Name:") { textField().bindText(quickStarterModel.entityNameProperty) }
             row("Location:") {
                 val commentLabel =
-                    projectLocationField(locationProperty, wizardContext)
+                    projectLocationField(quickStarterModel.locationProperty, wizardContext)
                         .align(AlignX.FILL)
-                        .comment(getLocationComment(), 100)
+                        .comment(quickStarterModel.getLocationComment(), 100)
                         .comment!!
-                entityNameProperty.afterChange {
-                    commentLabel.text = getLocationComment()
+                quickStarterModel.entityNameProperty.afterChange {
+                    commentLabel.text = quickStarterModel.getLocationComment()
                     updateModel()
                 }
-                locationProperty.afterChange {
-                    commentLabel.text = getLocationComment()
-                    entityNameProperty.set(suggestName(entityNameProperty.get()))
+                quickStarterModel.locationProperty.afterChange {
+                    commentLabel.text = quickStarterModel.getLocationComment()
+                    quickStarterModel.entityNameProperty.set(quickStarterModel.suggestName(quickStarterModel.entityNameProperty.get()))
                     updateModel()
                 }
             }
@@ -163,22 +203,22 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
             }
             quickStarterGroup!!.expanded = false
             row {
-                val actualCommandComment = comment(lakeCommandForComment())
+                val actualCommandComment = comment(quickStarterModel.lakeCommandForComment())
                     .component
-                entityNameProperty.afterChange {
-                    actualCommandComment.text = lakeCommandForComment()
+                quickStarterModel.entityNameProperty.afterChange {
+                    actualCommandComment.text = quickStarterModel.lakeCommandForComment()
                     updateModel()
                 }
-                locationProperty.afterChange {
-                    actualCommandComment.text = lakeCommandForComment()
+                quickStarterModel.locationProperty.afterChange {
+                    actualCommandComment.text = quickStarterModel.lakeCommandForComment()
                     updateModel()
                 }
                 quickStarterModel.templatesProperty.afterChange {
-                    actualCommandComment.text = lakeCommandForComment()
+                    actualCommandComment.text = quickStarterModel.lakeCommandForComment()
                     updateModel()
                 }
                 quickStarterModel.languagesProperty.afterChange {
-                    actualCommandComment.text = lakeCommandForComment()
+                    actualCommandComment.text = quickStarterModel.lakeCommandForComment()
                     updateModel()
                 }
             }
@@ -188,54 +228,11 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
         updateModel()
     }
 
-    private fun lakeCommandForComment(): String = "Command to create project: ${lakeCommand()}"
-
-
-    private fun lakeCommand() : String {
-        val commandBuilder = StringBuilder("lake new ${entityNameProperty.get()}")
-        val isDefaultTemplate = quickStarterModel.templatesProperty.get() == QuickStarterModel.TEMPLATES[0]
-        val isDefaultLanguage = quickStarterModel.languagesProperty.get() == QuickStarterModel.LANGUAGES[0]
-        if (!isDefaultTemplate) {
-            commandBuilder.append(" ${quickStarterModel.templatesProperty.get()}")
-        }
-        if (!isDefaultLanguage) {
-            if (isDefaultTemplate) {
-                commandBuilder.append(" ")
-            }
-            commandBuilder.append(".${quickStarterModel.languagesProperty.get()}")
-        }
-        return commandBuilder.toString()
-    }
-
-    private fun suggestName(): String {
-        return suggestName("Untitled")
-    }
-
-    private fun suggestName(prefix: String): String {
-        val projectFileDirectory = File(wizardContext.projectFileDirectory)
-        return FileUtil.createSequentFileName(projectFileDirectory, prefix, "")
-    }
-
-    private fun suggestLocationByName(): String {
-        return wizardContext.projectFileDirectory
-    }
-
-    private fun getLocationComment(): String {
-        val shortPath = StringUtil.shortenPathWithEllipsis(getPresentablePath(canonicalPathProperty.get()), 60)
-        return UIBundle.message(
-            "label.project.wizard.new.project.path.description",
-            wizardContext.isCreatingNewProjectInt,
-            shortPath,
-        )
-    }
-
     private fun updateModel() {
-        wizardContext.setProjectFileDirectory(canonicalPathProperty.get())
-        wizardContext.projectName = entityNameProperty.get()
-        wizardContext.defaultModuleName = entityNameProperty.get()
-        // val projectModel = if (quickStarterGroup!!.expanded) quickStarterModel else skeletonStarterModel
-        val projectModel = quickStarterModel
-        wizardContext.getUserData(PROJECT_MODEL_PROP_KEY)?.set(projectModel)
+        wizardContext.setProjectFileDirectory(quickStarterModel.canonicalPathProperty.get())
+        wizardContext.projectName = quickStarterModel.entityNameProperty.get()
+        wizardContext.defaultModuleName = quickStarterModel.entityNameProperty.get()
+        wizardContext.getUserData(QUICK_STARTER_MODEL_KEY)?.set(quickStarterModel)
     }
 
     private fun Row.projectLocationField(
@@ -254,22 +251,36 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
 
     private fun Panel.addSdkUi(context: WizardContext) {
         row("Lean Version") {
-            // sdkComboBox(context, sdkProperty, Lean4SdkType.INSTANCE.name, {it is Lean4SdkType})
-            //     .columns(COLUMNS_MEDIUM)
-            //     .component
-            comboBox(
-                listOf(
-                    "v2.1",
-                    "v2.j",
-                    "v2.k",
-                    "v2.l",
-                    "v2.;",
-                    )
-            )
+            val comboBoxComponent = comboBox(service<ElanService>().toolchains(includeRemote = true)).component
+            // // after a long debug, I realized that after calling
+            makeComboBoxSearchable(comboBoxComponent)
+            comboBoxComponent.isSwingPopup = false
         }
-        // row {
-        //     comment("Choose the Lean4 version to use")
-        // }.bottomGap(BottomGap.SMALL)
+    }
+
+    /**
+     * After a long debug I realized that the following code is necessary to make the combo box searchable
+     * At first I found the following code with `sdkComboBox` is searchable:
+     * ```
+     * sdkComboBox(
+     *     wizardContext,
+     *     sdkProperty,
+     *     Lean4SdkType.INSTANCE.name,
+     *     { it is Lean4SdkType }
+     * )
+     * ```
+     * which is copied and modifier from intellij-arend, but we don't want sdk here and want to list all versions.
+     * Checking https://intellij-support.jetbrains.com/hc/en-us/community/posts/360007069080-ComboBox-Editable-as-Input-field
+     * Jakub suggested to check the class [com.intellij.ui.popup.list.ComboBoxPopup] but the class does not give any hints to
+     * show how to use it.
+     * At last, I put a breakpoint at the constructor of [com.intellij.ui.popup.list.ComboBoxPopup] and it shows
+     * [com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup] creates it. And putting a breakpoint at the constructor
+     * of [com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup] it shows that
+     * [com.intellij.openapi.ui.ComboBox.setSwingPopup] with the argument false creates it.
+     * What a hard way to find this!
+     */
+    private fun makeComboBoxSearchable(comboBoxComponent: ComboBox<String>) {
+        comboBoxComponent.isSwingPopup = false
     }
 }
 
@@ -298,12 +309,12 @@ class LeanProjectWizard : GeneratorNewProjectWizard {
     private val propertyGraph: PropertyGraph
         get() = PropertyGraph("Lean4 project")
 
-    private val projectModelProperty = propertyGraph.property<DownloadableModel?>(null)
+    private val quickStarterModelProperty = propertyGraph.property<QuickStarterModel?>(null)
 
-    val projectModel: DownloadableModel? by projectModelProperty
+    val quickStarterModel: QuickStarterModel? by quickStarterModelProperty
 
     override fun createStep(context: WizardContext): NewProjectWizardStep {
-        context.putUserData(PROJECT_MODEL_PROP_KEY, projectModelProperty)
+        context.putUserData(QUICK_STARTER_MODEL_KEY, quickStarterModelProperty)
         return LeanProjectWizardStep(context, propertyGraph)
     }
 
@@ -314,14 +325,15 @@ class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProject
 
     private val propertyGraph = PropertyGraph()
 
-    private val projectDownloadedProperty = propertyGraph.property(false)
-
     override fun createStep(context: WizardContext): NewProjectWizardStep {
         return leanWizard.createStep(context)
     }
 
     override fun createProject(name: String?, path: String?): Project? {
         return super.createProject(name, path)?.let { project ->
+            val quickStarterModel = leanWizard.quickStarterModel!!
+            "${Path.of(System.getProperty("user.home"), ".elan", "bin")}${File.separatorChar}${quickStarterModel.lakeCommand()}".runCommand(File(quickStarterModel.locationProperty.get()))
+            // "lake new $name".runCommand(File(path))
             project
         }
     }

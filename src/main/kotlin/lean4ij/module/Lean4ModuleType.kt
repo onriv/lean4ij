@@ -16,13 +16,9 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.GeneratorNewProjectWizard
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -33,6 +29,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.module.GeneralModuleType
+import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
@@ -42,7 +40,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
@@ -53,7 +50,7 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import lean4ij.language.Lean4Icons
 import lean4ij.project.ElanService
-import lean4ij.util.runCommand
+import lean4ij.util.executeAt
 import java.io.File
 import java.nio.file.Path
 import javax.swing.Icon
@@ -77,13 +74,6 @@ class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wi
     val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
     val templatesProperty = propertyGraph.property(TEMPLATES.first())
     val languagesProperty = propertyGraph.property(LANGUAGES.first())
-    // val useAuthenticationProperty = graph.property(false)
-    // val usePrereleaseProperty = graph.property(false)
-
-    private val templates by templatesProperty
-    private val languages by languagesProperty
-    // private val useAuthentication by useAuthenticationProperty
-    // private val usePrerelease by usePrereleaseProperty
 
     private fun suggestName(): String {
         return suggestName("Untitled")
@@ -116,8 +106,8 @@ class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wi
         }
 
     fun commentForConfigurationLanguage() = when (languagesProperty.get()) {
-            ".lean" -> "a Lean version of the the configuration file; default"
-            ".toml" -> "a TOML version of the the configuration file"
+            "lean" -> "a Lean version of the the configuration file; default"
+            "toml" -> "a TOML version of the the configuration file"
             else -> "unrecognized language"
         }
 
@@ -296,6 +286,24 @@ class LeanProjectWizardStep (override val context: WizardContext, override val p
     override fun setupUI(builder: Panel) {
         LeanPanel(propertyGraph, context, builder)
     }
+
+    /**
+     * The source code for creating new project originates from vaadin's plugin
+     * But it does not override this method.
+     *
+     * Rather, for me, I have to override this method to set up the project correctly
+     * such that the created new project does not occur into problem like this
+     * https://intellij-support.jetbrains.com/hc/en-us/community/posts/4527187223826-Project-panel-doesn-t-show-the-folders-and-files-are-looking-as-external
+     *
+     * The following code is from [com.intellij.ide.wizard.language.EmptyProjectGeneratorNewProjectWizard.Step.setupProject]
+     * The moduleTypeID here must be [GeneralModuleType.TYPE_ID]
+     */
+    override fun setupProject(project: Project) {
+        val moduleType = ModuleTypeManager.getInstance().findByID(GeneralModuleType.TYPE_ID)
+        val builder = moduleType.createModuleBuilder()
+        val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
+        builder.commit(project, model)
+    }
 }
 
 class LeanProjectWizard : GeneratorNewProjectWizard {
@@ -317,163 +325,22 @@ class LeanProjectWizard : GeneratorNewProjectWizard {
         context.putUserData(QUICK_STARTER_MODEL_KEY, quickStarterModelProperty)
         return LeanProjectWizardStep(context, propertyGraph)
     }
-
 }
 
-class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProjectWizard()):
-    GeneratorNewProjectWizardBuilderAdapter(leanWizard) {
-
-    private val propertyGraph = PropertyGraph()
-
-    override fun createStep(context: WizardContext): NewProjectWizardStep {
-        return leanWizard.createStep(context)
-    }
+class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProjectWizard()): GeneratorNewProjectWizardBuilderAdapter(leanWizard) {
 
     override fun createProject(name: String?, path: String?): Project? {
         return super.createProject(name, path)?.let { project ->
             val quickStarterModel = leanWizard.quickStarterModel!!
-            "${Path.of(System.getProperty("user.home"), ".elan", "bin")}${File.separatorChar}${quickStarterModel.lakeCommand()}".runCommand(File(quickStarterModel.locationProperty.get()))
-            // "lake new $name".runCommand(File(path))
+            // TODO for some region here it requires proxy
+            // TODO version not support yet and
+            //      although from https://leanprover.zulipchat.com/#narrow/channel/113489-new-members/topic/lake.20new.20project.20with.20specified.20lean.20version.3F
+            //      we know lake with elan can automatically download lean
+            //      but we may manually do it with a update etc
+            val result = "${Path.of(System.getProperty("user.home"), ".elan", "bin")}${File.separatorChar}${quickStarterModel.lakeCommand()}"
+                .executeAt(File(quickStarterModel.locationProperty.get()))
+            println(result)
             project
         }
     }
-
-    override fun isAvailable(): Boolean {
-        val lastPerformedActionId = (ActionManager.getInstance() as ActionManagerImpl).lastPreformedActionId
-        lastPerformedActionId ?: return false
-        return lastPerformedActionId.contains("NewProject", true)
-    }
-
-    private fun afterProjectCreated(project: Project) {
-        VfsUtil.findFileByIoFile(File(project.basePath, "README.md"), true)?.let {
-            val descriptor = OpenFileDescriptor(project, it)
-            descriptor.setUsePreviewTab(true)
-            FileEditorManager.getInstance(project).openEditor(descriptor, true)
-        }
-    }
 }
-
-
-class Lean4ModuleType : ModuleType<Lean4ModuleBuilder>("LEAN4_MODULE") {
-    override fun getNodeIcon(isOpened: Boolean) = Lean4Icons.FILE
-
-    override fun createModuleBuilder() = Lean4ModuleBuilder()
-
-    override fun getDescription() = "Lean4 library"
-
-    override fun getName() = "Lean4"
-
-    companion object {
-        fun has(module: Module?) = module != null && `is`(module, INSTANCE)
-
-        @JvmField
-        val INSTANCE = Lean4ModuleType()
-    }
-}
-
-// class LeanModuleWizardStep(override val context: WizardContext, override val propertyGraph: PropertyGraph) : NewProjectWizardStep {
-//
-//     override val data: UserDataHolder
-//         get() = TODO("Not yet implemented")
-//     override val keywords: NewProjectWizardStep.Keywords
-//         get() = TODO("Not yet implemented")
-//
-//     private val projectNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(this::suggestName)
-//     private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::defaultLocation)
-//     private val canonicalPathProperty = locationProperty.joinCanonicalPath(projectNameProperty)
-//     private val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
-//         .bindBooleanStorage(NewProjectWizardStep.GIT_PROPERTY_NAME)
-//
-//     private val sdkModel: ProjectSdksModel = ProjectSdksModel()
-//     private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null )
-//
-//     override fun getComponent(): JComponent {
-//         return panel {
-//             row(UIBundle.message("label.project.wizard.new.project.name")) {
-//                 textField().bindText(projectNameProperty)
-//                     .columns(COLUMNS_MEDIUM)
-//                     .gap(RightGap.SMALL)
-//                     .focused()
-//             }.bottomGap(BottomGap.SMALL)
-//             val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
-//                 projectLocationField(locationProperty, context!!)
-//                     .align(AlignX.FILL)
-//                     .comment(getLocationComment(context), 100)
-//             }
-//             if (context.isCreatingNewProject) {
-//                 // Git should not be enabled for single module
-//                 row("") {
-//                     checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
-//                         .bindSelected(gitProperty)
-//                 }.bottomGap(BottomGap.SMALL)
-//             } else {
-//                 locationRow.bottomGap(BottomGap.SMALL)
-//             }
-//             addSdkUi(context)
-//         }.withVisualPadding(topField = true)
-//     }
-//
-//     override fun updateDataModel() {
-//         val lake = service<ElanService>().getDefaultLakePath()
-//         "$lake new ${projectNameProperty.get()}".runCommand(File(locationProperty.get()))
-//     }
-//
-//     /**
-//      * From intellij-arend, TODO add concrete link
-//      * This is a literal copy... make sure it does not violate the license...
-//      */
-//     private fun Row.projectLocationField(
-//         locationProperty: GraphProperty<String>,
-//         wizardContext: WizardContext
-//     ): Cell<TextFieldWithBrowseButton> {
-//         val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-//             .withFileFilter { it.isDirectory }
-//             .withPathToTextConvertor(::getPresentablePath)
-//             .withTextToPathConvertor(::getCanonicalPath)
-//         val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
-//         val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-//         return textFieldWithBrowseButton(
-//             null, wizardContext.project,
-//             fileChooserDescriptor.withTitle(title)
-//         )
-//             .bindText(property)
-//     }
-//
-//     /**
-//      * From intellij-arend, and from the following link we know that we must depend on the java plugin
-//      * https://intellij-support.jetbrains.com/hc/en-us/community/posts/8536219607570-How-do-I-create-a-SDK-selector-ComboBox-in-an-IntelliJ-plugin
-//      */
-//     private fun Panel.addSdkUi(context: WizardContext) {
-//         row("Lean Version") {
-//             sdkComboBox(context, sdkProperty, Lean4SdkType.INSTANCE.name, {it is Lean4SdkType})
-//                 .columns(COLUMNS_MEDIUM)
-//                 .component
-//         }
-//         row {
-//             comment("Project SDK is needed if you want to create a language extension or debug typechecking")
-//         }.bottomGap(BottomGap.SMALL)
-//     }
-//
-//     private fun getLocationComment(context: WizardContext): String {
-//         val shortPath = StringUtil.shortenPathWithEllipsis(getPresentablePath(canonicalPathProperty.get()), 60)
-//         return UIBundle.message(
-//             "label.project.wizard.new.project.path.description",
-//             context.isCreatingNewProjectInt,
-//             shortPath
-//         )
-//     }
-//
-//     /**
-//      * This is copied from intellij-arend
-//      */
-//     private fun suggestName(): String = suggestName(DEFAULT_MODULE_ARTIFACT)
-//
-//     private fun suggestName(prefix: String): String {
-//         val projectFileDirectory = File(context.projectFileDirectory)
-//         return FileUtil.createSequentFileName(projectFileDirectory, prefix, "")
-//     }
-//
-//     // TODO define default location
-//     private fun defaultLocation(): String = context.projectFileDirectory
-//
-// }

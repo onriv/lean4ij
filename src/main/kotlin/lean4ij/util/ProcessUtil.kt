@@ -9,7 +9,7 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-fun String.runCommand(workingDir: File): String {
+fun String.executeAt(workingDir: File): String {
     try {
         val parts = this.split("\\s".toRegex())
         val proc = ProcessBuilder(*parts.toTypedArray())
@@ -19,7 +19,7 @@ fun String.runCommand(workingDir: File): String {
             .start()
 
         proc.waitFor(60, TimeUnit.MINUTES)
-        return proc.inputStream.bufferedReader().readText()
+        return proc.inputStream.bufferedReader().readText() + "\n" + proc.errorStream.bufferedReader().readText()
     } catch (e: IOException) {
         throw e
     }

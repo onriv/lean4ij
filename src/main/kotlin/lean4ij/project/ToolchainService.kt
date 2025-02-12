@@ -1,11 +1,40 @@
 package lean4ij.project
 
+import com.google.common.io.Resources
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 import kotlin.io.path.exists
 
+@Service
+class ElanService {
+    fun getDefaultLakePath(): Path {
+        val elanBinPath = Path.of(System.getProperty("user.home"), ".elan", "bin")
+        return elanBinPath.resolve("lake")
+    }
+    fun getDefaultElanPath(): Path {
+        val elanBinPath = Path.of(System.getProperty("user.home"), ".elan", "bin")
+        return elanBinPath.resolve("elan")
+    }
+
+    /**
+     * All versions are extracted locally from the lean4 repo with the following shell command:
+     * ```
+     * git --no-pager tag|grep v4|python -c 'import sys; print("".join(sorted(sys.stdin,key=lambda x:tuple(map(int,x.replace("v","").replace("-rc", ".").replace("-m", ".").split("."))), reverse=True)))'
+     * ```
+     * TODO maybe it can fetch locally or update in the pipeline
+     */
+    fun toolchains(includeRemote: Boolean): List<String> {
+        return javaClass.classLoader.getResource("toolchains.txt").readText().split("\n")
+    }
+
+}
+
+/**
+ * TODO this is project level service
+ *      there should be a global service similar for system level elan/lake
+ */
 @Service(Service.Level.PROJECT)
 class ToolchainService(val project: Project) {
     // set to true when the toolchain could not properly be
@@ -13,6 +42,10 @@ class ToolchainService(val project: Project) {
     var toolChainPath: Path? = null
     var lakePath:  Path? = null
     var leanPath: Path? = null
+
+    // This is for creating new project
+    var defaultLakePath: Path? = null
+    var defaultElanPath: Path? = null
 
     companion object {
         private val ARGUMENT_SEPARATOR = Regex("\\s+")

@@ -1,3 +1,7 @@
+/**
+ * TODO update gradle plugin to 2.x
+ *      https://github.com/onriv/lean4ij/issues/125
+ */
 import com.github.gradle.node.npm.proxy.ProxySettings
 import com.github.gradle.node.npm.task.NpmTask
 import com.google.common.collect.ImmutableMap

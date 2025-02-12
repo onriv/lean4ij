@@ -1,12 +1,12 @@
 package lean4ij.util
 
-import lean4ij.util.LeanUtil.runCommand
 import junit.framework.TestCase
+import java.io.File
 
 class LeanUtilTest : TestCase() {
 
     fun testRunCommand() {
-        val curlVersionOutput = runCommand("curl --version")
+        val curlVersionOutput = "curl --version".executeAt(File("."))
         println(curlVersionOutput)
     }
 

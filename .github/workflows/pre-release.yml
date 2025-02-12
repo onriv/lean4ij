@@ -12,6 +12,8 @@ jobs:
   # Prepare and publish the plugin to JetBrains Marketplace repository
   release:
     name: Publish Plugin
+    # Only run if tag contains 'beta' (case-sensitive)
+    if: contains(github.event.release.tag_name, 'beta')
     runs-on: ubuntu-latest
     permissions:
       contents: write

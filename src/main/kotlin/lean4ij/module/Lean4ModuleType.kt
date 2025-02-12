@@ -339,6 +339,14 @@ class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProject
             //      but we may manually do it with a update etc
             val result = "${Path.of(System.getProperty("user.home"), ".elan", "bin")}${File.separatorChar}${quickStarterModel.lakeCommand()}"
                 .executeAt(File(quickStarterModel.locationProperty.get()))
+            // TODO here we should create some run configuration programmatically
+            //      to download lean/lake if it's not exists
+            //      it should be done after the new project opened so it does not
+            //      block current project, ref:
+            //      https://plugins.jetbrains.com/docs/intellij/run-configurations.html#creating-a-run-configuration-programmatically
+            //      and some use cases: https://grep.app/search?q=RunManager.createConfiguration
+            //      The command of elan that downloads lean/lake is `elan which lake` or `elan which lean`
+            //      This is preferred over using any command involved lake to download the toolchain I think.
             println(result)
             project
         }

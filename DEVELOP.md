@@ -140,6 +140,11 @@ socksProxyPort=7890
 
 For first (and while require updating the frontend, run a `gradle buildBrowserInfoview` before run `runIde`). If the above way does not fix error in building the frontend, try remove `nodeProxySettings = ProxySettings.FORCED` too in `build.gradle.kts`.
 
+
+# Project Creating
+
+Currently implementing, check https://plugins.jetbrains.com/docs/intellij/project-wizard.html for the official document.
+
 # Debug and troubleshooting
 
 TODO

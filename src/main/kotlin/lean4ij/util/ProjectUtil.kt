@@ -4,9 +4,10 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager.getInstance
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import lean4ij.project.LeanProjectService
-
 
 /**
  * notify an error with [content]

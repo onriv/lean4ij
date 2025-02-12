@@ -21,6 +21,9 @@ import lean4ij.sdk.SdkService
 class LeanProjectActivity : ProjectActivity {
 
     override suspend fun execute(project: Project) {
+        if (!project.service<LeanProjectService>().isLeanProject()) {
+            return
+        }
         project.service<SdkService>().setupModule()
 
         setupEditorFocusChangeEventListener(project)

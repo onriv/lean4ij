@@ -56,6 +56,11 @@ import kotlin.io.path.Path
 
 @Service(Service.Level.PROJECT)
 class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
+    // TODO the state maybe should move out to a delegated
+    // This is default to false, for it maybe not creating by Intellij IDEA
+    // in this case we think it's already created by the user using command line
+    // tool, etc.
+    var isProjectCreating: Boolean = false
 
     private var _languageServer = CompletableDeferred<LeanLanguageServer>()
     val languageServer : CompletableDeferred<LeanLanguageServer> get() = _languageServer

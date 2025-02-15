@@ -112,12 +112,16 @@ class SdkService(private val project: Project) {
                                 projectRootManager.setProjectSdkName(toolchain, "Lean4")
                             }
                         }
-                        addExcludeFolder(
-                            VfsUtil.findFile(
-                                Paths.get(basePath, ".lake"),
-                                true
-                            )!!
-                        )
+                        val lakePath = Paths.get(basePath, ".lake")
+                        // This path can be not exist for the first setup, in the case we skip adding it to exclude folder
+                        if (lakePath.exists()) {
+                            addExcludeFolder(
+                                VfsUtil.findFile(
+                                    Paths.get(basePath, ".lake"),
+                                    true
+                                )!!
+                            )
+                        }
                     }
                 }
                 project.save()

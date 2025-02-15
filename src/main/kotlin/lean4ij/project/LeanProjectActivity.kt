@@ -21,10 +21,13 @@ import lean4ij.sdk.SdkService
 class LeanProjectActivity : ProjectActivity {
 
     override suspend fun execute(project: Project) {
-        if (!project.service<LeanProjectService>().isLeanProject()) {
+        val leanProject = project.service<LeanProjectService>()
+        if (!leanProject.isLeanProject()) {
             return
         }
-        project.service<SdkService>().setupModule()
+        if (!leanProject.isProjectCreating){
+            project.service<SdkService>().setupModule()
+        }
 
         setupEditorFocusChangeEventListener(project)
 

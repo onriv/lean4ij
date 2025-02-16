@@ -11,6 +11,8 @@
  */
 package lean4ij.module
 
+import com.intellij.execution.ProgramRunnerUtil
+import com.intellij.execution.RunManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.GeneratorNewProjectWizard
@@ -19,14 +21,13 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleType
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.joinCanonicalPath
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.module.GeneralModuleType
@@ -40,17 +41,26 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.CollapsibleRow
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import lean4ij.language.Lean4Icons
 import lean4ij.project.ElanService
-import lean4ij.util.executeAt
+import lean4ij.project.LeanProjectService
+import lean4ij.run.ElanRunConfiguration
+import lean4ij.run.ElanRunConfigurationType
+import lean4ij.run.fullWidthCell
+import lean4ij.sdk.SdkService
+import lean4ij.util.execute
 import java.io.File
 import java.nio.file.Path
 import javax.swing.Icon
@@ -62,7 +72,8 @@ fun <T : JComponent> Panel.aligned(text: String, component: T, init: Cell<T>.() 
     cell(component).align(AlignX.FILL).init()
 }
 
-class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wizardContext: WizardContext) : BaseState() {
+class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wizardContext: WizardContext) :
+    BaseState() {
 
     companion object {
         val TEMPLATES = listOf("std", "exe", "lib", "math")
@@ -71,6 +82,9 @@ class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wi
 
     val entityNameProperty = propertyGraph.lazyProperty(::suggestName)
     val locationProperty = propertyGraph.lazyProperty(::suggestLocationByName)
+    val versionProperty = propertyGraph.lazyProperty{ service<ElanService>().toolchains(includeRemote = true)[0] }
+    val useProxyProperty = propertyGraph.lazyProperty{ false }
+    val proxyValueProperty = propertyGraph.lazyProperty { "" }
     val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
     val templatesProperty = propertyGraph.property(TEMPLATES.first())
     val languagesProperty = propertyGraph.property(LANGUAGES.first())
@@ -98,22 +112,22 @@ class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wi
     }
 
     fun commentForTemplate() = when (templatesProperty.get()) {
-            "std" -> "library and executable; default"
-            "exe" -> "executable only"
-            "lib" -> "library only"
-            "math" -> "library only with a mathlib dependency"
-            else -> "unrecognized template"
-        }
+        "std" -> "library and executable; default"
+        "exe" -> "executable only"
+        "lib" -> "library only"
+        "math" -> "library only with a mathlib dependency"
+        else -> "unrecognized template"
+    }
 
     fun commentForConfigurationLanguage() = when (languagesProperty.get()) {
-            "lean" -> "a Lean version of the the configuration file; default"
-            "toml" -> "a TOML version of the the configuration file"
-            else -> "unrecognized language"
-        }
+        "lean" -> "a Lean version of the the configuration file; default"
+        "toml" -> "a TOML version of the the configuration file"
+        else -> "unrecognized language"
+    }
 
     fun lakeCommandForComment(): String = "Command to create project: ${lakeCommand()}"
 
-    fun lakeCommand() : String {
+    fun lakeCommand(): String {
         val commandBuilder = StringBuilder("lake new ${entityNameProperty.get()}")
         val isDefaultTemplate = templatesProperty.get() == QuickStarterModel.TEMPLATES[0]
         val isDefaultLanguage = languagesProperty.get() == QuickStarterModel.LANGUAGES[0]
@@ -158,10 +172,6 @@ class QuickStarterPanel(private val model: QuickStarterModel) {
 
 class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardContext, builder: Panel) {
 
-    private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null )
-
-    private var quickStarterGroup: CollapsibleRow? = null
-
     private val quickStarterModel = QuickStarterModel(propertyGraph, wizardContext)
     private val quickStarterPanel = QuickStarterPanel(quickStarterModel)
 
@@ -184,14 +194,40 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
                     updateModel()
                 }
             }
-            addSdkUi(wizardContext)
+            row("Lean Version") {
+                val comboBox = comboBox(service<ElanService>().toolchains(includeRemote = true))
+                comboBox.bindItem(quickStarterModel.versionProperty)
+                val comboBoxComponent = comboBox.component
+                makeComboBoxSearchable(comboBoxComponent)
+            }
 
-            quickStarterGroup = collapsibleGroup("Project Settings") {
+            val proxySettingsGroup = collapsibleGroup("Proxy Settings") {
+                row("Enable proxy:") {
+                    checkBox("").bindSelected(quickStarterModel.useProxyProperty)
+                }
+                row("Proxy:") {
+                    fullWidthCell(
+                        textField()
+                            .bindText(quickStarterModel.proxyValueProperty)
+                            .enabledIf(quickStarterModel.useProxyProperty)
+                            .component
+                    )
+                }.visibleIf(quickStarterModel.useProxyProperty)
+                row {
+                    comment("""
+                        If you are behind a proxy, you can enable this option to download Lean from the internet.<br>
+                        The proxy is transformed into an environment variable `HTTP_PROXY` for elan.
+                    """.trimIndent())
+                }
+            }
+            proxySettingsGroup.expanded = false
+
+            val quickStarterGroup = collapsibleGroup("Project Settings") {
                 row {
                     cell(quickStarterPanel.root)
                 }
             }
-            quickStarterGroup!!.expanded = false
+            quickStarterGroup.expanded = false
             row {
                 val actualCommandComment = comment(quickStarterModel.lakeCommandForComment())
                     .component
@@ -213,8 +249,6 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
                 }
             }
         }
-
-        quickStarterGroup!!.expanded = true
         updateModel()
     }
 
@@ -239,12 +273,12 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
         return textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor).bindText(property)
     }
 
-    private fun Panel.addSdkUi(context: WizardContext) {
+    private fun Panel.addLeanVersionRow(context: WizardContext) {
         row("Lean Version") {
-            val comboBoxComponent = comboBox(service<ElanService>().toolchains(includeRemote = true)).component
-            // // after a long debug, I realized that after calling
+            val comboBox = comboBox(service<ElanService>().toolchains(includeRemote = true))
+            comboBox.bindItem(quickStarterModel.versionProperty)
+            val comboBoxComponent = comboBox.component
             makeComboBoxSearchable(comboBoxComponent)
-            comboBoxComponent.isSwingPopup = false
         }
     }
 
@@ -274,7 +308,7 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
     }
 }
 
-class LeanProjectWizardStep (override val context: WizardContext, override val propertyGraph: PropertyGraph) :
+class LeanProjectWizardStep(override val context: WizardContext, override val propertyGraph: PropertyGraph) :
     NewProjectWizardStep {
 
     override val data: UserDataHolder
@@ -327,7 +361,8 @@ class LeanProjectWizard : GeneratorNewProjectWizard {
     }
 }
 
-class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProjectWizard()): GeneratorNewProjectWizardBuilderAdapter(leanWizard) {
+class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProjectWizard()) :
+    GeneratorNewProjectWizardBuilderAdapter(leanWizard) {
 
     override fun createProject(name: String?, path: String?): Project? {
         return super.createProject(name, path)?.let { project ->
@@ -337,17 +372,53 @@ class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProject
             //      although from https://leanprover.zulipchat.com/#narrow/channel/113489-new-members/topic/lake.20new.20project.20with.20specified.20lean.20version.3F
             //      we know lake with elan can automatically download lean
             //      but we may manually do it with a update etc
-            val result = "${Path.of(System.getProperty("user.home"), ".elan", "bin")}${File.separatorChar}${quickStarterModel.lakeCommand()}"
-                .executeAt(File(quickStarterModel.locationProperty.get()))
-            // TODO here we should create some run configuration programmatically
-            //      to download lean/lake if it's not exists
-            //      it should be done after the new project opened so it does not
-            //      block current project, ref:
-            //      https://plugins.jetbrains.com/docs/intellij/run-configurations.html#creating-a-run-configuration-programmatically
-            //      and some use cases: https://grep.app/search?q=RunManager.createConfiguration
-            //      The command of elan that downloads lean/lake is `elan which lake` or `elan which lean`
-            //      This is preferred over using any command involved lake to download the toolchain I think.
-            println(result)
+            val elanService = service<ElanService>()
+            val command = "${elanService.elanBinPath}${File.separatorChar}${quickStarterModel.lakeCommand()}"
+            val envs = if (quickStarterModel.useProxyProperty.get()) {
+                mapOf()
+            } else {
+                mapOf("HTTPS_PROXY" to quickStarterModel.proxyValueProperty.get())
+            }
+            // TODO running this command directly here may block the ui
+            val result = command.execute(File(quickStarterModel.locationProperty.get()), envs)
+
+            // TODO could this really be null in our case?
+            project.basePath?.let { basePath ->
+                val version = quickStarterModel.versionProperty.get()
+                // TODO this and some other code in this method/file etc should be refactored into ElanService
+                Path.of(basePath, "lean-toolchain").toFile().writeText("leanprover/lean4:${version}")
+            }
+
+            val runManager = RunManager.getInstance(project)
+            val lakeRunConfigurationType =
+                ConfigurationTypeUtil.findConfigurationType(ElanRunConfigurationType::class.java)
+            val configuration =
+                runManager.createConfiguration("elan which lean", lakeRunConfigurationType.configurationFactories[0])
+            val elanRuhConfiguration = configuration.configuration as ElanRunConfiguration
+            // TODO modify lean-toolchain file to the specified version
+
+            elanRuhConfiguration.options.arguments = "which lean"
+            if (quickStarterModel.useProxyProperty.get()) {
+                elanRuhConfiguration.options.environments["HTTPS_PROXY"] = quickStarterModel.proxyValueProperty.get().trim()
+            }
+            runManager.addConfiguration(configuration)
+
+            // The configuration cannot be executed directly here. It's too early, the except before using invokeLater:
+            //     You must not register toolwindow programmatically so early. Rework code or use ToolWindowManager.invokeLater
+            //     java.lang.IllegalStateException: You must not register toolwindow programmatically so early. Rework code or use ToolWindowManager.invokeLater
+            //     at com.intellij.openapi.wm.impl.ToolWindowManagerImpl.getDefaultToolWindowPaneIfInitialized(ToolWindowManagerImpl.kt:584)
+            val leanProject = project.service<LeanProjectService>()
+            leanProject.isProjectCreating = true
+            ToolWindowManager.getInstance(project).invokeLater {
+                // check https://plugins.jetbrains.com/docs/intellij/run-configurations.html#starting-a-run-configuration-programmatically
+                // for Starting a Run Configuration Programmatically
+                ProgramRunnerUtil.executeConfiguration(configuration, DefaultRunExecutor.getRunExecutorInstance())
+                // Here we set up the sdk by
+                // skipping some in lean4ij.project.LeanProjectActivity.execute
+                project.service<SdkService>().setupModule()
+                leanProject.isProjectCreating = false
+            }
+
             project
         }
     }

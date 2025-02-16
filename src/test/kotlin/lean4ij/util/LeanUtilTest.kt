@@ -6,7 +6,7 @@ import java.io.File
 class LeanUtilTest : TestCase() {
 
     fun testRunCommand() {
-        val curlVersionOutput = "curl --version".executeAt(File("."))
+        val curlVersionOutput = "curl --version".execute(File("."))
         println(curlVersionOutput)
     }
 

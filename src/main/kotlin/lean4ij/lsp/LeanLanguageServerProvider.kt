@@ -12,7 +12,7 @@ import lean4ij.setting.Lean4Settings
 import lean4ij.util.OsUtil
 import lean4ij.util.notify
 import lean4ij.util.notifyErr
-import lean4ij.util.executeAt
+import lean4ij.util.execute
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -116,7 +116,7 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
      */
     private fun setServerCommandFromElan() {
         val elan = getElan()
-        val lake = "$elan which lake".executeAt(File(project.basePath!!)).trim()
+        val lake = "$elan which lake".execute(File(project.basePath!!)).trim()
         commands = listOf(lake, "serve", "--", project.basePath)
         workingDirectory = project.basePath
     }

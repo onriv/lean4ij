@@ -2,13 +2,19 @@ package lean4ij.project
 
 import com.google.common.io.Resources
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-@Service
+@Service(Service.Level.PROJECT)
 class ElanService {
+
+    val elanHomePath = Path.of(System.getProperty("user.home"), ".elan")
+    val elanBinPath = elanHomePath.resolve("bin")
+    val elanPath = elanBinPath.resolve("elan")
+
     fun getDefaultLakePath(): Path {
         val elanBinPath = Path.of(System.getProperty("user.home"), ".elan", "bin")
         return elanBinPath.resolve("lake")
@@ -27,6 +33,19 @@ class ElanService {
      */
     fun toolchains(includeRemote: Boolean): List<String> {
         return javaClass.classLoader.getResource("toolchains.txt").readText().split("\n")
+    }
+
+    fun commandForRunningElan(arguments: String, project: Project, environment: Map<String, String>) : GeneralCommandLine {
+        val command = mutableListOf(elanPath.toString())
+        // TODO what if it's empty?
+        if (arguments.isNotEmpty()) {
+            // TODO DRY this
+            command.addAll(arguments.split(Regex("\\s+")))
+        }
+        return GeneralCommandLine(*command.toTypedArray()).apply {
+            this.workDirectory = Path.of(project.basePath!!).toFile()
+            this.environment.putAll(environment)
+        }
     }
 
 }
@@ -48,6 +67,7 @@ class ToolchainService(val project: Project) {
     var defaultElanPath: Path? = null
 
     companion object {
+        // TODO DRY this with the above elan service
         private val ARGUMENT_SEPARATOR = Regex("\\s+")
         const val TOOLCHAIN_FILE_NAME = "lean-toolchain"
 

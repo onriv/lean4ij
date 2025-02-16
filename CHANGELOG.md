@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-02-16
+
+Depend on the latest approved nightly build of LSP4IJ: 0.10.1-20250213-172854
 The version upgrades to 0.2.0 for the new project wizard features. For 0.2.x we are trying to
 add some features for project management, elan/lake functionalities, etc.
 
@@ -242,7 +245,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.15...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/onriv/lean4ij/compare/v0.1.15...v0.2.0
 [0.1.15]: https://github.com/onriv/lean4ij/compare/v0.1.14...v0.1.15
 [0.1.14]: https://github.com/onriv/lean4ij/compare/v0.1.13...v0.1.14
 [0.1.13]: https://github.com/onriv/lean4ij/compare/v0.1.13-beta.1...v0.1.13

@@ -53,6 +53,8 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 @Service(Service.Level.PROJECT)
 class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
@@ -368,5 +370,37 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                  */
             }
         }
+    }
+
+    /**
+     * A naive check on if current project is depending on mathlib
+     * TODO definitely it requires some refactor
+     */
+    fun isDependingOnMathlib() : Boolean {
+        val projectBasePath = project.basePath?:return false
+        // TODO maybe some constant for the configuration file
+        val projectConfigurationFile = Path(projectBasePath, "lakefile.lean")
+        if (projectConfigurationFile.exists() && projectConfigurationFile.isRegularFile()){
+            val configurationText = projectConfigurationFile.toFile().readText()
+            // require mathlib and the concrete git path can be in different lines
+            // check: https://grep.app/search?f.lang=Lean&f.path.pattern=lakefile.lean&regexp=true&q=require+mathlib%5B%5Cs%5CS%5D%2Bleanprover-community%2Fmathlib4
+            // This definitely has some bad case, but it should enough for most case
+            val mathlibDependenceRegex = Regex("require mathlib[\\s\\S]+leanprover-community/mathlib4")
+            if (mathlibDependenceRegex.find(configurationText) != null) {
+                return true
+            }
+        }
+        val projectConfigurationFileToml =Path(projectBasePath, "lakefile.toml")
+        if (projectConfigurationFileToml.exists() && projectConfigurationFileToml.isRegularFile()) {
+            val configurationText = projectConfigurationFileToml.toFile().readText()
+            // TODO absolutely we should use some toml library for this
+            // This is checked with
+            // https://grep.app/search?f.lang=TOML&f.path.pattern=lakefile.toml&regexp=true&q=name%5Cs*%3D%5Cs*%22mathlib%22%5B%5Cs%5CS%2B%5Dgit%5Cs*%3D%5Cs*%22https%3A%2F%2Fgithub.com%2Fleanprover-community%2Fmathlib4.git%22
+            val mathlibDependenceRegex = Regex("name\\s*=\\s*\"mathlib\"[\\s\\S+]git\\s*=\\s*\"https://github.com/leanprover-community/mathlib4.git\"")
+            if (mathlibDependenceRegex.find(configurationText) != null) {
+                return true
+            }
+        }
+        return false
     }
 }

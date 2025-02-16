@@ -389,11 +389,12 @@ class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProject
                 Path.of(basePath, "lean-toolchain").toFile().writeText("leanprover/lean4:${version}")
             }
 
+            // TODO DRY with lean4ij.project.LeanProjectActivity.addRunConfigurations
             val runManager = RunManager.getInstance(project)
-            val lakeRunConfigurationType =
+            val elanRunConfigurationType =
                 ConfigurationTypeUtil.findConfigurationType(ElanRunConfigurationType::class.java)
             val configuration =
-                runManager.createConfiguration("elan which lean", lakeRunConfigurationType.configurationFactories[0])
+                runManager.createConfiguration("elan which lean", elanRunConfigurationType.configurationFactories[0])
             val elanRuhConfiguration = configuration.configuration as ElanRunConfiguration
             // TODO modify lean-toolchain file to the specified version
 

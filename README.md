@@ -11,7 +11,9 @@ A [Lean4](https://lean-lang.org/) plugin for Jetbrains IDES with the following f
 - Autocompletion
 - Unicode abbreviations
 - Symbol Information
-- Run and build a lean file
+- Elan/Lake/Lean run configuration
+- Project creation/management
+- Recognize `lean` toolchain as SDK and `.lake` directory as library root
 
 ![Demo image](.github/media/example.png)
 

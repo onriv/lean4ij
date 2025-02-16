@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+The version upgrades to 0.2.0 for the new project wizard features. For 0.2.x we are trying to
+add some features for project management, elan/lake functionalities, etc.
+
+- Fix #127. The infoview button on main toolbar is only visible for lean project.
+- Add "New project wizard" for Intellij Idea (see [docs](https://github.com/onriv/lean4ij/blob/main/docs/create-project.md) for detail)
+- Add automatically generated run configuration (see [docs](https://github.com/onriv/lean4ij/blob/main/docs/run-configuration.md) for detail)
+- Dedicated workflow for prerelease.
+
 ## [0.1.15] - 2025-02-05
 
 Depend on the latest approved nightly build of LSP4IJ: 0.10.0-20250204-132029

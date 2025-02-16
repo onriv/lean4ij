@@ -11,6 +11,9 @@ import lean4ij.language.Lean4Definition
 import lean4ij.language.psi.TokenType
 import kotlin.io.path.relativeTo
 
+/**
+ * TODO This seems given multiple run configurations if hitting the gutter multiple times
+ */
 class MainRunConfigurationProducer : LazyRunConfigurationProducer<LeanRunConfiguration>() {
 
     companion object {

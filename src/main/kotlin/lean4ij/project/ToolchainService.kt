@@ -101,7 +101,7 @@ class ToolchainService(val project: Project) {
         }
     }
 
-    fun commandForRunningLake(arguments: String): GeneralCommandLine {
+    fun commandForRunningLake(arguments: String, environments: Map<String, String> = mapOf()): GeneralCommandLine {
         val command = mutableListOf(lakePath.toString())
         // TODO what if it's empty?
         if (arguments.isNotEmpty()) {
@@ -109,6 +109,7 @@ class ToolchainService(val project: Project) {
         }
         return GeneralCommandLine(*command.toTypedArray()).apply {
             this.workDirectory = Path.of(project.basePath!!).toFile()
+            this.environment.putAll(environments)
         }
     }
 }

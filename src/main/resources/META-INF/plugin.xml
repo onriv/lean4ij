@@ -4,7 +4,7 @@
     <name>Lean4ij</name>
     <vendor>lean4ij</vendor>
 
-    <depends>com.intellij.modules.lang</depends>
+    
     <depends>com.intellij.modules.platform</depends>
     <!-- ref: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules-specific-to-functionality -->
     <depends>com.redhat.devtools.lsp4ij</depends>

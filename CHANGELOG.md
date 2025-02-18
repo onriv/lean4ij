@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- Fix #137, the support for Non-IDEA IDEs.
+
 ## [0.2.0] - 2025-02-16
 
 Depend on the latest approved nightly build of LSP4IJ: 0.10.1-20250213-172854

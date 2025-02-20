@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-02-18
+
+Depend on the latest approved nightly build of LSP4IJ: 0.10.1-20250213-172854
+
 - Fix #137, the support for Non-IDEA IDEs.
 
 ## [0.2.0] - 2025-02-16
@@ -247,7 +251,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/onriv/lean4ij/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/onriv/lean4ij/compare/v0.1.15...v0.2.0
 [0.1.15]: https://github.com/onriv/lean4ij/compare/v0.1.14...v0.1.15
 [0.1.14]: https://github.com/onriv/lean4ij/compare/v0.1.13...v0.1.14

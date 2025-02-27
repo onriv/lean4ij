@@ -41,7 +41,7 @@ fun environment(key: String) = providers.environmentVariable(key)
 plugins {
     id("java") // Java support
     // from https://github.com/ktorio/ktor-samples/blob/main/sse/build.gradle.kts
-    id("io.ktor.plugin") version "3.1.0"
+    id("io.ktor.plugin") version "3.1.1"
     alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin

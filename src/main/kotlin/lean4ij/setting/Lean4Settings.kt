@@ -5,7 +5,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.xmlb.XmlSerializerUtil
-import kotlin.properties.Delegates
 
 /**
  * TODO this in fact can be different to implement the immutable state directly rather than using an
@@ -64,6 +63,10 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var nativeInfoviewPopupPreferredMaxWidth = 600
 
     var enableVscodeInfoview = true
+
+    var showAllMessagesInInternalInfoview = true
+    var showMessagesInInternalInfoview = true
+    var showExpectedTypeInInternalInfoview = true
 
     // TODO this in fact can be different to implement the immutable state directly rather than using an
     //      extra class
@@ -164,5 +167,8 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         int("native infoview min width", settings::nativeInfoviewPopupPreferredMinWidth, 0, 3000).enabledIf(enableNativeInfoview.selected)
         int("native infoview max width", settings::nativeInfoviewPopupPreferredMaxWidth, 0, 3000).enabledIf(enableNativeInfoview.selected)
         boolean("Enable the vscode infoview", settings::enableVscodeInfoview)
+        boolean("Show All messages in internal infoview", settings::showAllMessagesInInternalInfoview)
+        boolean("Show message in internal infoview", settings::showMessagesInInternalInfoview)
+        boolean("Show expected type in internal infoview", settings::showExpectedTypeInInternalInfoview)
     }
 }

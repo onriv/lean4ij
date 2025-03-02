@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+- A temporary try catch for #57, that external infoview throws exception
+- fix #106, wrongly syntax error in the editor
+- support #59, visibility settings for the parts in the internal infoview
+
 ## [0.2.1] - 2025-02-18
 
 Depend on the latest approved nightly build of LSP4IJ: 0.10.1-20250213-172854

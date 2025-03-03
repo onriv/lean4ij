@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2025-03-02
+
+Depend on the latest approved nightly build of LSP4IJ: 0.11.1-20250226-013217
+
 - A temporary try catch for #57, that external infoview throws exception
 - fix #106, wrongly syntax error in the editor
 - support #59, visibility settings for the parts in the internal infoview
@@ -255,7 +259,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/onriv/lean4ij/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/onriv/lean4ij/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/onriv/lean4ij/compare/v0.1.15...v0.2.0
 [0.1.15]: https://github.com/onriv/lean4ij/compare/v0.1.14...v0.1.15

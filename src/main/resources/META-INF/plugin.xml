@@ -173,21 +173,30 @@
     </extensions>
 
     <actions>
+        <!-- The implementation should be similar with lean4ij.infoview.LeanInfoViewWindow.installPopupHandler -->
+        <group id="lean4ij.editor.customGroup" text="Lean Actions..." popup="true">
+            <separator/>
+            <reference ref="LSP.GotoReference"/>
+            <reference ref="LSP.GotoDeclaration"/>
+            <separator/>
+        </group>
+        <!--  -->
 
         <!-- infoview actions -->
         <action id="ToggleLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4 Actions: Toggle Infoview (internal) visibility" description="Lean4: Toggle Infoview (internal) visibility"
-                icon="/icons/infoview_icon.svg"
-        >
+                icon="/icons/infoview_icon.svg">
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="first"/>
         </action>
         <action id="ToggleLeanInfoViewJcef" class="lean4ij.actions.ToggleLeanInfoViewJcef" text="Lean4 Actions: Toggle Infoview (jcef) visibility" description="Lean4: Toggle Infoview (jcef) visibility"
-                icon="/icons/jcef_icon.svg"
-        >
+                icon="/icons/jcef_icon.svg">
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="first"/>
         </action>
         <action id="ToggleInfoviewPreferred" class="lean4ij.actions.ToggleInfoviewPreferred" text="Lean4 Actions: Toggle Infoview (preferred) visibility" description="Lean4: Toggle Infoview (preferred) visibility"
                 icon="/icons/jcef_icon.svg"
         >
             <add-to-group group-id="MainToolbarRight" anchor="first"/>
             <add-to-group group-id="ToolbarRunGroup" anchor="first"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="first"/>
         </action>
         <action id="IncreaseZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.IncreaseZoomLevelForLeanInfoViewJcef" text="Lean4 Actions: Increase zoom level for lean infoview (jcef)" description="Lean4: increase zoom level for lean infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>
@@ -212,9 +221,11 @@
         </action>
         <action id="RestartJcefInfoview" class="lean4ij.actions.RestartJcefInfoview" text="Lean4 Actions: Restart Jcef Infoview" description="Lean4 Actions: Restart Jcef Infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="last"/>
         </action>
         <action id="RestartInternalInfoview" class="lean4ij.actions.RestartInternalInfoview" text="Lean4 Actions: Restart Internal Infoview" description="Lean4 Actions: Restart Internal Infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="last"/>
         </action>
         <action id="ToggleInternalInfoviewSoftWrap" class="lean4ij.actions.ToggleInternalInfoviewSoftWrap" text="Lean4 Actions: Toggle Internal Infoview Soft Wrap" description="Lean4 Actions: Toggle Internal Infoview Soft Wrap">
             <add-to-group group-id="MainMenu" anchor="last"/>
@@ -239,9 +250,11 @@
         <!-- lsp actions -->
         <action id="RestartLeanLsp" class="lean4ij.actions.RestartLeanLsp" text="Lean4 Actions: Restart Lean Lsp Server" description="Restart Lean Lsp Server">
             <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="last"/>
         </action>
         <action id="RestartCurrentLeanFile" class="lean4ij.actions.RestartCurrentFile" text="Lean4 Actions: Restart Current Lean File" description="Restart Current Lean File">
             <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="last"/>
         </action>
 
         <action id="FindInExternalInfoview" class="lean4ij.actions.FindInExternalInfoview" text="Lean4 Actions: Find in external infoview" description="Find in external infoview">
@@ -261,7 +274,6 @@
         <action id="InternalInfoviewGotoDefinition" class="lean4ij.actions.InternalInfoviewGotoDefinition" text="Lean4 Actions: Go to Definition" description="InternalInfoviewGotoDefinition">
             <add-to-group group-id="lean4ij.infoview.rightClickGroup" anchor="last"/>
         </action>
-
     </actions>
 
     <applicationListeners>

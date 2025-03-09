@@ -42,18 +42,8 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         leanProject.scope.launch(Dispatchers.EDT) {
             try {
                 val editor0 = createEditor()
-                // There are many ways to do this
-                // one is ths contextMenuGroup, or handle it manually with installPopupHandler
-                // or using things like PopupHandler.installPopupMenu
-                // check: https://intellij-support.jetbrains.com/hc/en-us/community/posts/6912597187218-How-can-I-create-a-custom-right-click-menu-that-contains-a-couple-of-actions-and-attach-the-menu-to-each-element-in-a-JTree-in-my-plugin
-                // and  https://github.com/JetBrains/intellij-community/blob/master/platform/lang-impl/src/com/intellij/packageDependencies/ui/DependenciesPanel.java
-                editor0.contextMenuGroupId = "lean4ij.infoview.rightClickGroup"
-                editor0.installPopupHandler { event ->
-                    val leanInfoviewService = project.service<LeanInfoviewService>()
-                    leanInfoviewService.caretIsOverText = event.isOverText
-                    // if the event is not over text, we do not pass it to context menu group
-                    !event.isOverText
-                }
+
+                installPopupHandler(editor0)
 
                 editor.complete(editor0)
             } catch (ex: Throwable) {
@@ -78,6 +68,24 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
             return ""
         }
         return ""
+    }
+
+    /**
+     * This creates a right-click popup menu for the infoview editor
+     * There are many ways to do this,
+     * one is ths contextMenuGroup, or handle it manually with installPopupHandler
+     * or using things like PopupHandler.installPopupMenu
+     * check: https://intellij-support.jetbrains.com/hc/en-us/community/posts/6912597187218-How-can-I-create-a-custom-right-click-menu-that-contains-a-couple-of-actions-and-attach-the-menu-to-each-element-in-a-JTree-in-my-plugin
+     * and https://github.com/JetBrains/intellij-community/blob/master/platform/lang-impl/src/com/intellij/packageDependencies/ui/DependenciesPanel.java
+     */
+    private fun installPopupHandler(editor: EditorEx) {
+        editor.contextMenuGroupId = "lean4ij.infoview.rightClickGroup"
+        editor.installPopupHandler { event ->
+            val leanInfoviewService = project.service<LeanInfoviewService>()
+            leanInfoviewService.caretIsOverText = event.isOverText
+            // if the event is not over text, we do not pass it to context menu group
+            !event.isOverText
+        }
     }
 
     /**

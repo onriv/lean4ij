@@ -2,12 +2,10 @@ package lean4ij.infoview.dsl
 
 import lean4ij.lsp.LeanLanguageServer
 import lean4ij.lsp.data.InteractiveGoals
-import lean4ij.lsp.fromJson
 import lean4ij.test.readResource
+import lean4ij.util.fromJson
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.lang.StringBuilder
 
 
 class DslKtTest {

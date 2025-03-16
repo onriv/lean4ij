@@ -1,12 +1,17 @@
 package lean4ij.project
 
-import com.google.common.io.Resources
+import com.google.gson.Gson
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.json.Json
+import lean4ij.util.fromJson
+import java.net.HttpURLConnection
+import java.net.Proxy
+import java.net.URL
 import java.nio.file.Path
-import kotlin.io.path.exists
+
+data class GitHubTag(val name: String)
 
 @Service(Service.Level.PROJECT)
 class ElanService {
@@ -30,10 +35,56 @@ class ElanService {
      * git --no-pager tag|grep v4|python -c 'import sys; print("".join(sorted(sys.stdin,key=lambda x:tuple(map(int,x.replace("v","").replace("-rc", ".").replace("-m", ".").split("."))), reverse=True)))'
      * ```
      * TODO maybe it can fetch locally or update in the pipeline
+     * A curl version of this using the github api is
+     * curl https://api.github.com/repos/leanprover/lean4/tags |grep name|awk '{print $2}'
      */
     fun toolchains(includeRemote: Boolean): List<String> {
         return javaClass.classLoader.getResource("toolchains.txt").readText().split("\n")
     }
+
+    /**
+     * Fetching all versions from https://api.github.com/repos/leanprover/lean4/tags
+     */
+    fun toolchainsFromGithub(proxy: Proxy? = null): List<String> {
+        return getGitHubTags("leanprover", "lean4", proxy)
+    }
+
+    /**
+     * The method here is using the GitHub API to fetch the tags of a repository
+     * and then return the names of the tags.
+     *
+     * The method is from standard library and avoids relying on third party libraries
+     */
+    fun getGitHubTags(owner: String, repo: String, proxy: Proxy?): List<String> {
+        val url = URL("https://api.github.com/repos/$owner/$repo/tags")
+        val connection = (if (proxy != null) {
+            url.openConnection(proxy)
+        } else {
+            url.openConnection()
+        }) as HttpURLConnection
+
+        try {
+            connection.apply {
+                requestMethod = "GET"
+                setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36")
+                connectTimeout = 5000
+                readTimeout = 5000
+            }
+
+            return when (connection.responseCode) {
+                in 200..299 -> {
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    Gson().fromJson<List<GitHubTag>>(response).map { it.name }
+                }
+                else -> throw Exception("HTTP Error ${connection.responseCode}: ${connection.responseMessage}")
+            }
+        } catch (e: Exception) {
+            throw e;
+        } finally {
+            connection.disconnect()
+        }
+    }
+
 
     fun commandForRunningElan(arguments: String, project: Project, environment: Map<String, String>) : GeneralCommandLine {
         val command = mutableListOf(elanPath.toString())

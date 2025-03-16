@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextCo
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleTypeManager
+import com.intellij.openapi.observable.util.toStringProperty
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
@@ -61,7 +62,12 @@ import lean4ij.run.ElanRunConfigurationType
 import lean4ij.run.fullWidthCell
 import lean4ij.sdk.SdkService
 import lean4ij.util.execute
+import java.awt.Color
 import java.io.File
+import java.net.ConnectException
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.URL
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -82,8 +88,20 @@ class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wi
 
     val entityNameProperty = propertyGraph.lazyProperty(::suggestName)
     val locationProperty = propertyGraph.lazyProperty(::suggestLocationByName)
-    val versionProperty = propertyGraph.lazyProperty{ service<ElanService>().toolchains(includeRemote = true)[0] }
-    val useProxyProperty = propertyGraph.lazyProperty{ false }
+    val fetchingTagsFromGithubProperty = propertyGraph.lazyProperty { false }
+    val fetchingTagsError = propertyGraph.lazyProperty { "" }
+    val allVersionsProperty = fetchingTagsFromGithubProperty.transform(
+        map = {
+            getVersions(it)
+        },
+        backwardMap = {
+            throw IllegalStateException("versionProperty should not backward map to fetchingTagsFromGithubProperty")
+        }
+    )
+    val versionProperty = propertyGraph.lazyProperty {
+        allVersionsProperty.get()[0]
+    }
+    val useProxyProperty = propertyGraph.lazyProperty { false }
     val proxyValueProperty = propertyGraph.lazyProperty { "" }
     val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
     val templatesProperty = propertyGraph.property(TEMPLATES.first())
@@ -100,6 +118,39 @@ class QuickStarterModel(private val propertyGraph: PropertyGraph, private val wi
 
     private fun suggestLocationByName(): String {
         return wizardContext.projectFileDirectory
+    }
+
+    private fun getVersions(fromGithub : Boolean): List<String> {
+        val elanService = service<ElanService>()
+        if (!fromGithub) {
+            return elanService.toolchains(includeRemote = true)
+        }
+
+        try {
+            val proxy = if (useProxyProperty.get()) {
+                val url = URL(proxyValueProperty.get())
+                val type = if (url.protocol.contains("sock")) {
+                    Proxy.Type.SOCKS
+                } else {
+                    Proxy.Type.HTTP
+                }
+                Proxy(type, InetSocketAddress(url.host, url.port))
+            } else {
+                null
+            }
+            try {
+                return elanService.toolchainsFromGithub(proxy)
+            } finally {
+                fetchingTagsError.set("")
+            }
+        } catch (e: ConnectException) {
+            fetchingTagsError.set(
+                (e.message ?: "unknown error") + ", please consider using proxy<br>fallback to preset versions"
+            )
+        } catch (e: Exception) {
+            fetchingTagsError.set((e.message ?: "unknown error") + "<br>fallback to preset versions")
+        }
+        return elanService.toolchains(includeRemote = true)
     }
 
     fun getLocationComment(): String {
@@ -195,10 +246,31 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
                 }
             }
             row("Lean Version") {
-                val comboBox = comboBox(service<ElanService>().toolchains(includeRemote = true))
+                val comboBox = comboBox(quickStarterModel.allVersionsProperty.get())
+                quickStarterModel.allVersionsProperty.afterChange {
+                    comboBox.component.removeAllItems()
+                    quickStarterModel.allVersionsProperty.get().forEach { comboBox.component.addItem(it) }
+                }
                 comboBox.bindItem(quickStarterModel.versionProperty)
                 val comboBoxComponent = comboBox.component
                 makeComboBoxSearchable(comboBoxComponent)
+                val fetchingTagsFromGithub = checkBox("Fetching tags from Github")
+                fetchingTagsFromGithub.bindSelected(quickStarterModel.fetchingTagsFromGithubProperty)
+            }
+            // add an error message row for downloading lean version, and hide it by default
+            row {
+                val errorMessage = text("Error message")
+                val component = errorMessage.component
+                component.isVisible = false
+                quickStarterModel.fetchingTagsError.afterChange {
+                    if (it.isNotEmpty()) {
+                        component.text = it
+                        component.foreground = Color.RED
+                        component.isVisible = true
+                    } else {
+                        component.isVisible = false
+                    }
+                }
             }
 
             val proxySettingsGroup = collapsibleGroup("Proxy Settings") {
@@ -214,10 +286,12 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
                     )
                 }.visibleIf(quickStarterModel.useProxyProperty)
                 row {
-                    comment("""
+                    comment(
+                        """
                         If you are behind a proxy, you can enable this option to download Lean from the internet.<br>
                         The proxy is transformed into an environment variable `HTTP_PROXY` for elan.
-                    """.trimIndent())
+                    """.trimIndent()
+                    )
                 }
             }
             proxySettingsGroup.expanded = false
@@ -271,15 +345,6 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
         val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
         val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
         return textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor).bindText(property)
-    }
-
-    private fun Panel.addLeanVersionRow(context: WizardContext) {
-        row("Lean Version") {
-            val comboBox = comboBox(service<ElanService>().toolchains(includeRemote = true))
-            comboBox.bindItem(quickStarterModel.versionProperty)
-            val comboBoxComponent = comboBox.component
-            makeComboBoxSearchable(comboBoxComponent)
-        }
     }
 
     /**
@@ -400,7 +465,8 @@ class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProject
 
             elanRuhConfiguration.options.arguments = "which lean"
             if (quickStarterModel.useProxyProperty.get()) {
-                elanRuhConfiguration.options.environments["HTTPS_PROXY"] = quickStarterModel.proxyValueProperty.get().trim()
+                elanRuhConfiguration.options.environments["HTTPS_PROXY"] =
+                    quickStarterModel.proxyValueProperty.get().trim()
             }
             runManager.addConfiguration(configuration)
 

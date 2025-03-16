@@ -31,8 +31,8 @@ import lean4ij.lsp.LeanLanguageServer
 import lean4ij.lsp.data.RpcCallParamsRaw
 import lean4ij.lsp.data.RpcConnectParams
 import lean4ij.lsp.data.DefinitionTarget
-import lean4ij.lsp.fromJson
 import lean4ij.project.LeanProjectService
+import lean4ij.util.fromJson
 import java.awt.Color
 
 private val logger = logger<ExternalInfoViewService>()

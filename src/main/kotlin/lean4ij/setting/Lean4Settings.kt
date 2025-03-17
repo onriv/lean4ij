@@ -41,7 +41,6 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var languageServerStartingStrategy = "Eager"
     var fileProgressTriggeringStrategy = "OnlySelectedEditor"
 
-    var maxInlayHintWaitingMillis = 5
     var strategyForTriggeringSymbolsOrClassesRequests = "debounce"
     var workspaceSymbolTriggerSuffix = ",,"
     var workspaceSymbolTriggerDebouncingTime = 1000
@@ -104,7 +103,6 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
     group("Inlay Hints Settings ") {
         boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)
         string("Comment prefix for goal hints", settings::commentPrefixForGoalHint)
-        int("Max inlay hint waiting millis(multiple of 25)", settings::maxInlayHintWaitingMillis, 0, 500, 25)
     }
     group("Language Server Settings") {
         boolean("Enable language server", settings::enableLanguageServer)

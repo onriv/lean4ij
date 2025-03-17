@@ -278,7 +278,7 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             val range = ReadAction.compute<RangeMarker, Throwable> {
                 editor.document.createRangeMarker(hintPos, hintPos)
             }
-            hints.add(Hint(range, inlayHintType, 45, ": ..."))
+            hints.add(Hint(range, inlayHintType, 35, ": ..."))
         }
 
         return hints

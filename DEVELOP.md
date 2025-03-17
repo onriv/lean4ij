@@ -140,6 +140,11 @@ socksProxyPort=7890
 
 For first (and while require updating the frontend, run a `gradle buildBrowserInfoview` before run `runIde`). If the above way does not fix error in building the frontend, try remove `nodeProxySettings = ProxySettings.FORCED` too in `build.gradle.kts`.
 
+
+# Project Creating
+
+Currently implementing, check https://plugins.jetbrains.com/docs/intellij/project-wizard.html for the official document.
+
 # Debug and troubleshooting
 
 TODO
@@ -209,9 +214,19 @@ Running it from gradle seems working fine currently, but for running a selected 
 -ea
 ```
 
+If a test failed in the pipeline, an artifact named "tests-result" will be generated at the part of artifacts and
+there is the detail for the failure of tests in it. Download and unzip to see the concrete error if necessary.
 
 # Ref
 
+## Some ref on intellij plugin development
+
+The general docs is at [Intellij Platform SDK](https://plugins.jetbrains.com/docs/intellij/welcome.html)
+
+For docs about extension points, check [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html) 
+and [IntelliJ Platform Extension Point and Listener List](https://plugins.jetbrains.com/docs/intellij/intellij-platform-extension-point-list.html)
+
+## Related thread in zulip
 - Some threads in zulip during the developments:
   - [Would lsp server quit anomaly?](https://leanprover.zulipchat.com/#narrow/stream/270676-lean4/topic/Would.20lsp.20server.20quit.20anomaly.3F)
   - [`elan which lake` downloads lean if it not exist](https://leanprover.zulipchat.com/#narrow/stream/270676-lean4/topic/.60elan.20which.20lake.60.20downloads.20lean.20if.20it.20not.20exist) This is why currently the way to find the toolchain is manually done

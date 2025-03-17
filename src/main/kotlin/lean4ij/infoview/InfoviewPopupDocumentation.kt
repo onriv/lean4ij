@@ -143,9 +143,8 @@ class InfoviewPopupDocumentation(
             )
             val infoToInteractive = leanProjectService.languageServer.await()
                 .infoToInteractive(rpcParams)
-            val sb = InfoviewRender(project, file)
-            val typeStr = infoToInteractive.type?.toInfoViewString(sb, null) ?: ""
-            val exprStr = infoToInteractive.exprExplicit?.toInfoViewString(sb, null) ?: ""
+            val typeStr = infoToInteractive.type?.toInfoObjectModel()?.toString() ?: ""
+            val exprStr = infoToInteractive.exprExplicit?.toInfoObjectModel()?.toString() ?: ""
             var htmlDoc: String? = null
             if (infoToInteractive.doc != null) {
                 val markdownDoc: String = infoToInteractive.doc

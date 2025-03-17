@@ -8,7 +8,7 @@ import lean4ij.lsp.data.ContextInfo
 import lean4ij.lsp.data.Position
 
 /**
- * TODO move some logic in [LeanInfoViewWindowFactory] here
+ * TODO move some logic in [InfoViewWindowFactory] here
  */
 @Service(Service.Level.PROJECT)
 class LeanInfoviewService(private val project: Project) {

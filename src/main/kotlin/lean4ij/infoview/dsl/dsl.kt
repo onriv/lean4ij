@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import lean4ij.infoview.Lean4TextAttributesKeys
-import lean4ij.infoview.LeanInfoViewWindowFactory
+import lean4ij.infoview.InfoViewWindowFactory
 import lean4ij.infoview.LeanInfoviewContext
 import lean4ij.lsp.data.ContextInfo
 import lean4ij.lsp.data.FoldingData
@@ -201,7 +201,7 @@ class InfoObjectModel(
                 val foldRegion = editorEx.foldingModel.addFoldRegion(folding.startOffset, folding.endOffset, folding.placeholderText)
                 foldRegion?.apply {
                     isExpanded = if (folding.isAllMessages) {
-                        LeanInfoViewWindowFactory.expandAllMessage
+                        InfoViewWindowFactory.expandAllMessage
                     } else {
                         folding.expanded
                     }

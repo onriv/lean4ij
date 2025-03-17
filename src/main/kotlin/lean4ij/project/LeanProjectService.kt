@@ -47,14 +47,22 @@ import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.services.LanguageServer
 import java.awt.Color
+import java.lang.AssertionError
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 @Service(Service.Level.PROJECT)
 class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
+    // TODO the state maybe should move out to a delegated
+    // This is default to false, for it maybe not creating by Intellij IDEA
+    // in this case we think it's already created by the user using command line
+    // tool, etc.
+    var isProjectCreating: Boolean = false
 
     private var _languageServer = CompletableDeferred<LeanLanguageServer>()
     val languageServer : CompletableDeferred<LeanLanguageServer> get() = _languageServer
@@ -269,6 +277,15 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      * we implement it here rather than the [LeanFile] class.
      * Although we can also match the request using the response in [LeanLanguageServerLifecycleListener]
      * we do not do it this way yet though
+     * TODO MAYBE this should be refactor out to some editor related service or other stuff
+     *      too many things in [LeanProjectService]
+     * The catch in the following definition in fact cannot block the plugin notifying an
+     * error when we are trying to remove a non-exist listener
+     * check [com.intellij.openapi.editor.impl.EditorImpl.removeEditorMouseMotionListener] and
+     * [com.intellij.openapi.diagnostic.Logger.assertTrue]
+     * The error is notified at the point the error is created not the point it's caught
+     * Removing non-existent listener may be caused by duplicated removal, we try to fix
+     * this by set it to null after removal
      */
     fun highlightCurrentContent(hover: Hover?) {
         if (!service<Lean4Settings>().enableHoverHighlight) {
@@ -282,9 +299,14 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
             if (hoverListener != null) {
                 try {
                     editor.removeEditorMouseMotionListener(hoverListener!!)
+                    hoverListener = null
                 } catch (e: Throwable) {
                     // There are cases that we remove non-exist listener
                     // Here we just ignore it
+                    // Some concrete exception is:
+                    //   java.lang.Throwable: Assertion failed
+                    //   	at com.intellij.openapi.diagnostic.Logger.assertTrue(Logger.java:469)
+                    //   	at com.intellij.openapi.diagnostic.Logger.assertTrue(Logger.java:478)
                 }
             }
             if (hoverRangeHighlighter != null) {
@@ -295,8 +317,9 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                 return
             }
 
-            // TODO duplicated with
+            // TODO DRY DRY, duplicated with
             //      lean4ij.infoview.InfoviewMouseMotionListener.mouseMoved
+            // TODO this should add some setting page for it too
             val attr = object : TextAttributes() {
                 override fun getBackgroundColor(): Color {
                     // TODO document this
@@ -306,7 +329,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                     //      indeed here it can be null, don't know why Kotlin does not mark it as error
                     // TODO there is cases here the background of identifier under current caret is null
                     // TODO do this better in a way
-                    var color = scheme.getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES).backgroundColor
+                    var color = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
                     if (color != null) {
                         return color
                     }
@@ -317,21 +340,76 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                     return scheme.defaultBackground
                 }
             }
-            hoverRangeHighlighter = markupModel.addRangeHighlighter(
-                StringUtil.lineColToOffset(document.charsSequence, hover.range.start.line, hover.range.start.character),
-                StringUtil.lineColToOffset(document.charsSequence, hover.range.end.line, hover.range.end.character),
-                HighlighterLayer.LAST,
-                attr,
-                HighlighterTargetArea.EXACT_RANGE
-            )
-            hoverListener = object : EditorMouseMotionListener {
-                override fun mouseMoved(e: EditorMouseEvent) {
-                    if (!e.isOverText) {
-                        editor.markupModel.removeHighlighter(hoverRangeHighlighter!!)
+            try {
+                hoverRangeHighlighter = markupModel.addRangeHighlighter(
+                    StringUtil.lineColToOffset(document.charsSequence, hover.range.start.line, hover.range.start.character),
+                    StringUtil.lineColToOffset(document.charsSequence, hover.range.end.line, hover.range.end.character),
+                    HighlighterLayer.LAST,
+                    attr,
+                    HighlighterTargetArea.EXACT_RANGE
+                )
+                hoverListener = object : EditorMouseMotionListener {
+                    override fun mouseMoved(e: EditorMouseEvent) {
+                        if (!e.isOverText) {
+                            editor.markupModel.removeHighlighter(hoverRangeHighlighter!!)
+                        }
                     }
                 }
+                editor.addEditorMouseMotionListener(hoverListener!!)
+            } catch (e: AssertionError) {
+                // There may be the following exception, it may be caused by concurrently changing the content in the editor and the hover event is triggered
+                // TODO Nevertheless when editing the content the hover event should not be triggered theoretically, throttled the hover event when editing rather than
+                //      simply catching the exception
+                /**
+                 * java.lang.AssertionError: 446 (class com.intellij.openapi.editor.impl.RangeHighlighterTree); this: 902(class com.intellij.openapi.editor.impl.RangeHighlighterTree)
+                 * 	at com.intellij.openapi.editor.impl.IntervalTreeImpl.checkBelongsToTheTree(IntervalTreeImpl.java:938)
+                 * 	at com.intellij.openapi.editor.impl.IntervalTreeImpl.removeInterval(IntervalTreeImpl.java:969)
+                 * 	at com.intellij.openapi.editor.impl.MarkupModelImpl.removeHighlighter(MarkupModelImpl.java:200)
+                 * 	at lean4ij.project.LeanProjectService$highlightCurrentContent$1$1.mouseMoved(LeanProjectService.kt:337)
+                 * 	at com.intellij.openapi.editor.impl.EditorImpl$MyMouseMotionListener.mouseMoved(EditorImpl.java:4857)
+                 */
             }
-            editor.addEditorMouseMotionListener(hoverListener!!)
         }
+    }
+
+    /**
+     * A naive check on if current project is depending on mathlib
+     * TODO definitely it requires some refactor
+     */
+    fun isDependingOnMathlib() : Boolean {
+        val projectBasePath = project.basePath?:return false
+        // TODO maybe some constant for the configuration file
+        val projectConfigurationFile = Path(projectBasePath, "lakefile.lean")
+        if (projectConfigurationFile.exists() && projectConfigurationFile.isRegularFile()){
+            val configurationText = projectConfigurationFile.toFile().readText()
+            // require mathlib and the concrete git path can be in different lines
+            // check: https://grep.app/search?f.lang=Lean&f.path.pattern=lakefile.lean&regexp=true&q=require+mathlib%5B%5Cs%5CS%5D%2Bleanprover-community%2Fmathlib4
+            // This definitely has some bad case, but it should enough for most case
+            val mathlibDependenceRegex = Regex("require mathlib[\\s\\S]+leanprover-community/mathlib4")
+            if (mathlibDependenceRegex.find(configurationText) != null) {
+                return true
+            }
+        }
+        val projectConfigurationFileToml =Path(projectBasePath, "lakefile.toml")
+        if (projectConfigurationFileToml.exists() && projectConfigurationFileToml.isRegularFile()) {
+            val configurationText = projectConfigurationFileToml.toFile().readText()
+            // TODO absolutely we should use some toml library for this
+            // This is checked with
+            // https://grep.app/search?f.lang=TOML&f.path.pattern=lakefile.toml&regexp=true&q=name%5Cs*%3D%5Cs*%22mathlib%22%5B%5Cs%5CS%2B%5Dgit%5Cs*%3D%5Cs*%22https%3A%2F%2Fgithub.com%2Fleanprover-community%2Fmathlib4.git%22
+            // val mathlibDependenceRegex = Regex("name\\s*=\\s*\"mathlib\"[\\s\\S+]git\\s*=\\s*\"https://github.com/leanprover-community/mathlib4.git\"")
+            // The above is too much, we check only `name = mathlib` for the configuration since the following
+            //     name\s*=\s*"mathlib"[\s\S]+scope = "leanprover-community"
+            // i.e., the following raw string is also observed, which seems default generated by `lake new <SomeProject> math.toml`
+            //     [[require]]
+            //      name = "mathlib"
+            //      scope = "leanprover-community"
+            //      version = "git#master"
+            // check https://grep.app/search?f.lang=TOML&f.path.pattern=lakefile.toml&regexp=true&q=name%5Cs*%3D%5Cs*%22mathlib%22%5B%5Cs%5CS%5D%2Bscope+%3D+%22leanprover-community%22
+            val mathlibDependenceRegex = Regex("name\\s*=\\s*\"mathlib\"")
+            if (mathlibDependenceRegex.find(configurationText) != null) {
+                return true
+            }
+        }
+        return false
     }
 }

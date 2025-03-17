@@ -68,7 +68,6 @@ class Lean4SettingsView {
         for (action in applyActions) {
             action()
         }
-        lean4Settings.updateNonPersistent()
     }
 
     fun reset() {

@@ -8,7 +8,7 @@
    fill="none"
    version="1.1"
    id="svg1"
-   sodipodi:docname="resume_dark.svg"
+   sodipodi:docname="infoview_icon_dark.svg"
    inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -41,16 +41,10 @@
      r="8"
      fill="#F0F1F2"
      id="circle1" />
-  <text
-     xml:space="preserve"
-     style="font-size:14.9167px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#818594;fill-opacity:1;stroke:#818592;stroke-width:0.678712;stroke-opacity:1"
-     x="3.3377948"
-     y="13.385642"
+  <path
+     d="M 12.879239,2.6642637 8.8878561,13.385642 H 7.2709091 L 3.3086606,2.6642637 H 4.7945038 L 5.9453039,5.8835906 H 10.16976 L 11.305993,2.6642637 Z M 9.7327474,7.1217933 H 6.3968837 l 1.6897825,4.7343047 z"
      id="text2"
-     transform="scale(1.0085892,0.99148394)"><tspan
-       sodipodi:role="line"
-       id="tspan2"
-       x="3.3377948"
-       y="13.385642"
-       style="fill:#818594;fill-opacity:1;stroke:#818592;stroke-width:0.678712;stroke-opacity:1">∀</tspan></text>
+     style="font-size:14.9167px;fill:#818594;stroke:#818592;stroke-width:0.678712"
+     transform="scale(1.0085892,0.99148394)"
+     aria-label="∀" />
 </svg>

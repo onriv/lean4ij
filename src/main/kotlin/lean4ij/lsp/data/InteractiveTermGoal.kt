@@ -47,43 +47,6 @@ class InteractiveTermGoal(
     }
 
     /**
-     * TODO refactor StringBuilder into a Render
-     */
-    fun toInfoViewString(editor: Editor, sb: InfoviewRender) {
-        val header = "Expected type"
-        val start = sb.length
-        sb.append("$header")
-        sb.highlight(
-            start,
-            sb.length,
-            EditorColorsManager.getInstance().globalScheme.getAttributes(Lean4TextAttributesKeys.SwingInfoviewExpectedType.key)
-        )
-        sb.append('\n')
-        // TODO deduplicate
-        for (hyp in hyps) {
-            val names = hyp.names.joinToString(prefix = "", separator = " ", postfix = "")
-            val start = sb.length
-            sb.append(names)
-            if (names.contains("✝")) {
-                sb.highlight(start, sb.length, Lean4TextAttributesKeys.GoalInaccessible)
-            } else {
-                sb.highlight(start, sb.length, Lean4TextAttributesKeys.GoalHyp)
-            }
-            sb.append(" : ")
-            hyp.type.toInfoViewString(sb, null)
-            sb.append("\n")
-        }
-        sb.append("⊢", Lean4TextAttributesKeys.SwingInfoviewGoalSymbol)
-        sb.append(" ")
-        type.toInfoViewString(sb, null)
-        val end = sb.length
-        // TODO it can not add fold here directly for the content still not add to editor yet
-        //
-        sb.addFoldingOperation(start, end, header)
-        sb.append("\n")
-    }
-
-    /**
      * TODO this should absolutely DRY with [lean4ij.lsp.data.InteractiveGoals.getCodeText]
      */
     fun getCodeText(offset: Int): Triple<ContextInfo, Int, Int>? {

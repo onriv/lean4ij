@@ -5,7 +5,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.xmlb.XmlSerializerUtil
-import kotlin.properties.Delegates
 
 /**
  * TODO this in fact can be different to implement the immutable state directly rather than using an
@@ -27,6 +26,10 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableHeuristicDefinition = true
     var enableHoverHighlight = true
 
+    var addSpaceAfterLiveTemplates = true
+    var autoCompletePairLiveTemplates = true
+    var enableBothSpaceAndNonSpaceLiveTemplates = false
+
     /**
      * TODO add project level configuration for this
      */
@@ -44,13 +47,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var workspaceSymbolTriggerDebouncingTime = 1000
 
     // ref: https://kotlinlang.org/docs/delegated-properties.html#observable-properties
-    var commentPrefixForGoalHint: String by Delegates.observable("---") {
-        prop, old, new ->
-        updateCommentPrefixForGoalHintRegex(new)
-    }
-
-    @Transient
-    var commentPrefixForGoalHintRegex : Regex? = null
+    var commentPrefixForGoalHint: String = "---"
 
     var enableDiagnosticsLens = true
     var enableLspCompletion = true
@@ -67,21 +64,20 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
 
     var enableVscodeInfoview = true
 
+    var showAllMessagesInInternalInfoview = true
+    var showMessagesInInternalInfoview = true
+    var showExpectedTypeInInternalInfoview = true
+
     // TODO this in fact can be different to implement the immutable state directly rather than using an
     //      extra class
     override fun getState() = this
 
     override fun loadState(state: Lean4Settings) {
         XmlSerializerUtil.copyBean(state, this)
-        updateNonPersistent()
     }
 
-    fun updateNonPersistent() {
-        updateCommentPrefixForGoalHintRegex(commentPrefixForGoalHint)
-    }
-
-    fun updateCommentPrefixForGoalHintRegex(prefix: String) {
-        commentPrefixForGoalHintRegex = Regex("""(\n\s*${Regex.escape(prefix)})\s*?\n\s*\S""")
+    fun getCommentPrefixForGoalHintRegex() : Regex {
+        return Regex("""(\n\s*${Regex.escape(commentPrefixForGoalHint)})\s*?\n\s*\S""")
     }
 }
 
@@ -101,6 +97,9 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Comment at first column", settings::commentAtFirstColumn)
         boolean("Use space after line comment", settings::useSpaceAfterLineComment)
         boolean("Comment empty line", settings::commentEmptyLine)
+        boolean("Add whitespace after live templates for unicode", settings::addSpaceAfterLiveTemplates)
+        boolean("Autocomplete live templates for pair unicode", settings::autoCompletePairLiveTemplates)
+        boolean("Enable both spaced and non spaced live templates", settings::enableBothSpaceAndNonSpaceLiveTemplates)
     }
     group("Inlay Hints Settings ") {
         boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)
@@ -168,5 +167,8 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         int("native infoview min width", settings::nativeInfoviewPopupPreferredMinWidth, 0, 3000).enabledIf(enableNativeInfoview.selected)
         int("native infoview max width", settings::nativeInfoviewPopupPreferredMaxWidth, 0, 3000).enabledIf(enableNativeInfoview.selected)
         boolean("Enable the vscode infoview", settings::enableVscodeInfoview)
+        boolean("Show All messages in internal infoview", settings::showAllMessagesInInternalInfoview)
+        boolean("Show message in internal infoview", settings::showMessagesInInternalInfoview)
+        boolean("Show expected type in internal infoview", settings::showExpectedTypeInInternalInfoview)
     }
 }

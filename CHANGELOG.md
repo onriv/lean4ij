@@ -4,6 +4,71 @@
 
 ## [Unreleased]
 
+- support #94, a dedicated context menu for lean file in editor
+- a detail log for #143
+
+## [0.2.2] - 2025-03-02
+
+Depend on the latest approved nightly build of LSP4IJ: 0.11.1-20250226-013217
+
+- A temporary try catch for #57, that external infoview throws exception
+- fix #106, wrongly syntax error in the editor
+- support #59, visibility settings for the parts in the internal infoview
+
+## [0.2.1] - 2025-02-18
+
+Depend on the latest approved nightly build of LSP4IJ: 0.10.1-20250213-172854
+
+- Fix #137, the support for Non-IDEA IDEs.
+
+## [0.2.0] - 2025-02-16
+
+Depend on the latest approved nightly build of LSP4IJ: 0.10.1-20250213-172854
+The version upgrades to 0.2.0 for the new project wizard features. For 0.2.x we are trying to
+add some features for project management, elan/lake functionalities, etc.
+
+- Fix #127. The infoview button on main toolbar is only visible for lean project.
+- Add "New project wizard" for Intellij Idea (see [docs](https://github.com/onriv/lean4ij/blob/main/docs/create-project.md) for detail)
+- Add automatically generated run configuration (see [docs](https://github.com/onriv/lean4ij/blob/main/docs/run-configuration.md) for detail)
+- Dedicated workflow for prerelease.
+
+## [0.1.15] - 2025-02-05
+
+Depend on the latest approved nightly build of LSP4IJ: 0.10.0-20250204-132029
+
+- Alternative live templates (see [docs](https://github.com/onriv/lean4ij/blob/main/docs/unicode-live-templates.md) for details)
+
+## [0.1.14] - 2025-01-27
+
+Depend on the latest approved nightly build of LSP4IJ: 0.10.0-20250127-013201
+
+- add run content and gutter for the main function
+- show infoview and related actions only for lean project (#111)
+- update vite to 5.4.14 for the vscode-adapted infoview (#118)
+- switch the default color of hovering to selection (#120)
+- fix wrongly folding in the "Messages" part of internal infoview
+- fix heuristic highlight for definition and attribute (regression becuase version 0.1.11 introduce the context-sensitive whitespace)
+- try to fix error notified in hovering the editor
+- remove `toInfoViewString` (superseded by `toInfoModelObject`)
+- rewrite some unicode characters in the flex file for building on Windows
+- some unittests for the parser
+
+## [0.1.13] - 2025-01-20
+
+Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250116-013135
+
+- @enigmurl  fix error notification in non-lean project
+- fix [#104](https://github.com/onriv/lean4ij/issues/104) that icons not welly displayed in the toolbar
+- simply the Regex used in settings
+
+## [0.1.13-beta.1] - 2025-01-20
+
+Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250116-013135
+
+- @enigmurl fix error notification in non-lean project
+- fix [#104](https://github.com/onriv/lean4ij/issues/104) that icons not welly displayed in the toolbar
+- simply the Regex used in settings
+
 ## [0.1.12] - 2025-01-13
 
 Depend on the latest approved nightly build of LSP4IJ: 0.9.1-20250112-190958
@@ -197,7 +262,14 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.1.12...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/onriv/lean4ij/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/onriv/lean4ij/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/onriv/lean4ij/compare/v0.1.15...v0.2.0
+[0.1.15]: https://github.com/onriv/lean4ij/compare/v0.1.14...v0.1.15
+[0.1.14]: https://github.com/onriv/lean4ij/compare/v0.1.13...v0.1.14
+[0.1.13]: https://github.com/onriv/lean4ij/compare/v0.1.13-beta.1...v0.1.13
+[0.1.13-beta.1]: https://github.com/onriv/lean4ij/compare/v0.1.12...v0.1.13-beta.1
 [0.1.12]: https://github.com/onriv/lean4ij/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/onriv/lean4ij/compare/v0.1.11-beta.0...v0.1.11
 [0.1.11-beta.0]: https://github.com/onriv/lean4ij/compare/v0.1.10...v0.1.11-beta.0

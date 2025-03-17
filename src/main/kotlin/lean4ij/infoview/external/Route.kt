@@ -31,8 +31,8 @@ import lean4ij.lsp.LeanLanguageServer
 import lean4ij.lsp.data.RpcCallParamsRaw
 import lean4ij.lsp.data.RpcConnectParams
 import lean4ij.lsp.data.DefinitionTarget
-import lean4ij.lsp.fromJson
 import lean4ij.project.LeanProjectService
+import lean4ij.util.fromJson
 import java.awt.Color
 
 private val logger = logger<ExternalInfoViewService>()
@@ -123,43 +123,49 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
     webSocket("/ws") {
         try {
             val outgoingJob = launch {
-                val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
-                sendWithLog(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme))))
+                // TODO this is a temporary try catch for https://github.com/onriv/lean4ij/issues/57
+                //      in a large chance it's caused by the client closing the connection
+                try {
+                    val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
+                    sendWithLog(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme))))
 
-                // TODO maybe this should be removed if disconnected for avoiding leak?
-                project.messageBus.connect().subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener {
-                    val scheme = it ?: EditorColorsManager.getInstance().globalScheme
-                    scopeIO.launch {
-                        @Suppress("NAME_SHADOWING")
-                        val themeJson = Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(scheme))))
-                        logger.trace(themeJson)
-                        sendWithLog(themeJson)
+                    // TODO maybe this should be removed if disconnected for avoiding leak?
+                    project.messageBus.connect().subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener {
+                        val scheme = it ?: EditorColorsManager.getInstance().globalScheme
+                        scopeIO.launch {
+                            @Suppress("NAME_SHADOWING")
+                            val themeJson = Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(scheme))))
+                            logger.trace(themeJson)
+                            sendWithLog(themeJson)
+                        }
+                    })
+
+                    val serverRestarted = service.awaitInitializedResult()
+                    sendWithLog(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted)))
+                    service.previousCursorLocation?.let {
+                        // This is for showing the goal without moving the cursor at the startup
+                        // TODO this should be handled earlier
+                        sendWithLog(Gson().toJson(InfoviewEvent("changedCursorLocation", it)))
                     }
-                })
-
-                val serverRestarted = service.awaitInitializedResult()
-                sendWithLog(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted)))
-                service.previousCursorLocation?.let {
-                    // This is for showing the goal without moving the cursor at the startup
-                    // TODO this should be handled earlier
-                    sendWithLog(Gson().toJson(InfoviewEvent("changedCursorLocation", it)))
-                }
-                // here it's kind of lazy accessing LeanProjectService here directly
-                // TODO here we send all old notificationMessages to new connections that
-                //      starts after the server and the editor has been initialized
-                //      it may cause by restarting the infoview only or starting
-                //      a new tab in the browser
-                //      Not sure if the infoview is designed in such a way or not, it's kind of lazy
-                // TODO and it may keep growing
-                // Here the copy is for avoiding ConcurrentModificationException since
-                // it's also changed in ExternalInfoViewService
-                // TODO it seems still not resolved, and the ConcurrentModificationException comes from Gson serialization, which means that something is changing some NotificationMessage?
-                val copiedMessages = service.notificationMessages.toList()
-                copiedMessages.forEach {
-                    sendWithLog(Gson().toJson(it))
-                }
-                service.events().collect {
-                    sendWithLog(Gson().toJson(it))
+                    // here it's kind of lazy accessing LeanProjectService here directly
+                    // TODO here we send all old notificationMessages to new connections that
+                    //      starts after the server and the editor has been initialized
+                    //      it may cause by restarting the infoview only or starting
+                    //      a new tab in the browser
+                    //      Not sure if the infoview is designed in such a way or not, it's kind of lazy
+                    // TODO and it may keep growing
+                    // Here the copy is for avoiding ConcurrentModificationException since
+                    // it's also changed in ExternalInfoViewService
+                    // TODO it seems still not resolved, and the ConcurrentModificationException comes from Gson serialization, which means that something is changing some NotificationMessage?
+                    val copiedMessages = service.notificationMessages.toList()
+                    copiedMessages.forEach {
+                        sendWithLog(Gson().toJson(it))
+                    }
+                    service.events().collect {
+                        sendWithLog(Gson().toJson(it))
+                    }
+                } catch (e: Exception) {
+                    thisLogger().error(e)
                 }
             }
             runCatching {

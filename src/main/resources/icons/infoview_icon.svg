@@ -8,14 +8,12 @@
    fill="none"
    version="1.1"
    id="svg1"
-   sodipodi:docname="resume.svg"
+   sodipodi:docname="infoview_icon.svg"
    inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-  <defs
-     id="defs1" />
   <sodipodi:namedview
      id="namedview1"
      pagecolor="#ffffff"
@@ -25,15 +23,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="77.649163"
-     inkscape:cx="11.081897"
-     inkscape:cy="8.6092363"
+     inkscape:zoom="109.8125"
+     inkscape:cx="8"
+     inkscape:cy="8"
      inkscape:window-width="3840"
      inkscape:window-height="2046"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg1" />
+  <defs
+     id="defs1" />
   <circle
      opacity="0.1"
      cx="8"
@@ -41,16 +41,9 @@
      r="8"
      fill="#313547"
      id="circle1" />
-  <text
-     xml:space="preserve"
-     style="font-size:14.9167px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#818594;stroke:#818592;stroke-width:0.678712;fill-opacity:1;stroke-opacity:1"
-     x="3.2000346"
-     y="13.766417"
+  <path
+     d="M 12.687002,3.1830221 8.6613365,13.813097 H 7.0305012 L 3.0342202,3.1830221 H 4.5328256 L 5.6935101,6.374933 H 9.954251 L 11.100244,3.1830221 Z M 9.5134847,7.6025911 H 6.1489686 L 7.853265,12.296578 Z"
      id="text2"
-     transform="scale(1.0085892,0.99148392)"><tspan
-       sodipodi:role="line"
-       id="tspan2"
-       x="3.2000346"
-       y="13.766417"
-       style="stroke-width:0.678712;fill:#818594;fill-opacity:1;stroke:#818592;stroke-opacity:1">∀</tspan></text>
+     style="font-size:14.9167px;fill:#818594;stroke:#818592;stroke-width:0.678712"
+     aria-label="∀" />
 </svg>

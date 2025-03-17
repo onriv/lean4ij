@@ -3,19 +3,38 @@
     <id>lean4ij</id>
     <name>Lean4ij</name>
     <vendor>lean4ij</vendor>
-
+    <!-- ref: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules-specific-to-functionality -->
+    <!-- we must depend on com.intellij.modules.platform for compatibility with Pycharm/Clion/RustRover etc -->
     <depends>com.intellij.modules.platform</depends>
-<!--    <depends>com.intellij.modules.ultimate</depends>-->
-<!--     <depends>org.jetbrains.plugins.textmate</depends> -->
     <depends>com.redhat.devtools.lsp4ij</depends>
+    <!-- For the creating new project feature the java dependence is necessary -->
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
+    <!-- check the document: -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html#declaring-extensions -->
+    <!-- and -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/intellij-platform-extension-point-list.html -->
+    <!-- for knowledge about extensions -->
     <extensions defaultExtensionNs="com.intellij">
         <defaultLiveTemplates file="/liveTemplates/Lean4.xml"/>
         <liveTemplateContext
                 contextId="Lean4"
                 implementation="lean4ij.language.Lean4Context"/>
+
+        <defaultLiveTemplates file="/liveTemplates/Lean4-space.xml"/>
+        <liveTemplateContext
+                contextId="Lean4Space"
+                implementation="lean4ij.language.Lean4SpaceContext"/>
+
+        <defaultLiveTemplates file="/liveTemplates/Lean4-pair.xml"/>
+        <liveTemplateContext
+                contextId="Lean4Pair"
+                implementation="lean4ij.language.Lean4PairContext"/>
+
+
+
+
         <!-- // from https://github.com/JetBrains/godot-support/blob/master/rider/src/main/resources/META-INF/plugin.xml-->
         <!-- https://github.com/mallowigi/permify-jetbrains/blob/de27f901228919ce7eab0c37d8045443283fc4eb/src/main/resources/META-INF/plugin.xml#L26-->
         <!-- <textmate.bundleProvider implementation="lean4ij.language.TextMateBundleProvider"/> -->
@@ -60,14 +79,19 @@
         <!-- we missed the second level -->
         <annotator language="lean4" implementationClass="lean4ij.language.Lean4Annotator"/>
 
+        <!-- module -->
+        <moduleBuilder builderClass="lean4ij.module.Lean4ModuleBuilder" id="LEAN4_MODULE_BUILDER" />
+
         <!-- check https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries for making icons to respect theme -->
-        <toolWindow factoryClass="lean4ij.infoview.LeanInfoViewWindowFactory"
+        <library.toolWindow factoryClass="lean4ij.infoview.InfoViewWindowFactory"
                     id="LeanInfoViewWindow"
                     icon="/icons/infoview_icon.svg"
+                    librarySearchClass="lean4ij.infoview.InfoviewLibrarySearchHelper"
         />
-        <toolWindow factoryClass="lean4ij.infoview.external.JcefInfoviewTooWindowFactory"
+        <library.toolWindow factoryClass="lean4ij.infoview.external.JcefInfoviewTooWindowFactory"
                     id="LeanInfoviewJcef"
                     icon="/icons/jcef_icon.svg"
+                    librarySearchClass="lean4ij.infoview.InfoviewLibrarySearchHelper"
         />
 
         <postStartupActivity implementation="lean4ij.project.LeanProjectActivity"/>
@@ -123,6 +147,13 @@
         <!-- <elementDescriptionProvider implementation="lean4ij.language.Lean4ElementDescriptionProvider"/> -->
         <configurationType implementation="lean4ij.run.LeanRunConfigurationType"/>
         <configurationType implementation="lean4ij.run.LakeRunConfigurationType"/>
+        <configurationType implementation="lean4ij.run.ElanRunConfigurationType"/>
+
+        <runLineMarkerContributor language="lean4"
+                                  implementationClass="lean4ij.run.MainRunLineMarkerContributor"/>
+        <programRunner implementation="lean4ij.run.MainRunner"/>
+        <runConfigurationProducer implementation="lean4ij.run.MainRunConfigurationProducer"/>
+
     </extensions>
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
         <server id="lean"
@@ -142,21 +173,30 @@
     </extensions>
 
     <actions>
+        <!-- The implementation should be similar with lean4ij.infoview.LeanInfoViewWindow.installPopupHandler -->
+        <group id="lean4ij.editor.customGroup" text="Lean Actions..." popup="true">
+            <separator/>
+            <reference ref="LSP.GotoReference"/>
+            <reference ref="LSP.GotoDeclaration"/>
+            <separator/>
+        </group>
+        <!--  -->
 
         <!-- infoview actions -->
         <action id="ToggleLeanInfoViewInternal" class="lean4ij.actions.ToggleLeanInfoViewInternal" text="Lean4 Actions: Toggle Infoview (internal) visibility" description="Lean4: Toggle Infoview (internal) visibility"
-                icon="/icons/infoview_icon.svg"
-        >
+                icon="/icons/infoview_icon.svg">
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="first"/>
         </action>
         <action id="ToggleLeanInfoViewJcef" class="lean4ij.actions.ToggleLeanInfoViewJcef" text="Lean4 Actions: Toggle Infoview (jcef) visibility" description="Lean4: Toggle Infoview (jcef) visibility"
-                icon="/icons/jcef_icon.svg"
-        >
+                icon="/icons/jcef_icon.svg">
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="first"/>
         </action>
         <action id="ToggleInfoviewPreferred" class="lean4ij.actions.ToggleInfoviewPreferred" text="Lean4 Actions: Toggle Infoview (preferred) visibility" description="Lean4: Toggle Infoview (preferred) visibility"
                 icon="/icons/jcef_icon.svg"
         >
             <add-to-group group-id="MainToolbarRight" anchor="first"/>
             <add-to-group group-id="ToolbarRunGroup" anchor="first"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="first"/>
         </action>
         <action id="IncreaseZoomLevelForLeanInfoViewJcef" class="lean4ij.actions.IncreaseZoomLevelForLeanInfoViewJcef" text="Lean4 Actions: Increase zoom level for lean infoview (jcef)" description="Lean4: increase zoom level for lean infoview (jcef)">
             <add-to-group group-id="MainMenu" anchor="last"/>
@@ -181,9 +221,11 @@
         </action>
         <action id="RestartJcefInfoview" class="lean4ij.actions.RestartJcefInfoview" text="Lean4 Actions: Restart Jcef Infoview" description="Lean4 Actions: Restart Jcef Infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="last"/>
         </action>
         <action id="RestartInternalInfoview" class="lean4ij.actions.RestartInternalInfoview" text="Lean4 Actions: Restart Internal Infoview" description="Lean4 Actions: Restart Internal Infoview">
             <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="last"/>
         </action>
         <action id="ToggleInternalInfoviewSoftWrap" class="lean4ij.actions.ToggleInternalInfoviewSoftWrap" text="Lean4 Actions: Toggle Internal Infoview Soft Wrap" description="Lean4 Actions: Toggle Internal Infoview Soft Wrap">
             <add-to-group group-id="MainMenu" anchor="last"/>
@@ -208,9 +250,11 @@
         <!-- lsp actions -->
         <action id="RestartLeanLsp" class="lean4ij.actions.RestartLeanLsp" text="Lean4 Actions: Restart Lean Lsp Server" description="Restart Lean Lsp Server">
             <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="last"/>
         </action>
         <action id="RestartCurrentLeanFile" class="lean4ij.actions.RestartCurrentFile" text="Lean4 Actions: Restart Current Lean File" description="Restart Current Lean File">
             <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="lean4ij.editor.customGroup" anchor="last"/>
         </action>
 
         <action id="FindInExternalInfoview" class="lean4ij.actions.FindInExternalInfoview" text="Lean4 Actions: Find in external infoview" description="Find in external infoview">
@@ -230,7 +274,6 @@
         <action id="InternalInfoviewGotoDefinition" class="lean4ij.actions.InternalInfoviewGotoDefinition" text="Lean4 Actions: Go to Definition" description="InternalInfoviewGotoDefinition">
             <add-to-group group-id="lean4ij.infoview.rightClickGroup" anchor="last"/>
         </action>
-
     </actions>
 
     <applicationListeners>

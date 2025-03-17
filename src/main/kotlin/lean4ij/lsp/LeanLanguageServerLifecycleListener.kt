@@ -1,6 +1,7 @@
 package lean4ij.lsp
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerWrapper
 import com.redhat.devtools.lsp4ij.ServerStatus
@@ -53,7 +54,17 @@ class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServer
             if (message.id in hoverRequests) {
                 // get current hover results for showing highlight of current content
                 hoverRequests.remove(message.id)
-                leanProjectService.highlightCurrentContent(message.result as Hover?)
+                // TODO here I got a cast Exception earlier, but
+                //      but unable to reproduce it in develop environment yet
+                //      Checking LSP the message.result do be a Hover object
+                //      in org.eclipse.lsp4j.services.TextDocumentService.hover
+                //      So why could it fail to cast to Hover?
+                try {
+                    leanProjectService.highlightCurrentContent(message.result as Hover?)
+                } catch (e: Exception) {
+                    thisLogger().error("Failed to cast message.result to Hover with result ${message.result}", e)
+                    throw e
+                }
             }
             // This is not customize used in yet
             // if (message.result is SemanticTokens) {

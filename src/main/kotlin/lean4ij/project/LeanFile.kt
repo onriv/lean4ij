@@ -31,7 +31,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import lean4ij.setting.Lean4Settings
-import lean4ij.infoview.LeanInfoViewWindowFactory
+import lean4ij.infoview.InfoViewWindowFactory
 import lean4ij.infoview.external.data.ApplyEditChange
 import lean4ij.lsp.data.FileProgressProcessingInfo
 import lean4ij.lsp.data.GetGoToLocationParams
@@ -216,7 +216,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             if (!lean4Settings.autoUpdateInternalInfoview && !forceUpdate) return
             updateInternalInfoview(editor, params)
         } else {
-            LeanInfoViewWindowFactory.getLeanInfoview(project)?.let { leanInfoviewWindow ->
+            InfoViewWindowFactory.getLeanInfoview(project)?.let { leanInfoviewWindow ->
                 leanProjectService.scope.launch {
                     leanInfoviewWindow.updateDirectText("Internal infoview is not enable.")
                 }
@@ -248,7 +248,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val interactiveTermGoal = interactiveTermGoalAsync.await()
             val interactiveDiagnostics = interactiveDiagnosticsAsync.await()
             // TODO the arguments are passing very deep, need some refactor
-            LeanInfoViewWindowFactory.updateInteractiveGoal(editor, project, virtualFile!!, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
+            InfoViewWindowFactory.updateInteractiveGoal(editor, project, virtualFile!!, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
         }
     }
 

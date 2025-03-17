@@ -43,6 +43,7 @@ import lean4ij.lsp.data.TaggedText
 import lean4ij.lsp.data.TaggedTextAppend
 import lean4ij.lsp.data.TaggedTextTag
 import lean4ij.lsp.data.TaggedTextText
+import lean4ij.util.fromJson
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.DidOpenTextDocumentParams
 import java.lang.reflect.Type
@@ -250,19 +251,6 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
                 })
             .create()
     }
-}
-
-/**
- * TODO Add gson util back?
- */
-inline fun <reified T> Gson.fromJson(src: String?): T {
-    val type = object : TypeToken<T>() {}.type
-    return this.fromJson(src, type)
-}
-
-inline fun <reified T> Gson.fromJson(src: JsonElement?): T {
-    val type = object : TypeToken<T>() {}.type
-    return this.fromJson(src, type)
 }
 
 /**

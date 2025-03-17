@@ -24,16 +24,18 @@ import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.lsp.data.Position
 import lean4ij.project.LeanProjectService
+import lean4ij.setting.Lean4Settings
 import java.awt.BorderLayout
-
 
 /**
  * TODO do not show this if indexing, the doc seems saying it's an option for it
  *      maybe dumb-aware or something
  */
-class LeanInfoViewWindowFactory : ToolWindowFactory {
+class InfoViewWindowFactory : ToolWindowFactory {
 
     companion object {
+
+        val settings = service<Lean4Settings>()
 
         /**
          * The id is from plugin.xml
@@ -63,16 +65,22 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     add(it)
                     size++
                 }
-                interactiveTermGoal?.toInfoObjectModel()?.let {
-                    // if it has interactive goals, then there should be some line break
-                    // for interactive term goal, i.e., expected type
-                    if (size > 0) {
-                        br()
+                if (settings.showExpectedTypeInInternalInfoview) {
+                    interactiveTermGoal?.toInfoObjectModel()?.let {
+                        // if it has interactive goals, then there should be some line break
+                        // for interactive term goal, i.e., expected type
+                        if (size > 0) {
+                            br()
+                        }
+                        add(it)
+                        size++
                     }
-                    add(it)
-                    size++
                 }
-                if (interactiveDiagnostics?.isNotEmpty() == true) {
+                // TODO Although the option controls the UI visibility of the messages section,
+                //      it does not disable the underlying logic responsible for generating this data.
+                //      Consequently, certain LSP requests and backend operations related to messages
+                //      are still executed even when the option is disabled, leading to redundant processing.
+                if (settings.showMessagesInInternalInfoview && interactiveDiagnostics?.isNotEmpty() == true) {
                     if (size > 0) {
                         br()
                     }
@@ -83,9 +91,9 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                                 h3("${file.name}:${i.fullRange.start.line + 1}:${i.fullRange.start.character}")
                                 add(i.toInfoObjectModel())
                                 size++
-                                if (idx != interactiveDiagnostics.lastIndex) {
-                                    br()
-                                }
+                            }
+                            if (idx != interactiveDiagnostics.lastIndex) {
+                                br()
                             }
                         }
                     }
@@ -94,7 +102,11 @@ class LeanInfoViewWindowFactory : ToolWindowFactory {
                     +"No info found."
                 }
             }
-            if (!allMessage.isNullOrEmpty()) {
+            // TODO Although the option controls the UI visibility of the allMessages section,
+            //      it does not disable the underlying logic responsible for generating this data.
+            //      Consequently, certain LSP requests and backend operations related to allMessages
+            //      are still executed even when the option is disabled, leading to redundant processing.
+            if (settings.showAllMessagesInInternalInfoview && !allMessage.isNullOrEmpty()) {
                 br()
                 fold(
                     expanded = expandAllMessage,

@@ -8,7 +8,7 @@
    fill="none"
    version="1.1"
    id="svg1"
-   sodipodi:docname="resume_dark.svg"
+   sodipodi:docname="jcef_icon.svg"
    inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -41,18 +41,12 @@
      r="8"
      fill="#F0F1F2"
      id="circle1" />
-  <text
-     xml:space="preserve"
-     style="font-size:14.0743px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#818594;fill-opacity:1;stroke:#818592;stroke-width:0.640383;stroke-opacity:1"
-     x="3.5949008"
-     y="13.864944"
+  <path
+     d="M 12.597505,3.7490415 8.83153,13.864944 H 7.3058979 L 3.567412,3.7490415 H 4.9693442 L 6.0551544,6.7865613 H 10.04104 L 11.113106,3.7490415 Z M 9.6287071,7.9548381 H 6.4812319 l 1.5943542,4.4669409 z"
      id="text2"
-     transform="scale(1.0066424,0.99340144)"><tspan
-       sodipodi:role="line"
-       id="tspan2"
-       x="3.5949008"
-       y="13.864944"
-       style="fill:#818594;fill-opacity:1;stroke:#818592;stroke-width:0.640383;stroke-opacity:1">∀</tspan></text>
+     style="font-size:14.0743px;fill:#818594;stroke:#818592;stroke-width:0.640383"
+     transform="scale(1.0066424,0.99340144)"
+     aria-label="∀" />
   <ellipse
      style="fill:none;stroke:#818592;stroke-width:0.622479"
      id="path1"

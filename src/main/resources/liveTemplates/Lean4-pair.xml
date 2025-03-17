@@ -1,0 +1,68 @@
+<templateSet group="Lean4Pair">
+    <template name="\{" value="{$END$}" shortcut="SPACE" description="{}" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\{_" value="{$END$}_" shortcut="SPACE" description="{}_" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\{{" value="⦃$END$⦄" shortcut="SPACE" description="⦃⦄" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\[" value="[$END$]" shortcut="SPACE" description="[]" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\[_" value="[$END$]_" shortcut="SPACE" description="[]_" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\[[" value="⟦$END$⟧" shortcut="SPACE" description="⟦⟧" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\&lt;" value="⟨$END$⟩" shortcut="SPACE" description="⟨⟩" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\(" value="($END$)" shortcut="SPACE" description="()" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\(_" value="($END$)_" shortcut="SPACE" description="()_" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\(['" value="⟮$END$⟯" shortcut="SPACE" description="⟮⟯" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\f&lt;" value="‹$END$›" shortcut="SPACE" description="‹›" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\f&lt;&lt;" value="«$END$»" shortcut="SPACE" description="«»" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+    <template name="\[--" value="⁅$END$⁆" shortcut="SPACE" description="⁅⁆" toReformat="false" toShortenFQNames="true">
+        <context>
+          <option name="Lean4Pair" value="true" />
+        </context>
+      </template>
+</templateSet>
+        

@@ -19,6 +19,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
@@ -98,30 +99,40 @@ class SdkService(private val project: Project) {
         }
 
         // TODO maybe it's not a good way doing it synchronously
-        sdk = sdkCompletable.get(20, TimeUnit.SECONDS)
-        project.basePath?.let { basePath ->
-            thisLogger().info("current module is $basePath")
-            project.modules.singleOrNull()?.let {
-                ModuleRootModificationUtil.updateModel(it) { rootModule ->
-                    rootModule.contentEntries.singleOrNull()?.run {
-                        rootModule.sdk = sdk
-                        val projectRootManager = ProjectRootManager.getInstance(project)
-                        application.invokeLater {
-                            application.runWriteAction {
-                                projectRootManager.projectSdk = sdk
-                                projectRootManager.setProjectSdkName(toolchain, "Lean4")
+        // TODO It indeed can be ran out of time
+        try {
+            sdk = sdkCompletable.get(20, TimeUnit.SECONDS)
+            project.basePath?.let { basePath ->
+                thisLogger().info("current module is $basePath")
+                project.modules.singleOrNull()?.let {
+                    ModuleRootModificationUtil.updateModel(it) { rootModule ->
+                        rootModule.contentEntries.singleOrNull()?.run {
+                            rootModule.sdk = sdk
+                            val projectRootManager = ProjectRootManager.getInstance(project)
+                            application.invokeLater {
+                                application.runWriteAction {
+                                    projectRootManager.projectSdk = sdk
+                                    projectRootManager.setProjectSdkName(toolchain, "Lean4")
+                                }
+                            }
+                            val lakePath = Paths.get(basePath, ".lake")
+                            // This path can be not exist for the first setup, in the case we skip adding it to exclude folder
+                            if (lakePath.exists()) {
+                                addExcludeFolder(
+                                    VfsUtil.findFile(
+                                        Paths.get(basePath, ".lake"),
+                                        true
+                                    )!!
+                                )
                             }
                         }
-                        addExcludeFolder(
-                            VfsUtil.findFile(
-                                Paths.get(basePath, ".lake"),
-                                true
-                            )!!
-                        )
                     }
+                    project.save()
                 }
-                project.save()
             }
+        } catch (e: TimeoutException) {
+            project.notifyErr("Timeout for setting uyp the sdk for $toolchain")
+            thisLogger().error(e)
         }
     }
 }

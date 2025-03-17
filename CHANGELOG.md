@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+- support #94, a dedicated context menu for lean file in editor
+- a detail log for #143
+
 ## [0.2.2] - 2025-03-02
 
 Depend on the latest approved nightly build of LSP4IJ: 0.11.1-20250226-013217

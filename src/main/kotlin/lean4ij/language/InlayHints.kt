@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -63,7 +64,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 // location is either line or absolute pos, depending on the type of hint
-class Hint(val isEol: Boolean, val location: Int, val content: String, val collapseSize: Int, val collapsedText: String)
+class Hint(val position: RangeMarker, val content: String, val collapseSize: Int, val collapsedText: String)
 
 class HintSet {
     companion object {
@@ -103,15 +104,8 @@ class HintSet {
 
     fun dumpHints(sink: InlayTreeSink) {
         this.hints.forEach { hint ->
-            if (hint.isEol) {
-                sink.addPresentation(EndOfLinePosition(hint.location), hasBackground = true) {
-                    this.addHint(hint)
-                }
-            }
-            else {
-                sink.addPresentation(InlineInlayPosition(hint.location, false), hasBackground = true) {
-                    this.addHint(hint)
-                }
+            sink.addPresentation(InlineInlayPosition(hint.position.startOffset, false), hasBackground = true) {
+                this.addHint(hint)
             }
         }
     }
@@ -136,6 +130,7 @@ class HintCache {
     }
 
     fun insert(file: LeanFile, time: Long, hints: CompletableFuture<HintSet>) {
+        cache[file]?.second?.cancel(true);
         cache[file] = Pair(time, hints)
     }
 }
@@ -146,7 +141,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
     var hintCache = HintCache()
 
     companion object {
-        const val TIMEOUT_STEP_MILLIS: Long = 25
+        const val TIMEOUT_STEP_MILLIS: Long = 5
         const val TIMEOUT_MAX_ITS = 10
         val lean4Settings = service<Lean4Settings>()
     }
@@ -189,6 +184,7 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
                 val content = editor.document.text
                 val actualHints = computeFor(leanFile, content)
                 hints.complete(actualHints)
+
                 // request rerender of hints
                 // reference: https://github.com/redhat-developer/lsp4ij/blob/main/src/main/java/com/redhat/devtools/lsp4ij/internal/InlayHintsFactoryBridge.java#L59
                 DeclarativeInlayHintsPassFactory.scheduleRecompute(editor, project)
@@ -196,25 +192,10 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
             }
         }
 
-        // wait until future is finished
-        // (see lsp 4ij for reference)
-        val computeTime = element.containingFile.modificationStamp
-        var its = 0
-        while (!hints.isDone) {
-            its += 1
-            if (element.containingFile.modificationStamp != computeTime || its * TIMEOUT_MAX_ITS >= lean4Settings.maxInlayHintWaitingMillis) {
-                return
-            }
-
-            try {
-                hints.get(TIMEOUT_STEP_MILLIS, TimeUnit.MILLISECONDS)
-            }
-            catch (_: TimeoutException) {
-                // Ignore timeout
-            }
+        if (hints.isDone) {
+            hints.get().dumpHints(sink)
         }
-
-        hints.get().dumpHints(sink)
+        // else it will reschedule once its finished
     }
 
     abstract suspend fun computeFor(file: LeanFile, content: String): HintSet
@@ -266,7 +247,9 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
                 hintPos += 1
             }
-            hints.add(Hint(false, hintPos, inlayHintType, 45, ": ..."))
+
+
+            hints.add(Hint(editor.document.createRangeMarker(hintPos, hintPos), inlayHintType, 45, ": ..."))
         }
 
         return hints
@@ -352,8 +335,7 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
             }
 
             var hintPos = m.range.first + m.groupValues[1].length
-            hints.add(Hint(false, hintPos, typeHint, 100, "..."))
-//            hints.add(Hint(true, lineColumn.line - 1, typeHint))
+            hints.add(Hint(editor.document.createRangeMarker(hintPos, hintPos), typeHint, 100, "..."))
         }
 
         return hints
@@ -412,7 +394,8 @@ class PlaceHolderInlayHintsCollector(editor: Editor, project: Project?) : InlayH
                         continue
                     }
                     val inlayHint = split[1]
-                    hints.add(Hint(false, m.range.last+1, inlayHint, 20, "..."))
+                    val hintPos = m.range.last + 1
+                    hints.add(Hint(editor.document.createRangeMarker(hintPos, hintPos),  inlayHint, 20, "..."))
                 }
             }
         }
@@ -449,7 +432,6 @@ object InlayTextAttributes: UnmodifiableTextAttributes() {
         val scheme = EditorColorsManager.getInstance().globalScheme
         return scheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).foregroundColor
     }
-
 }
 
 class InlayRenderer(info: HighlightInfo): HintRenderer(clipDescription(info.description)) {

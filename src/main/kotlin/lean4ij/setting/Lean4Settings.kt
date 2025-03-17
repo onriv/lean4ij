@@ -41,7 +41,7 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var languageServerStartingStrategy = "Eager"
     var fileProgressTriggeringStrategy = "OnlySelectedEditor"
 
-    var maxInlayHintWaitingMillis = 100
+    var maxInlayHintWaitingMillis = 5
     var strategyForTriggeringSymbolsOrClassesRequests = "debounce"
     var workspaceSymbolTriggerSuffix = ",,"
     var workspaceSymbolTriggerDebouncingTime = 1000

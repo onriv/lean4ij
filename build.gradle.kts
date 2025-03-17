@@ -95,7 +95,7 @@ dependencies {
      * Native library (com/sun/jna/linux-x86-64/libjnidispatch.so) not found in resource path
      * Hence add this, not saw before on GitHub action
      */
-    testImplementation("net.java.dev.jna:jna:5.16.0")
+    testImplementation("net.java.dev.jna:jna:5.17.0")
 }
 
 // Set the JVM language level used to build the project.

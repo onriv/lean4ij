@@ -4,27 +4,16 @@ import com.google.common.base.MoreObjects
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HintRenderer
-import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
-import com.intellij.codeInsight.hints.declarative.CollapseState
-import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
-import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.InlayTreeSink
-import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
-import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
-import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.lang.ASTNode
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -42,28 +31,27 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.io.await
 import com.jetbrains.rd.util.lifetime.intersect
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import lean4ij.setting.Lean4Settings
-import lean4ij.lsp.data.InfoviewRender
 import lean4ij.lsp.data.InteractiveGoalsParams
 import lean4ij.lsp.data.InteractiveTermGoalParams
 import lean4ij.lsp.data.PlainGoalParams
 import lean4ij.lsp.data.Position
 import lean4ij.project.LeanFile
 import lean4ij.project.LeanProjectService
+import lean4ij.setting.Lean4Settings
 import lean4ij.util.LeanUtil
 import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import java.awt.Color
-import java.util.IdentityHashMap
+import java.util.*
+import java.util.Collections.synchronizedMap
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 // location is either line or absolute pos, depending on the type of hint
-class Hint(val isEol: Boolean, val location: Int, val content: String, val collapseSize: Int, val collapsedText: String)
+class Hint(val position: RangeMarker, val content: String, val collapseSize: Int, val collapsedText: String)
 
 class HintSet {
     companion object {
@@ -103,26 +91,22 @@ class HintSet {
 
     fun dumpHints(sink: InlayTreeSink) {
         this.hints.forEach { hint ->
-            if (hint.isEol) {
-                sink.addPresentation(EndOfLinePosition(hint.location), hasBackground = true) {
-                    this.addHint(hint)
-                }
-            }
-            else {
-                sink.addPresentation(InlineInlayPosition(hint.location, false), hasBackground = true) {
-                    this.addHint(hint)
-                }
+            sink.addPresentation(InlineInlayPosition(hint.position.startOffset, false), hasBackground = true) {
+                this.addHint(hint)
             }
         }
     }
 }
 
 class HintCache {
-    var cache = ConcurrentHashMap<LeanFile, Pair<Long, CompletableFuture<HintSet>>>()
+    var ongoingCache = ConcurrentHashMap<LeanFile, Pair<Long, CompletableFuture<HintSet>>>()
+    // items that may not be valid
+    // but they are complete and can be used at the very least
+    var dirtyCache = ConcurrentHashMap<LeanFile, HintSet>()
 
     /* returns (need re-computation, displaySet) */
     fun query(file: LeanFile, time: Long): CompletableFuture<HintSet>? {
-        val cur = cache[file] ?: return null
+        val cur = ongoingCache[file] ?: return null
 
         // we do not have a run scheduled for this version
         if (cur.first != time) {
@@ -136,7 +120,16 @@ class HintCache {
     }
 
     fun insert(file: LeanFile, time: Long, hints: CompletableFuture<HintSet>) {
-        cache[file] = Pair(time, hints)
+        ongoingCache[file]?.second?.cancel(true);
+        ongoingCache[file] = Pair(time, hints)
+    }
+
+    fun queryDirty(file: LeanFile): HintSet? {
+        return dirtyCache.get(file)
+    }
+
+    fun insertDirty(file: LeanFile, hints: HintSet) {
+        dirtyCache[file] = hints
     }
 }
 
@@ -146,9 +139,10 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
     var hintCache = HintCache()
 
     companion object {
-        const val TIMEOUT_STEP_MILLIS: Long = 25
-        const val TIMEOUT_MAX_ITS = 10
+        const val TIMEOUT_DEBOUNCE_MILLIS: Long = 20
+
         val lean4Settings = service<Lean4Settings>()
+        val scheduledRecomputations = synchronizedMap(IdentityHashMap<PsiFile, Long>());
     }
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
@@ -157,11 +151,10 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
             return
         }
         val inlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
-        val isEnabled = inlayHintsSettings.isProviderEnabled(getId()) ?: return;
+        val isEnabled = inlayHintsSettings.isProviderEnabled(getId()) != false;
         if (!isEnabled) {
             return
         }
-
         // since here we check if it's a file, this is in fact collect on the file level rather then
         // psi element
         if (project == null || element !is PsiFile) {
@@ -189,32 +182,44 @@ abstract class InlayHintBase(protected val editor: Editor, protected val project
                 val content = editor.document.text
                 val actualHints = computeFor(leanFile, content)
                 hints.complete(actualHints)
+
                 // request rerender of hints
                 // reference: https://github.com/redhat-developer/lsp4ij/blob/main/src/main/java/com/redhat/devtools/lsp4ij/internal/InlayHintsFactoryBridge.java#L59
-                DeclarativeInlayHintsPassFactory.scheduleRecompute(editor, project)
-                DaemonCodeAnalyzer.getInstance(project).restart(element.containingFile)
+
+                debounceRecompute(element.containingFile)
             }
         }
 
-        // wait until future is finished
-        // (see lsp 4ij for reference)
-        val computeTime = element.containingFile.modificationStamp
-        var its = 0
-        while (!hints.isDone) {
-            its += 1
-            if (element.containingFile.modificationStamp != computeTime || its * TIMEOUT_MAX_ITS >= lean4Settings.maxInlayHintWaitingMillis) {
-                return
-            }
-
-            try {
-                hints.get(TIMEOUT_STEP_MILLIS, TimeUnit.MILLISECONDS)
-            }
-            catch (_: TimeoutException) {
-                // Ignore timeout
-            }
+        if (hints.isDone) {
+            val hs = hints.get()
+            hs.dumpHints(sink)
+            hintCache.insertDirty(leanFile, hs)
         }
+        else {
+            // it will reschedule once its finished
+            // but in the meantime, put the old (dirty) hints
+            val backup = hintCache.queryDirty(leanFile)
+            backup?.dumpHints(sink)
+        }
+    }
 
-        hints.get().dumpHints(sink)
+    private suspend fun debounceRecompute(file: PsiFile) {
+        // group multiple successive hints coming in together into the same recomputation
+
+        val readTime = System.currentTimeMillis()
+
+        delay(TIMEOUT_DEBOUNCE_MILLIS)
+
+        // only the latest recompute should run
+        val scheduleTime = scheduledRecomputations.getOrDefault(file, -1)
+        if (scheduleTime < readTime) {
+            val currentTime = System.currentTimeMillis()
+
+            scheduledRecomputations.put(file, currentTime)
+
+            DeclarativeInlayHintsPassFactory.scheduleRecompute(editor, file.project)
+            DaemonCodeAnalyzer.getInstance(project).restart(file)
+        }
     }
 
     abstract suspend fun computeFor(file: LeanFile, content: String): HintSet
@@ -254,19 +259,26 @@ class OmitTypeInlayHintsCollector(editor: Editor, project: Project?) : InlayHint
             val position = Position(line = lineColumn.line, character = lineColumn.column)
             val textDocument = TextDocumentIdentifier(LspUtil.quote(file.virtualFile!!.path))
             val params = PlainGoalParams(textDocument, position)
+
             val interactiveTermGoalParams =
                 InteractiveTermGoalParams(session, params, textDocument, position)
+
             // TODO what if the server not start?
             //      will it hang and leak?
             val termGoal = file.getInteractiveTermGoal(interactiveTermGoalParams) ?: continue
             // TODO can here project be null?, the InfoviewRender mainly keeps nullable for it
             val inlayHintType = ": ${termGoal.type.toInfoObjectModel()}"
             var hintPos = m.range.last - m.groupValues[3].length
+
             // anonymous have is slightly weird
             if (m.groupValues[1] != "have " || !m.groupValues[2].isEmpty()) {
                 hintPos += 1
             }
-            hints.add(Hint(false, hintPos, inlayHintType, 45, ": ..."))
+
+            val range = ReadAction.compute<RangeMarker, Throwable> {
+                editor.document.createRangeMarker(hintPos, hintPos)
+            }
+            hints.add(Hint(range, inlayHintType, 35, ": ..."))
         }
 
         return hints
@@ -352,8 +364,10 @@ class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase
             }
 
             var hintPos = m.range.first + m.groupValues[1].length
-            hints.add(Hint(false, hintPos, typeHint, 100, "..."))
-//            hints.add(Hint(true, lineColumn.line - 1, typeHint))
+            val range = ReadAction.compute<RangeMarker, Throwable> {
+                editor.document.createRangeMarker(hintPos, hintPos)
+            }
+            hints.add(Hint(range, typeHint, 100, "..."))
         }
 
         return hints
@@ -412,7 +426,11 @@ class PlaceHolderInlayHintsCollector(editor: Editor, project: Project?) : InlayH
                         continue
                     }
                     val inlayHint = split[1]
-                    hints.add(Hint(false, m.range.last+1, inlayHint, 20, "..."))
+                    val hintPos = m.range.last + 1
+                    val range = ReadAction.compute<RangeMarker, Throwable> {
+                        editor.document.createRangeMarker(hintPos, hintPos)
+                    }
+                    hints.add(Hint(range, inlayHint, 20, "..."))
                 }
             }
         }
@@ -449,7 +467,6 @@ object InlayTextAttributes: UnmodifiableTextAttributes() {
         val scheme = EditorColorsManager.getInstance().globalScheme
         return scheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).foregroundColor
     }
-
 }
 
 class InlayRenderer(info: HighlightInfo): HintRenderer(clipDescription(info.description)) {

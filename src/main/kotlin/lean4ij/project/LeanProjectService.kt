@@ -298,6 +298,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
 
             if (hoverListener != null) {
                 try {
+                    thisLogger().debug("remove hover listener $hoverListener for $editor")
                     editor.removeEditorMouseMotionListener(hoverListener!!)
                     hoverListener = null
                 } catch (e: Throwable) {
@@ -355,6 +356,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                         }
                     }
                 }
+                thisLogger().debug("add hover listener $hoverListener for $editor")
                 editor.addEditorMouseMotionListener(hoverListener!!)
             } catch (e: AssertionError) {
                 // There may be the following exception, it may be caused by concurrently changing the content in the editor and the hover event is triggered

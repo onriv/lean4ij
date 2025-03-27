@@ -162,6 +162,13 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                     val endLine = min(processingInfo.range.end.line, document.lineCount)
                     val startLineOffset = StringUtil.lineColToOffset(document.charsSequence, startLine, 0)
                     val endLineOffset = StringUtil.lineColToOffset(document.charsSequence, min(endLine, document.lineCount-1), 0)
+                    // TODO Here it may incur an exception:
+                    //      https://github.com/onriv/lean4ij/issues/148
+                    //      In a large chance it may be caused by the file is edited currently
+                    //      For a temporary solution, just ignore it
+                    if (endLineOffset == -1 || startLineOffset == -1) {
+                        continue
+                    }
                     val rangeHighlighter = markupModel.addRangeHighlighter(
                         leanFileProgressEmptyTextAttributesKey,
                         startLineOffset, endLineOffset, HighlighterLayer.LAST, HighlighterTargetArea.LINES_IN_RANGE)

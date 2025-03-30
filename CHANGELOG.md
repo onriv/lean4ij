@@ -4,8 +4,11 @@
 
 ## [Unreleased]
 
-- enable the inlay hints by default
+- enable the inlay hints by default, and
 - boost the inlay hints performance
+- some minor change:
+  - a debug log for hunting #143, that throws exception saying "Assertion failed"
+  - a temp fix for exceptions in #148, line marker related
 
 ## [0.2.4] - 2025-03-17
 

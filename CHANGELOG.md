@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+## [0.2.5] - 2025-03-30
+
+Depend on the latest approved nightly build of LSP4IJ: 0.12.0-20250328-180521
+
 - enable the inlay hints by default, and
 - boost the inlay hints performance
 - some minor change:
@@ -272,7 +276,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/onriv/lean4ij/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/onriv/lean4ij/compare/v0.2.2...v0.2.4
 [0.2.2]: https://github.com/onriv/lean4ij/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/onriv/lean4ij/compare/v0.2.0...v0.2.1

@@ -49,7 +49,6 @@ class MiniInfoview(val project: Project) : SimpleToolWindowPanel(true) {
             val lineHeight = editor.lineHeight
             val totalHeight = lineHeight * lines.size
 
-            print("Line Height $lineHeight ${editor.lineHeight}")
             Dimension(maxWidth + 40, totalHeight + 5)
         }
     }

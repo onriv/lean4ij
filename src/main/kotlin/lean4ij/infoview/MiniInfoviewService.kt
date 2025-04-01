@@ -24,7 +24,6 @@ import lean4ij.infoview.dsl.info
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.lsp.data.Position
-import java.awt.Dimension
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
@@ -39,7 +38,6 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
     private var isScrolling = false
     private var scrollJob: Job? = null
     private var currentEditor: Editor? = null
-    private var caretListener: CaretListener? = null
     private var areaListener: VisibleAreaListener? = null
 
     var lastContent: InfoObjectModel? = null
@@ -98,23 +96,6 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
     private fun setupListeners(editor: Editor) {
         removeListeners()
 
-        caretListener = object : CaretListener {
-            override fun caretPositionChanged(event: CaretEvent) {
-                if (!showing || isScrolling) return
-
-                val logicalPosition = event.newPosition
-                val position = Position(logicalPosition.line, logicalPosition.column)
-
-                scope.launch(Dispatchers.EDT) {
-                    currentPopover?.let { popup ->
-                        if (popup.isVisible && !isScrolling) {
-                            showAtCursor(editor, position)
-                        }
-                    }
-                }
-            }
-        }
-
         areaListener = object : VisibleAreaListener {
             override fun visibleAreaChanged(e: VisibleAreaEvent) {
                 if (!showing) return
@@ -138,16 +119,13 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
         }
 
         // Register listeners
-        editor.caretModel.addCaretListener(caretListener!!)
         editor.scrollingModel.addVisibleAreaListener(areaListener!!)
     }
 
     private fun removeListeners() {
         currentEditor?.let { editor ->
-            caretListener?.let { editor.caretModel.removeCaretListener(it) }
             areaListener?.let { editor.scrollingModel.removeVisibleAreaListener(it) }
         }
-        caretListener = null
         areaListener = null
     }
 
@@ -163,7 +141,6 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
                 editor.markupModel.removeAllHighlighters()
                 content.output(view.getEditor())
 
-                val size = editor.component.preferredSize
                 currentPopover?.size = view.measureIntrinsicContentSize()
             }
 

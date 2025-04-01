@@ -90,7 +90,6 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
         // Convert to screen coordinates
         val relativePoint = RelativePoint(editor.contentComponent, point)
 
-        println("Point $relativePoint")
         if (currentPopover?.canShow() != false) {
             currentPopover?.show(relativePoint)
         }
@@ -171,12 +170,10 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
     }
 
     private fun createOrUpdatePopupPanel(doc: InfoObjectModel?, editor: Editor?, position: Position?) {
-        println("Create or Update $showing ${lastContent != null} $editor $position")
         lastContent = doc
         if (showing && lastContent != null && editor != null && position != null) {
             displayContent(lastContent!!, editor, position)
         } else {
-            println("Cancelling")
             cancel()
         }
     }

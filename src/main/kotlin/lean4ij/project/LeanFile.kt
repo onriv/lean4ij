@@ -32,6 +32,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import lean4ij.setting.Lean4Settings
 import lean4ij.infoview.InfoViewWindowFactory
+import lean4ij.infoview.MiniInfoviewService
 import lean4ij.infoview.external.data.ApplyEditChange
 import lean4ij.lsp.data.FileProgressProcessingInfo
 import lean4ij.lsp.data.GetGoToLocationParams
@@ -209,6 +210,8 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             leanProjectService.updateCaret(params)
         }
 
+        // update goal popover
+
 
 
         // update info view
@@ -247,8 +250,12 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             val interactiveGoals = interactiveGoalsAsync.await()
             val interactiveTermGoal = interactiveTermGoalAsync.await()
             val interactiveDiagnostics = interactiveDiagnosticsAsync.await()
+
             // TODO the arguments are passing very deep, need some refactor
             InfoViewWindowFactory.updateInteractiveGoal(editor, project, virtualFile!!, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
+
+            project.service<MiniInfoviewService>()
+                .updateCaret(editor, position, interactiveGoals, interactiveTermGoal);
         }
     }
 

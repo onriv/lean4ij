@@ -3,6 +3,7 @@ package lean4ij.infoview
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.VisibleAreaEvent
@@ -18,12 +19,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import lean4ij.infoview.dsl.InfoObjectBuilder
 import lean4ij.infoview.dsl.InfoObjectModel
 import lean4ij.infoview.dsl.info
 import lean4ij.lsp.data.InteractiveGoals
 import lean4ij.lsp.data.InteractiveTermGoal
 import lean4ij.lsp.data.Position
+import java.awt.Dimension
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
@@ -76,18 +77,14 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
     }
 
     private fun showAtCursor(editor: Editor, position: Position) {
-        // Get the visual position of the cursor
         val visualPosition = editor.offsetToVisualPosition(editor.logicalPositionToOffset(
-            com.intellij.openapi.editor.LogicalPosition(position.line, position.character)
+            LogicalPosition(position.line, position.character)
         ))
 
-        // Convert to screen coordinates
         val point = editor.visualPositionToXY(visualPosition)
 
-        // Adjust point to be below the cursor
         point.y += editor.lineHeight
 
-        // Convert to screen coordinates
         val relativePoint = RelativePoint(editor.contentComponent, point)
 
         if (currentPopover?.canShow() != false) {
@@ -129,7 +126,7 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
 
                 scrollJob?.cancel()
                 scrollJob = scope.launch {
-                    delay(300)
+                    delay(500)
                     isScrolling = false
                     if (showing && lastContent != null) {
                         val caretPosition = editor.caretModel.logicalPosition
@@ -162,7 +159,12 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
 
             // Update the existing editor content
             miniInfoview?.let { view ->
+                val editor = view.getEditor()
+                editor.markupModel.removeAllHighlighters()
                 content.output(view.getEditor())
+
+                val size = editor.component.preferredSize
+                currentPopover?.size = view.measureIntrinsicContentSize()
             }
 
             showAtCursor(editor, position)
@@ -181,6 +183,7 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
     private fun getGoal(interactiveGoals: InteractiveGoals?, interactiveTermGoal: InteractiveTermGoal?): InfoObjectModel? {
         val goals = interactiveGoals?.goals
         val prefix = "⊢ "
+
         val type = if (goals?.size == 1) {
             interactiveGoals.goals[0].type
         } else if (ALLOW_TERM_GOALS) {

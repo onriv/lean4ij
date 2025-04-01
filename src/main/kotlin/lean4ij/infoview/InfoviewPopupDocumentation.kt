@@ -35,6 +35,30 @@ import javax.swing.JTextPane
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.HyperlinkEvent
 
+class InfoviewPopupContentMeasurement(val lean4Settings: Lean4Settings) {
+    /**
+     * code copied from [com.intellij.codeInsight.documentation.DocumentationEditorPane.getPreferredContentWidth]
+     */
+    fun getPreferredContentWidth(textLength: Int, preferredSize: Dimension): Int {
+        // Heuristics to calculate popup width based on the amount of the content.
+        // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
+        // 200 chars and less is 300px, 1000 chars and more is 500px.
+        // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
+        val width1 = lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound
+        val width2 = lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound
+        val minWidth = lean4Settings.nativeInfoviewPopupPreferredMinWidth
+        val maxWidth = lean4Settings.nativeInfoviewPopupPreferredMaxWidth
+        val contentLengthPreferredSize = if (textLength < width1) {
+            minWidth
+        } else if (textLength in (width1 + 1) until width2) {
+            minWidth + (textLength - width1) * (maxWidth - minWidth) / (width2 - width1)
+        } else {
+            maxWidth
+        }
+        return scale(contentLengthPreferredSize)
+    }
+}
+
 /**
  * Since currently we don't have a language implementation for the infoview, we cannot hover the content directly. Hence, we here implement a custom
  * hovering logic for the infoview on infoview. Other reason is the vscode version infoview can hover on doc again and recursively. This is not supported by
@@ -55,7 +79,7 @@ class InfoviewPopupEditorPane(text: String, maxWidth: Int, maxHeight: Int) : JTe
         font = schemeFont
         this.text = text
 
-        val width = getPreferredContentWidth(text.length, preferredSize)
+        val width = InfoviewPopupContentMeasurement(lean4Settings).getPreferredContentWidth(text.length, preferredSize)
         val height = getPreferredHeightByWidth(width)
         preferredSize = Dimension(width, height)
 
@@ -68,27 +92,6 @@ class InfoviewPopupEditorPane(text: String, maxWidth: Int, maxHeight: Int) : JTe
         }
     }
 
-    /**
-     * code copied from [com.intellij.codeInsight.documentation.DocumentationEditorPane.getPreferredContentWidth]
-     */
-    private fun getPreferredContentWidth(textLength: Int, preferredSize: Dimension): Int {
-        // Heuristics to calculate popup width based on the amount of the content.
-        // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
-        // 200 chars and less is 300px, 1000 chars and more is 500px.
-        // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
-        val width1 = lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound
-        val width2 = lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound
-        val minWidth = lean4Settings.nativeInfoviewPopupPreferredMinWidth
-        val maxWidth = lean4Settings.nativeInfoviewPopupPreferredMaxWidth
-        val contentLengthPreferredSize = if (textLength < width1) {
-            minWidth
-        } else if (textLength in (width1 + 1) until width2) {
-            minWidth + (textLength - width1) * (maxWidth - minWidth) / (width2 - width1)
-        } else {
-            maxWidth
-        }
-        return scale(contentLengthPreferredSize)
-    }
 
     private var myCachedPreferredSize: Dimension? = null
 

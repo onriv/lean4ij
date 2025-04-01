@@ -2,22 +2,18 @@ package lean4ij.infoview
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.wm.ToolWindow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import lean4ij.project.LeanProjectService
-import javax.swing.BorderFactory
+import java.awt.Dimension
 
 class MiniInfoview(val project: Project) : SimpleToolWindowPanel(true) {
-    /**
-     * TODO make this private
-     */
     private val editor : CompletableDeferred<EditorEx> = CompletableDeferred()
 
     suspend fun getEditor(): EditorEx {
@@ -31,12 +27,30 @@ class MiniInfoview(val project: Project) : SimpleToolWindowPanel(true) {
     init {
         leanProject.scope.launch(Dispatchers.EDT) {
             try {
-                val editor0 = InfoViewEditorFactory(project).createEditor()
+                val editor0 = InfoViewEditorFactory(project).createEditor(showScroll = false)
                 editor.complete(editor0)
                 setContent(editor0.component)
             } catch (ex: Throwable) {
                 editor.completeExceptionally(ex)
             }
+        }
+    }
+
+    suspend fun measureIntrinsicContentSize(): Dimension {
+        val editor = getEditor()
+
+        return withContext(Dispatchers.EDT) {
+            val document = editor.document
+            val text = document.text
+            val lines = text.split("\n")
+
+            val fontMetrics = editor.contentComponent.getFontMetrics(editor.colorsScheme.getFont(EditorFontType.PLAIN))
+            val maxWidth = lines.maxOfOrNull { fontMetrics.stringWidth(it) } ?: 0
+            val lineHeight = editor.lineHeight
+            val totalHeight = lineHeight * lines.size
+
+            print("Line Height $lineHeight ${editor.lineHeight}")
+            Dimension(maxWidth + 40, totalHeight + 5)
         }
     }
 }

@@ -25,7 +25,7 @@ class InfoViewEditorFactory(val project: Project) {
      * create an editorEx for rendering the info view
      * **this is only for EDT**, create it using
      */
-    fun createEditor(isPopupDoc: Boolean=false): EditorEx {
+    fun createEditor(isPopupDoc: Boolean=false, showScroll: Boolean=true): EditorEx {
         val editor = EditorFactory.getInstance()
             // java.lang.RuntimeException: Memory leak detected: 'com.intellij.openapi.editor.impl.view.EditorView@601dc681' (class com.intellij.openapi.editor.impl.view.EditorView) was registered in Disposer as a child of 'ROOT_DISPOSABLE' (class com.intellij.openapi.util.Disposer$2) but wasn't disposed.
             // Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.
@@ -53,8 +53,8 @@ class InfoViewEditorFactory(val project: Project) {
             setCaretEnabled(true)
             // if true, then it's in fact also only visible if necessary
             // check com.intellij.openapi.editor.impl.EditorImpl#setHorizontalScrollbarVisible
-            setHorizontalScrollbarVisible(true)
-            setVerticalScrollbarVisible(true)
+            setHorizontalScrollbarVisible(showScroll)
+            setVerticalScrollbarVisible(showScroll)
             isRendererMode = false
         }
         return editor

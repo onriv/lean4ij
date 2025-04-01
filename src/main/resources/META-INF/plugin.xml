@@ -275,7 +275,12 @@
             <add-to-group group-id="lean4ij.infoview.rightClickGroup" anchor="last"/>
         </action>
         <action id="lean4ij.actions.ToggleMiniInfoview" class="lean4ij.actions.ToggleMiniInfoview"
-                text="Lean4 Actions: Toggle Mini Infoview"/>
+                text="Lean4 Actions: Toggle Mini Infoview">
+            <keyboard-shortcut
+                    keymap="$default"
+                    first-keystroke="control QUOTE"
+            />
+        </action>
     </actions>
 
     <applicationListeners>

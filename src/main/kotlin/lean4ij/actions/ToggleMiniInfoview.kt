@@ -9,8 +9,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import kotlinx.coroutines.launch
 import lean4ij.infoview.MiniInfoviewService
+import lean4ij.setting.Lean4Settings
 
 class ToggleMiniInfoview : AnAction() {
+
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT
@@ -27,8 +29,11 @@ class ToggleMiniInfoview : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val service = project.service<MiniInfoviewService>()
-        service.scope.launch {
-            service.toggleVisibility()
+        val lean4Settings = service<Lean4Settings>()
+        if (lean4Settings.enableNativeInfoview) {
+            service.scope.launch {
+                service.toggleVisibility()
+            }
         }
     }
 }

@@ -219,8 +219,6 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
 
         // update goal popover
 
-
-
         // update info view
         if (lean4Settings.enableNativeInfoview) {
             if (!lean4Settings.autoUpdateInternalInfoview && !forceUpdate) return

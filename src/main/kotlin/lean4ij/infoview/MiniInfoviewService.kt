@@ -65,7 +65,7 @@ class MiniInfoviewService(private val project: Project, val scope: CoroutineScop
         popup.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
         popup.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 
-        currentPopover = factory.createComponentPopupBuilder(popup, popup)
+        currentPopover = factory.createComponentPopupBuilder(popup, null)
             .setResizable(true)
             .setFocusable(false)
             .setMovable(true)

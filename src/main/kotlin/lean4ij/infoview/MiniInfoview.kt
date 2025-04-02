@@ -2,6 +2,7 @@ package lean4ij.infoview
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -28,6 +29,9 @@ class MiniInfoview(val project: Project) : SimpleToolWindowPanel(true) {
         leanProject.scope.launch(Dispatchers.EDT) {
             try {
                 val editor0 = InfoViewEditorFactory(project).createEditor(showScroll = false)
+                editor0.setCaretEnabled(false)
+                editor0.setCaretVisible(false)
+                editor0.colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null)
                 editor.complete(editor0)
                 setContent(editor0.component)
             } catch (ex: Throwable) {

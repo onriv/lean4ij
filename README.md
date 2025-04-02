@@ -41,6 +41,8 @@ Afterwards, you have two options for installing Lean4ij:
    - If the infoview or anything else seems to be misbehaving, try clicking the restart button at the top of the infoview
 4. Enable goal hints by pressing Control I on the line that you want to see the goal for (Control Shift I to remove). You will see something like this:
    - ![Inlay Hint](.github/media/inlay_hint.png)
+5. Toggle a mini infoview that follows your cursor by pressing `Control '`. Use `Control '` to disable
+    - ![Goal Popover](.github/media/goal_popover.png)
 
 ### Actions
 
@@ -60,6 +62,7 @@ Currently, the following actions are defined, mostly without default shortcut. A
 | RestartJcefInfoview                  | Lean4 Actions: Restart Jcef Infoview                        |                  |  
 | AddInlayGoalHint                     | Lean4 Actions: Add Inlay Goal Hint                          | Control I        |  
 | DelInlayGoalHint                     | Lean4 Actions: Delete Inlay Goal Hint                       | Control Shift I  |  
+| ToggleMiniInfoView                   | Lean4 Actions: Toggle Mini Infoview                         | Control '         |  
 
 ## Settings
 

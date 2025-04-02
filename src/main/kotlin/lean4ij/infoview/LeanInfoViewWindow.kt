@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
 import kotlinx.coroutines.CompletableDeferred
@@ -17,6 +19,48 @@ import kotlinx.coroutines.launch
 import lean4ij.project.LeanProjectService
 import javax.swing.BorderFactory
 
+
+class InfoViewEditorFactory(val project: Project) {
+    /**
+     * create an editorEx for rendering the info view
+     * **this is only for EDT**, create it using
+     */
+    fun createEditor(isPopupDoc: Boolean=false, showScroll: Boolean=true): EditorEx {
+        val editor = EditorFactory.getInstance()
+            // java.lang.RuntimeException: Memory leak detected: 'com.intellij.openapi.editor.impl.view.EditorView@601dc681' (class com.intellij.openapi.editor.impl.view.EditorView) was registered in Disposer as a child of 'ROOT_DISPOSABLE' (class com.intellij.openapi.util.Disposer$2) but wasn't disposed.
+            // Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.
+            // See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.
+            // The corresponding Disposer.register() stacktrace is shown as the cause:
+            .createViewer(DocumentImpl(" ", true), project) as EditorEx
+        // val editor = editorTextField.getEditor(true)!!
+        with (editor) {
+            with (settings) {
+                isRightMarginShown = false
+                isLineNumbersShown = false
+                isLineMarkerAreaShown = false
+                isRefrainFromScrolling = true
+                isCaretRowShown = true
+                isBlinkCaret = true
+                isUseSoftWraps = true
+                setGutterIconsShown(false)
+                additionalLinesCount = 0
+                additionalColumnsCount = 1
+                isVirtualSpace = false
+                // for popup doc of inline infoview, the folding outline should not be shown
+                isFoldingOutlineShown = !isPopupDoc
+            }
+            headerComponent = null
+            setCaretEnabled(true)
+            // if true, then it's in fact also only visible if necessary
+            // check com.intellij.openapi.editor.impl.EditorImpl#setHorizontalScrollbarVisible
+            setHorizontalScrollbarVisible(showScroll)
+            setVerticalScrollbarVisible(showScroll)
+            isRendererMode = false
+        }
+        return editor
+    }
+
+}
 /**
  * check :https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html#ui-dsl-basics
  * for some cleaner way to write ui stuff
@@ -41,8 +85,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
     init {
         leanProject.scope.launch(Dispatchers.EDT) {
             try {
-                val editor0 = createEditor()
-
+                val editor0 = InfoViewEditorFactory(toolWindow.project).createEditor()
                 installPopupHandler(editor0)
 
                 editor.complete(editor0)
@@ -51,7 +94,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
                 editor.completeExceptionally(ex)
             }
             try {
-                popupEditor.complete(createEditor(true))
+                popupEditor.complete(InfoViewEditorFactory(toolWindow.project).createEditor(true))
             } catch (ex: Throwable) {
                 // TODO should here log?
                 popupEditor.completeExceptionally(ex)
@@ -88,44 +131,6 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
         }
     }
 
-    /**
-     * create an editorEx for rendering the info view
-     * **this is only for EDT**, create it using
-     */
-    private fun createEditor(isPopupDoc: Boolean=false): EditorEx {
-        val editor = EditorFactory.getInstance()
-            // java.lang.RuntimeException: Memory leak detected: 'com.intellij.openapi.editor.impl.view.EditorView@601dc681' (class com.intellij.openapi.editor.impl.view.EditorView) was registered in Disposer as a child of 'ROOT_DISPOSABLE' (class com.intellij.openapi.util.Disposer$2) but wasn't disposed.
-            // Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.
-            // See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.
-            // The corresponding Disposer.register() stacktrace is shown as the cause:
-            .createViewer(DocumentImpl(" ", true), toolWindow.project) as EditorEx
-        // val editor = editorTextField.getEditor(true)!!
-        with (editor) {
-            with (settings) {
-                isRightMarginShown = false
-                isLineNumbersShown = false
-                isLineMarkerAreaShown = false
-                isRefrainFromScrolling = true
-                isCaretRowShown = true
-                isBlinkCaret = true
-                isUseSoftWraps = true
-                setGutterIconsShown(false)
-                additionalLinesCount = 0
-                additionalColumnsCount = 1
-                isVirtualSpace = false
-                // for popup doc of inline infoview, the folding outline should not be shown
-                isFoldingOutlineShown = !isPopupDoc
-            }
-            headerComponent = null
-            setCaretEnabled(true)
-            // if true, then it's in fact also only visible if necessary
-            // check com.intellij.openapi.editor.impl.EditorImpl#setHorizontalScrollbarVisible
-            setHorizontalScrollbarVisible(true)
-            setVerticalScrollbarVisible(true)
-            isRendererMode = false
-        }
-        return editor
-    }
 
     suspend fun updateDirectText(text: String) {
         val editorEx: EditorEx = editor.await()
@@ -181,7 +186,7 @@ class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(tru
 
     fun restartEditor() {
         leanProject.scope.launch(Dispatchers.EDT) {
-            editor.complete(createEditor())
+            editor.complete(InfoViewEditorFactory(toolWindow.project).createEditor())
         }
     }
 

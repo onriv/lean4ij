@@ -42,8 +42,14 @@ class InfoViewWindowFactory : ToolWindowFactory {
          */
         fun getLeanInfoview(project: Project): LeanInfoViewWindow? {
             val contents = ToolWindowManager.getInstance(project)
-                .getToolWindow("LeanInfoViewWindow")!!
-                .contentManager.contents
+                .getToolWindow("LeanInfoViewWindow")
+                ?.contentManager?.contents
+            // If the project just startup and teh tool window never opened before
+            // it may be null
+            if (contents == null) {
+                thisLogger().debug("Cannot get lean info tool window contents")
+                return null
+            }
             if (contents.isEmpty()) {
                 return null
             }

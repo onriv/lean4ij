@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+The following work is enigmurl's great efforts!
+
+- add mini infoview (toggle with Ctrl+Quote, or from action menu)
+
 ## [0.2.5] - 2025-03-30
 
 Depend on the latest approved nightly build of LSP4IJ: 0.12.0-20250328-180521

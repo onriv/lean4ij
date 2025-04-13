@@ -4,7 +4,10 @@
 
 ## [Unreleased]
 
-The following work is enigmurl's great efforts!
+## [0.2.7] - 2025-04-13
+
+Depend on the latest approved nightly build of LSP4IJ: 0.12.1-20250411-162341
+The following work is @enigmurl enigmurl's great efforts!
 
 - add mini infoview (toggle with Ctrl+Quote, or from action menu)
 
@@ -280,7 +283,8 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.7...HEAD
+[0.2.7]: https://github.com/onriv/lean4ij/compare/v0.2.5...v0.2.7
 [0.2.5]: https://github.com/onriv/lean4ij/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/onriv/lean4ij/compare/v0.2.2...v0.2.4
 [0.2.2]: https://github.com/onriv/lean4ij/compare/v0.2.1...v0.2.2

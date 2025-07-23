@@ -9,6 +9,7 @@ import com.redhat.devtools.lsp4ij.client.features.LSPDiagnosticFeature
 import com.redhat.devtools.lsp4ij.client.features.LSPWorkspaceSymbolFeature
 import lean4ij.project.LeanProjectService
 import lean4ij.setting.Lean4Settings
+import org.eclipse.lsp4j.InitializeParams
 
 /**
  * per project with the getProject method in the base class
@@ -40,5 +41,14 @@ class Lean4LSPClientFeatures : LSPClientFeatures() {
         val selectedFile = FileEditorManager.getInstance(project)
             .selectedTextEditor?.virtualFile
         return selectedFile == file
+    }
+
+    override fun initializeParams(initializeParams: InitializeParams) {
+        // Setting this to true should make the LSP start filling out textEdit for completion items
+        // However, this currently doesn't seem to work, but it should probably stay here anyway
+        // See the test runner for Lean's LSP, which also explicitly sets this to true
+        // https://github.com/leanprover/lean4/blob/64219ac91e2930d3950637317c7dc4f7b45568d1/src/Lean/Server/Test/Runner.lean#L94
+        initializeParams.capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
+        super.initializeParams(initializeParams)
     }
 }

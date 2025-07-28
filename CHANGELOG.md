@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+- #165, fix #164, Fix completions deleting everything before the caret
+
 ## [0.2.7] - 2025-04-13
 
 Depend on the latest approved nightly build of LSP4IJ: 0.12.1-20250411-162341

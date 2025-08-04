@@ -429,7 +429,7 @@ class LeanProjectWizard : GeneratorNewProjectWizard {
 class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProjectWizard()) :
     GeneratorNewProjectWizardBuilderAdapter(leanWizard) {
 
-    override fun createProject(name: String?, path: String?): Project? {
+    override fun createProject(name: String, path: String): Project? {
         return super.createProject(name, path)?.let { project ->
             val quickStarterModel = leanWizard.quickStarterModel!!
             // TODO for some region here it requires proxy

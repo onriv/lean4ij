@@ -96,6 +96,11 @@ dependencies {
      * Hence add this, not saw before on GitHub action
      */
     testImplementation("net.java.dev.jna:jna:5.17.0")
+    // Currently it's still version 1 gradle plugin of intellij idea
+    // and now we cannot follow
+    // https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html#testing
+    // TODO see https://github.com/onriv/lean4ij/issues/125
+    testImplementation("junit:junit:4.13.2")
 }
 
 // Set the JVM language level used to build the project.

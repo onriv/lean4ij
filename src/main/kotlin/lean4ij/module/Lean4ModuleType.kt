@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextCo
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleTypeManager
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.toStringProperty
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -44,6 +45,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Cell
@@ -71,6 +73,7 @@ import java.net.URL
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComponent
+import kotlin.concurrent.timerTask
 
 val QUICK_STARTER_MODEL_KEY = Key<GraphProperty<QuickStarterModel?>>("lean4_quick_starter_model")
 
@@ -337,14 +340,15 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
         locationProperty: GraphProperty<String>,
         wizardContext: WizardContext,
     ): Cell<TextFieldWithBrowseButton> {
+        val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
         val fileChooserDescriptor =
             FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+                .withTitle(title)
                 .withFileFilter { it.isDirectory }
                 .withPathToTextConvertor(::getPresentablePath)
                 .withTextToPathConvertor(::getCanonicalPath)
-        val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
         val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-        return textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor).bindText(property)
+        return cell(textFieldWithBrowseButton(wizardContext.project, fileChooserDescriptor).bind(property))
     }
 
     /**

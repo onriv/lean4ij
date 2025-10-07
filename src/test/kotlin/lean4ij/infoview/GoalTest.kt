@@ -14,7 +14,22 @@ import lean4ij.test.readResource
 import org.junit.Ignore
 
 @TestDataPath("\$CONTENT_ROOT/src/test/testData")
-// Ignore temporally for maybe wrongly setup of project (check if update it to plugin v2 works or not)
+/**
+ * Running this test throws error:
+ * TODO it maybe caused by using ktor
+at com.intellij.ide.startup.impl.StartupManagerImplKt$launchActivity$1.invokeSuspend(StartupManagerImpl.kt:496)
+Caused by: java.lang.NoSuchMethodError: 'java.lang.Object kotlinx.coroutines.CancellableContinuation.tryResume(java.lang.Object, java.lang.Object, kotlin.jvm.functions.Function1)'
+at com.intellij.core.rwmutex.cqs.CancellableQueueSynchronizer.tryResumeImpl(CancellableQueueSynchronizer.kt:378)
+at com.intellij.core.rwmutex.cqs.CancellableQueueSynchronizer.resume(CancellableQueueSynchronizer.kt:283)
+at com.intellij.core.rwmutex.ReadWriteMutexWithWriteIntentImpl.releaseReadPermit(ReadWriteMutexWithWriteIntent.kt:203)
+at com.intellij.core.rwmutex.ReadPermitImpl.release(RWMutexIdea.kt:171)
+at com.intellij.openapi.application.impl.ThreadState.release(AnyThreadWriteThreadingSupport.kt:43)
+at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.tryRunReadAction(AnyThreadWriteThreadingSupport.kt:357)
+at com.intellij.openapi.application.impl.ApplicationImpl.tryRunReadAction(ApplicationImpl.java:971)
+at com.intellij.openapi.application.rw.CancellableReadActionKt.cancellableReadActionInternal$lambda$3$lambda$2(cancellableReadAction.kt:30)
+at com.intellij.openapi.progress.util.ProgressIndicatorUtilService.runActionAndCancelBeforeWrite(ProgressIndicatorUtilService.java:66)
+at com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite(ProgressIndicatorUtils.java:157)
+ */
 @Ignore
 class GoalTest : BasePlatformTestCase() {
 

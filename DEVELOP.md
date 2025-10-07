@@ -124,7 +124,9 @@ structure SubexprInfo where
 The `MsgEmbed` and its subclasses are used for displaying the messages. Almost all complexities came from this part.
 
 ## Developing in Intellij Idea
- Proxy issue (this should only happen in some specific region)
+If the sync button does not work inside Intellij Idea, run `./gradlew sync` in terminal first.
+
+Proxy issue (this should only happen in some specific region)
 If the runPlugin task requires some proxy, create a file named `local.properties` and add the following content to it.
 ```properties
 https.proxyHost=...

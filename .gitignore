@@ -14,4 +14,5 @@ local.properties
 
 # This is introduced by https://github.com/jenv/jenv
 .java-version
-
+.intellijPlatform/
+nohup.out

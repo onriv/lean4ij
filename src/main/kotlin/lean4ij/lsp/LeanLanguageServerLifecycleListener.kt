@@ -81,10 +81,4 @@ class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServer
         }
     }
 
-    override fun handleError(p0: LanguageServerWrapper, p1: Throwable) {
-    }
-
-    override fun dispose() {
-    }
-
 }

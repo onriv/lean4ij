@@ -3,7 +3,7 @@ package lean4ij.lsp
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.redhat.devtools.lsp4ij.client.features.LSPCompletionFeature
 import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.CompletionItem

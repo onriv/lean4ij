@@ -93,13 +93,14 @@ class LeanLanguageServerLifecycleListener(val project: Project) {
  * - Hover highlight requires the start/end information of Hover
  */
 object LeanLanguageServerLifecycleListenerProxyFactory {
-    fun create(project: Project): LanguageServerLifecycleListener {
+    fun create(project: Project): Any {
         val target = LeanLanguageServerLifecycleListener(project)
+        val interfaceClass = Class.forName("com.redhat.devtools.lsp4ij.lifecycle.LanguageServerLifecycleListener")
         return Proxy.newProxyInstance(
             this::class.java.classLoader,
             // target::class.java.classLoader,
-            arrayOf(LanguageServerLifecycleListener::class.java)
+            arrayOf(interfaceClass)
         ) { proxy, method, args -> method.invoke(target, *args)
-        } as LanguageServerLifecycleListener
+        }
     }
 }

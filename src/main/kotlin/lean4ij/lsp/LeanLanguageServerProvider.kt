@@ -31,7 +31,17 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
 
     private fun addLanguageServerLifecycleListener() {
         val instance = LanguageServerLifecycleManager.getInstance(project)
-        instance.addLanguageServerLifecycleListener(LeanLanguageServerLifecycleListenerProxyFactory.create(project))
+
+        // 首先尝试直接查找方法
+        val methods = instance::class.java.methods
+
+        // 查找名为 addLanguageServerLifecycleListener 的方法
+        val targetMethod = methods.find { method ->
+            method.name == "addLanguageServerLifecycleListener" &&
+                    method.parameterCount == 1
+        }
+
+        targetMethod!!.invoke(instance, LeanLanguageServerLifecycleListenerProxyFactory.create(project))
     }
 
 

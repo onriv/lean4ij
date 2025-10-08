@@ -31,7 +31,7 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
 
     private fun addLanguageServerLifecycleListener() {
         val instance = LanguageServerLifecycleManager.getInstance(project)
-        instance.addLanguageServerLifecycleListener(LeanLanguageServerLifecycleListener(project))
+        instance.addLanguageServerLifecycleListener(LeanLanguageServerLifecycleListenerProxyFactory.create(project))
     }
 
 

@@ -17,11 +17,12 @@ import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
+import java.lang.reflect.Proxy
 
-class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServerLifecycleListener {
+class LeanLanguageServerLifecycleListener(val project: Project) {
     private val leanProjectService : LeanProjectService = project.service()
 
-    override fun handleStatusChanged(languageServer: LanguageServerWrapper) {
+    fun handleStatusChanged(languageServer: LanguageServerWrapper) {
         if (languageServer.serverDefinition.id != Constants.LEAN_LANGUAGE_SERVER_ID) {
             return
         }
@@ -38,7 +39,7 @@ class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServer
 
     private val hoverRequests = mutableSetOf<String>()
 
-    override fun handleLSPMessage(message: Message, consumer: MessageConsumer, languageServer: LanguageServerWrapper) {
+    fun handleLSPMessage(message: Message, consumer: MessageConsumer, languageServer: LanguageServerWrapper) {
         if (languageServer.serverDefinition.id != Constants.LEAN_LANGUAGE_SERVER_ID) {
             return
         }
@@ -81,10 +82,24 @@ class LeanLanguageServerLifecycleListener(val project: Project) : LanguageServer
         }
     }
 
-    override fun handleError(p0: LanguageServerWrapper, p1: Throwable) {
-    }
+}
 
-    override fun dispose() {
+/**
+ * temporally implement [LanguageServerLifecycleListener] for it's marked as internal,
+ * but I don't have enough time to refactor it yet
+ * But it does need to be removed, see https://github.com/redhat-developer/lsp4ij/discussions/1324
+ * Currently the reason for using the listener is:
+ * - There are some features like vertical status bar for file progressing, requires knowing the status of language protocol server
+ * - Hover highlight requires the start/end information of Hover
+ */
+object LeanLanguageServerLifecycleListenerProxyFactory {
+    fun create(project: Project): LanguageServerLifecycleListener {
+        val target = LeanLanguageServerLifecycleListener(project)
+        return Proxy.newProxyInstance(
+            this::class.java.classLoader,
+            // target::class.java.classLoader,
+            arrayOf(LanguageServerLifecycleListener::class.java)
+        ) { proxy, method, args -> method.invoke(target, *args)
+        } as LanguageServerLifecycleListener
     }
-
 }

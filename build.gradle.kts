@@ -207,7 +207,8 @@ intellijPlatform {
             recommended()
             select {
                 types = listOf(IntelliJPlatformType.IntellijIdea)
-                sinceBuild = "2025.1"
+                sinceBuild = "2024.1"
+                untilBuild = "2025.1"
             }
         }
     }

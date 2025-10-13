@@ -208,7 +208,7 @@ intellijPlatform {
             select {
                 types = listOf(IntelliJPlatformType.IntellijIdea)
                 sinceBuild = "2024.1"
-                untilBuild = "2025.1"
+                // untilBuild = "2025.1"
             }
         }
     }

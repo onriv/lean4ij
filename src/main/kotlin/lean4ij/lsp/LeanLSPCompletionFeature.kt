@@ -54,10 +54,7 @@ class LeanLSPCompletionFeature : LSPCompletionFeature() {
             // Attempting to refer to it under certain circumstances fails to find the original element,
             // instead referring to the whole file, and so the whole text range of the file.
             val psiElement = context.parameters.position
-            // There is no com.intellij.psi.util.PsiTreeUtilKt.getStartOffset in version Intellij idea 2024.1
-            // For the compatibility of this version, we use psiElement.textRange.startOffset
-            // For version greater than or equal to 2024.2, just psiElement.startOffset should be enough
-            val elementStart = psiElement.textRange.startOffset
+            val elementStart = psiElement.startOffset
             // Cursor offset rather than the PSI element end pos
             val elementEnd = context.parameters.offset
 

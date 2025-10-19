@@ -29,9 +29,9 @@ import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.util.io.await
 import com.jetbrains.rd.util.lifetime.intersect
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import lean4ij.lsp.data.InteractiveGoalsParams
 import lean4ij.lsp.data.InteractiveTermGoalParams

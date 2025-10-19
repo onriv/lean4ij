@@ -32,7 +32,8 @@ import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextCo
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleTypeManager
-import com.intellij.openapi.observable.util.bind
+// there exists same name of bind method in Cell in 2024.2, we rename it to force the extension method
+import com.intellij.openapi.observable.util.bind as observable_bind
 import com.intellij.openapi.observable.util.toStringProperty
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -348,7 +349,7 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
                 .withPathToTextConvertor(::getPresentablePath)
                 .withTextToPathConvertor(::getCanonicalPath)
         val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-        return cell(textFieldWithBrowseButton(wizardContext.project, fileChooserDescriptor).bind(property))
+        return cell(textFieldWithBrowseButton(wizardContext.project, fileChooserDescriptor).observable_bind(property))
     }
 
     /**

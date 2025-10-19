@@ -20,7 +20,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
 import java.lang.reflect.Proxy
 
 class LeanLanguageServerLifecycleListener(val project: Project) {
-    private val leanProjectService : LeanProjectService = project.service()
+    private val leanProjectService: LeanProjectService = project.service()
 
     fun handleStatusChanged(languageServer: LanguageServerWrapper) {
         if (languageServer.serverDefinition.id != Constants.LEAN_LANGUAGE_SERVER_ID) {
@@ -45,7 +45,7 @@ class LeanLanguageServerLifecycleListener(val project: Project) {
         }
         if (message is RequestMessage) {
             if (message.params is HoverParams) {
-               hoverRequests.add(message.id)
+                hoverRequests.add(message.id)
             }
         }
         if (message is ResponseMessage) {
@@ -91,6 +91,7 @@ class LeanLanguageServerLifecycleListener(val project: Project) {
  * Currently the reason for using the listener is:
  * - There are some features like vertical status bar for file progressing, requires knowing the status of language protocol server
  * - Hover highlight requires the start/end information of Hover
+ * TODO remove this
  */
 object LeanLanguageServerLifecycleListenerProxyFactory {
     fun create(project: Project): Any {
@@ -100,7 +101,14 @@ object LeanLanguageServerLifecycleListenerProxyFactory {
             this::class.java.classLoader,
             // target::class.java.classLoader,
             arrayOf(interfaceClass)
-        ) { proxy, method, args -> method.invoke(target, *args)
+        ) { proxy, method, args ->
+            return@newProxyInstance when (method.name) {
+                "handleLSPMessage" -> target.handleLSPMessage(args[0] as Message, args[1] as MessageConsumer, args[2] as LanguageServerWrapper)
+                "handleStatusChanged" -> target.handleStatusChanged(args[0] as LanguageServerWrapper)
+                else -> {
+
+                }
+            }
         }
     }
 }

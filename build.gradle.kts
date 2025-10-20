@@ -58,8 +58,8 @@ plugins {
 
 }
 
-group = providers.gradleProperty("pluginGroup").get()
-version = providers.gradleProperty("pluginVersion").get()
+// group = providers.gradleProperty("pluginGroup").get()
+// version = providers.gradleProperty("pluginVersion").get()
 
 // group = properties("pluginGroup").get()
 // version = properties("pluginVersion").get()

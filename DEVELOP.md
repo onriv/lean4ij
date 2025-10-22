@@ -219,6 +219,11 @@ Running it from gradle seems working fine currently, but for running a selected 
 If a test failed in the pipeline, an artifact named "tests-result" will be generated at the part of artifacts and
 there is the detail for the failure of tests in it. Download and unzip to see the concrete error if necessary.
 
+# RELEASE
+
+After the github action run, in the [releases page](https://github.com/onriv/lean4ij/releases) there will be a draft release with the specified version.
+Edit it an make it a release or prerelease
+
 # Ref
 
 ## Some ref on intellij plugin development

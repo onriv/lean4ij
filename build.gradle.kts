@@ -58,8 +58,8 @@ plugins {
 
 }
 
-// group = providers.gradleProperty("pluginGroup").get()
-// version = providers.gradleProperty("pluginVersion").get()
+group = providers.gradleProperty("pluginGroup").get()
+version = providers.gradleProperty("pluginVersion").get()
 
 // group = properties("pluginGroup").get()
 // version = properties("pluginVersion").get()
@@ -156,8 +156,8 @@ kotlin {
 // this is copied from https://github.com/redhat-developer/intellij-quarkus/blob/main/build.gradle.kts
 intellijPlatform {
     pluginConfiguration {
-        name = providers.gradleProperty("pluginName").get()
-        version = providers.gradleProperty("pluginVersion").get()
+        name = providers.gradleProperty("pluginName")
+        version = providers.gradleProperty("pluginVersion")
 
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
         description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {

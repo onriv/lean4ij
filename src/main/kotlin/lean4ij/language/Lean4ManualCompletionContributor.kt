@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PlainTextTokenTypes
-import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.util.ProcessingContext
 
 

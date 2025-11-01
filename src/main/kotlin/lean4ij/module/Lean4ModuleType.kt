@@ -36,6 +36,7 @@ import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.observable.util.bind as observable_bind
 import com.intellij.openapi.observable.util.toStringProperty
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
@@ -46,7 +47,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Cell
@@ -66,6 +66,7 @@ import lean4ij.run.fullWidthCell
 import lean4ij.sdk.SdkService
 import lean4ij.util.execute
 import java.awt.Color
+import java.awt.TextField
 import java.io.File
 import java.net.ConnectException
 import java.net.InetSocketAddress
@@ -348,27 +349,12 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
                 .withFileFilter { it.isDirectory }
                 .withPathToTextConvertor(::getPresentablePath)
                 .withTextToPathConvertor(::getCanonicalPath)
-        val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-        var browseButton: Any =
-            textFieldWithBrowseButton(wizardContext.project, fileChooserDescriptor).observable_bind(property)
-
-        // from version 2024.3, the method textFieldWithBrowseButton return TextFieldWithBrowseButton rather than cell
-        // hence here we handle this dynamically too
-        // TODO remove this once no longer need support for 2024.2
-        return when {
-            browseButton is Cell<*> -> {
-                @Suppress("UNCHECKED_CAST")
-                browseButton as Cell<TextFieldWithBrowseButton>
-            }
-            browseButton is TextFieldWithBrowseButton -> {
-                cell(browseButton)
-            }
-            else -> {
-                throw IllegalArgumentException("Unexpected type: ${browseButton::class.java}")
-            }
+        // TODO not sure if property should be use or not
+        // val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
+        val button : TextFieldWithBrowseButton = TextFieldWithBrowseButton().apply {
+            addBrowseFolderListener(TextBrowseFolderListener(fileChooserDescriptor, wizardContext.project))
         }
-
-
+        return cell(button)
     }
 
     /**

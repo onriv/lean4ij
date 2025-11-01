@@ -105,9 +105,9 @@ class Lean4WorkspaceClassContributor : Lean4ChooseByNameContributorEx() {
 }
 
 class WorkspaceSymbolsCacheLoader(private val project: Project) :
-    CacheLoader<String, List<LeanWorkspaceSymbolData>?>() {
+    CacheLoader<String, List<LeanWorkspaceSymbolData>>() {
 
-    override fun load(key: String): List<LeanWorkspaceSymbolData>? {
+    override fun load(key: String): List<LeanWorkspaceSymbolData> {
         thisLogger().info("loading symbols for $key")
 
         // TODO very fuzzy this way...
@@ -122,7 +122,7 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) :
             // return null will trigger an exception and do not cache the value(null)
             // this is the expected behavior
             // we will catch it when using
-            return null
+            throw IllegalStateException("Language server not found")
         }
         val ls = languageServerItem.server
         val params = WorkspaceSymbolParams(key)
@@ -163,7 +163,7 @@ class WorkspaceSymbolsCache(private val project: Project) {
     private val lean4Settings = service<Lean4Settings>()
 
     // TODO here every output should also be cache
-    private val symbolsCache: LoadingCache<String, List<LeanWorkspaceSymbolData>?> = CacheBuilder.newBuilder()
+    private val symbolsCache: LoadingCache<String, List<LeanWorkspaceSymbolData>> = CacheBuilder.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(1))
         .build(WorkspaceSymbolsCacheLoader(project))
 

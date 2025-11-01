@@ -349,7 +349,26 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
                 .withPathToTextConvertor(::getPresentablePath)
                 .withTextToPathConvertor(::getCanonicalPath)
         val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-        return cell(textFieldWithBrowseButton(wizardContext.project, fileChooserDescriptor).observable_bind(property))
+        var browseButton: Any =
+            textFieldWithBrowseButton(wizardContext.project, fileChooserDescriptor).observable_bind(property)
+
+        // from version 2024.3, the method textFieldWithBrowseButton return TextFieldWithBrowseButton rather than cell
+        // hence here we handle this dynamically too
+        // TODO remove this once no longer need support for 2024.2
+        return when {
+            browseButton is Cell<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                browseButton as Cell<TextFieldWithBrowseButton>
+            }
+            browseButton is TextFieldWithBrowseButton -> {
+                cell(browseButton)
+            }
+            else -> {
+                throw IllegalArgumentException("Unexpected type: ${browseButton::class.java}")
+            }
+        }
+
+
     }
 
     /**

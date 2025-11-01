@@ -25,7 +25,9 @@ import org.cef.network.CefRequest
 import org.cef.security.CefSSLInfo
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.lang.reflect.Proxy
 import javax.swing.event.DocumentEvent
+import kotlin.reflect.KProperty0
 
 /**
  * TODO the name like infoview and infoView is inconsistent in the whole codebase...
@@ -39,12 +41,12 @@ class JcefInfoviewService(private val project: Project) {
      *
      * may help
      */
-    val searchTextField : SearchTextField = SearchTextField()
+    val searchTextField: SearchTextField = SearchTextField()
     val searchTextFlow: Channel<String> = Channel()
 
     init {
         searchTextField.isVisible = false
-        searchTextField.addDocumentListener(object: DocumentAdapter() {
+        searchTextField.addDocumentListener(object : DocumentAdapter() {
             override fun textChanged(e: DocumentEvent) {
                 project.leanProjectScope.launch {
                     searchTextFlow.send(searchTextField.text)
@@ -132,6 +134,7 @@ class JcefInfoviewService(private val project: Project) {
         }
         browser.zoomLevel = defaultZoomLevel!!
     }
+
     var defaultZoomLevel: Double? = null
 
     val errMsg =
@@ -144,78 +147,125 @@ class JcefInfoviewService(private val project: Project) {
 
         // browser.cefBrowser.find
         browser.jbCefClient
-            .addRequestHandler(object : CefRequestHandler {
-                override fun onBeforeBrowse(
-                    browser: CefBrowser?,
-                    frame: CefFrame?,
-                    request: CefRequest?,
-                    user_gesture: Boolean,
-                    is_redirect: Boolean
-                ): Boolean {
-                    if (request == null) return false
-                    val isInfoview = request.url.startsWith(_url!!)
-                    if (isInfoview) {
-                        return false
-                    } else {
-                        BrowserUtil.browse(request.url)
-                        return true
-                    }
-                }
-
-                override fun onOpenURLFromTab(
-                    browser: CefBrowser?,
-                    frame: CefFrame?,
-                    target_url: String?,
-                    user_gesture: Boolean
-                ): Boolean {
-                    return false
-                }
-
-                override fun getResourceRequestHandler(
-                    browser: CefBrowser?,
-                    frame: CefFrame?,
-                    request: CefRequest?,
-                    isNavigation: Boolean,
-                    isDownload: Boolean,
-                    requestInitiator: String?,
-                    disableDefaultHandling: BoolRef?
-                ): CefResourceRequestHandler? {
-                    return null
-                }
-
-                override fun getAuthCredentials(
-                    browser: CefBrowser?,
-                    origin_url: String?,
-                    isProxy: Boolean,
-                    host: String?,
-                    port: Int,
-                    realm: String?,
-                    scheme: String?,
-                    callback: CefAuthCallback?
-                ): Boolean {
-                    return false
-                }
-
-                override fun onCertificateError(
-                    browser: CefBrowser?,
-                    cert_error: CefLoadHandler.ErrorCode?,
-                    request_url: String?,
-                    sslInfo: CefSSLInfo?,
-                    callback: CefCallback?
-                ): Boolean {
-                    return false
-                }
-
-                override fun onRenderProcessTerminated(
-                    browser: CefBrowser?,
-                    status: CefRequestHandler.TerminationStatus?
-                ) {
-                }
-            }, browser.cefBrowser )
+            .addRequestHandler(createCefRequestHandler(), browser.cefBrowser)
         browser
     } else {
         // TODO make this shorter
         thisLogger().error(errMsg)
         null
+    }
+
+    /**
+     * Since version 2025.3, the [CefRequestHandler] class introduces a new method
+     * CefRequestHandler#onRenderProcessTerminated(CefBrowser browser, TerminationStatus status, int error_code, String error_string)
+     * It makes the verifier failed in version 2025.3 and for versions less than 2025.3 we cannot override it
+     * Hence temporally here we use dynamic proxy to solve to problem and until
+     * we no longer need to support versions less than 2025.3, we will remove it
+     * see https://github.com/JetBrains/intellij-community/blob/master/platform/ui.jcef/jcef/JBCefClient.java#L643 for some information
+     * TODO remove this once ready for 2025.3 and no longer need lower version
+     *
+     */
+    fun createCefRequestHandler(): CefRequestHandler {
+        val handler = InfoviewCefRequestHandler(::url);
+        return Proxy.newProxyInstance(
+            CefRequestHandler::class.java.classLoader,
+            arrayOf(CefRequestHandler::class.java)
+        ) { _, method, args ->
+            when (method.name) {
+                "onBeforeBrowse" -> {
+                    return@newProxyInstance handler.onBeforeBrowse(
+                        args[0] as CefBrowser?,
+                        args[1] as CefFrame?,
+                        args[2] as CefRequest?,
+                        args[3] as Boolean, args[4] as Boolean)
+                }
+
+                "onOpenURLFromTab" -> false
+                "getResourceRequestHandler" -> null
+                "getAuthCredentials" -> false
+                "onCertificateError" -> false
+                "onRenderProcessTerminated" -> Unit
+                else -> when (method.returnType.name) {
+                    "boolean" -> false
+                    "void" -> Unit
+                    else -> null
+                }
+            }
+        } as CefRequestHandler
+    }
+}
+
+/**
+ * Since version 2025.3, there is a new method required to override
+ * and introduce compatibility problem
+ * Temporally we use dynamic for this
+ * see https://github.com/JetBrains/intellij-community/blob/master/platform/ui.jcef/jcef/JBCefClient.java#L643 for some information
+ */
+class InfoviewCefRequestHandler(private val urlProp: KProperty0<String?>) /*: CefRequestHandler*/ {
+    /*override*/ fun onBeforeBrowse(
+        browser: CefBrowser?,
+        frame: CefFrame?,
+        request: CefRequest?,
+        user_gesture: Boolean,
+        is_redirect: Boolean
+    ): Boolean {
+        if (request == null) return false
+        val isInfoview = request.url.startsWith(urlProp.get()!!)
+        if (isInfoview) {
+            return false
+        } else {
+            BrowserUtil.browse(request.url)
+            return true
+        }
+    }
+
+    /*override*/ fun onOpenURLFromTab(
+        browser: CefBrowser?,
+        frame: CefFrame?,
+        target_url: String?,
+        user_gesture: Boolean
+    ): Boolean {
+        return false
+    }
+
+    /*override*/ fun getResourceRequestHandler(
+        browser: CefBrowser?,
+        frame: CefFrame?,
+        request: CefRequest?,
+        isNavigation: Boolean,
+        isDownload: Boolean,
+        requestInitiator: String?,
+        disableDefaultHandling: BoolRef?
+    ): CefResourceRequestHandler? {
+        return null
+    }
+
+    /*override*/ fun getAuthCredentials(
+        browser: CefBrowser?,
+        origin_url: String?,
+        isProxy: Boolean,
+        host: String?,
+        port: Int,
+        realm: String?,
+        scheme: String?,
+        callback: CefAuthCallback?
+    ): Boolean {
+        return false
+    }
+
+    /*override*/ fun onCertificateError(
+        browser: CefBrowser?,
+        cert_error: CefLoadHandler.ErrorCode?,
+        request_url: String?,
+        sslInfo: CefSSLInfo?,
+        callback: CefCallback?
+    ): Boolean {
+        return false
+    }
+
+    /*override*/ fun onRenderProcessTerminated(
+        browser: CefBrowser?,
+        status: CefRequestHandler.TerminationStatus?
+    ) {
     }
 }

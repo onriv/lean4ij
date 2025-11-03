@@ -192,10 +192,10 @@ jobs:
       - name: Check space
         run: df -h
       # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: true
+      # - name: Setup Gradle
+      #  uses: gradle/actions/setup-gradle@v4
+      #  with:
+      #    cache-read-only: true
 
       # Run Verify Plugin task and IntelliJ Plugin Verifier tool
       - name: Run Plugin Verification tasks

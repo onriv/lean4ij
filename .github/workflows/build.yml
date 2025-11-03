@@ -181,14 +181,16 @@ jobs:
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v4
-
+      - name: check space before java
+        run: df -h
       # Set up the Java environment for the next steps
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 21
-
+      - name: Check space
+        run: df -h
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -197,7 +199,7 @@ jobs:
 
       # Run Verify Plugin task and IntelliJ Plugin Verifier tool
       - name: Run Plugin Verification tasks
-        run: df -h && rm -rf /opt/hostedtoolcache && df -h && ./gradlew verifyPlugin
+        run: df -h && ./gradlew verifyPlugin
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result

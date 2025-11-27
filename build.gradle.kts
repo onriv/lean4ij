@@ -110,7 +110,7 @@ dependencies {
      * Native library (com/sun/jna/linux-x86-64/libjnidispatch.so) not found in resource path
      * Hence add this, not saw before on GitHub action
      */
-    testImplementation("net.java.dev.jna:jna:5.17.0")
+    testImplementation("net.java.dev.jna:jna:5.18.1")
     // Currently it's still version 1 gradle plugin of intellij idea
     // and now we cannot follow
     // https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html#testing

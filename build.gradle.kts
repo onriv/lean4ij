@@ -54,7 +54,7 @@ plugins {
     // TODO maybe later we can do kotlin-multiplatform
     //      see: https://stackoverflow.com/questions/78493876/kotlin-gradle-multiplatform-not-producing-nodejs-artifact
     id("com.github.node-gradle.node") version "7.1.0"
-    id("org.jetbrains.grammarkit") version "2022.3.2.2"
+    id("org.jetbrains.grammarkit") version "2023.3.0.1"
 
 }
 

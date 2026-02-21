@@ -7,6 +7,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 
+/**
+ * Action to manually restart the Lean Language Server.
+ *
+ * This is useful if the server becomes unresponsive or gets into a bad state.
+ * It triggers a full stop and start of the LSP process via [LeanProjectService].
+ */
 class RestartLeanLsp : AnAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
@@ -15,6 +21,8 @@ class RestartLeanLsp : AnAction() {
 
     init {
         templatePresentation.icon = AllIcons.Actions.StopRefresh
+        templatePresentation.text = "Restart Lean LSP Server"
+        templatePresentation.description = "Restarts the Lean 4 Language Server process."
     }
 
     override fun actionPerformed(e: AnActionEvent) {

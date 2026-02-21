@@ -8,6 +8,25 @@ For small change and quick development without Intellij Idea, you can use the Gi
 
 This way it requires no local develop environment and can be done on any machine with internet access. But it requires some more time for the build and test process and hence it's only recommend for small changes.
 
+# Architecture Overview
+
+The plugin follows a typical IntelliJ Platform plugin architecture, with specific components for handling the Lean Language Server Protocol (LSP).
+
+**Key Components:**
+
+*   **`LeanProjectService`**: The central service for the project. It manages the lifecycle of the `LeanLanguageServer` connection and orchestrates updates between the editor and the InfoView.
+*   **`LeanLanguageServer`**: A wrapper around the `InternalLeanLanguageServer` (LSP4J) that provides type-safe, suspending methods for Lean 4 specific RPC calls (e.g., getting goals, widgets).
+*   **`LeanFile`**: Represents a Lean source file and handles its specific session and state.
+*   **`InfoViewWindowFactory` & `LeanInfoviewService`**: Manage the "InfoView" tool window, which displays interactive goals and messages. This component uses a custom Swing-based rendering approach (and an experimental JCEF/browser version).
+
+**Data Flow:**
+
+1.  User moves caret in Editor.
+2.  `LeanProjectService` detects change.
+3.  Request sent to `LeanLanguageServer` (RPC call `getInteractiveGoals`).
+4.  Response (Goal State) received.
+5.  `InfoViewWindowFactory` updates the UI model.
+
 # Project and package structure
 
 A brief description of current project and package structure
@@ -244,6 +263,3 @@ and [IntelliJ Platform Extension Point and Listener List](https://plugins.jetbra
   - [Full BNF syntax?](https://leanprover.zulipchat.com/#narrow/stream/113489-new-members/topic/Full.20BNF.20syntax.3F)
   - [using lean4-infoview alone inside an external browser](https://leanprover.zulipchat.com/#narrow/stream/113488-general/topic/using.20lean4-infoview.20alone.20inside.20an.20external.20browser)
   - [✔ Lean LSP extensions](https://leanprover.zulipchat.com/#narrow/stream/113488-general/topic/.E2.9C.94.20Lean.20LSP.20extensions)
-
-
-

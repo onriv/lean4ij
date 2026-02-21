@@ -62,6 +62,9 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     // This is default to false, for it maybe not creating by Intellij IDEA
     // in this case we think it's already created by the user using command line
     // tool, etc.
+    /**
+     * Flag indicating if a new project creation is in progress.
+     */
     var isProjectCreating: Boolean = false
 
     private var _languageServer = CompletableDeferred<LeanLanguageServer>()
@@ -82,10 +85,19 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     val isEnable : AtomicBoolean = AtomicBoolean(lean4Settings.languageServerStartingStrategy == "Eager")
 
     private val _caretEvent = MutableSharedFlow<PlainGoalParams>()
+    /**
+     * Flow of events when the caret moves, carrying the parameters to request goal state.
+     */
     val caretEvent: Flow<PlainGoalParams> get() = _caretEvent.asSharedFlow()
     private val _serverEvent = MutableSharedFlow<NotificationMessage>()
+    /**
+     * Flow of generic server notification messages.
+     */
     val serverEvent : Flow<NotificationMessage> get() = _serverEvent.asSharedFlow()
 
+    /**
+     * Emits a server notification event to listeners.
+     */
     fun emitServerEvent(message: NotificationMessage) {
         scope.launch {
             _serverEvent.emit(message)
@@ -94,16 +106,26 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
 
     private val leanFiles = ConcurrentHashMap<String, LeanFile>()
 
+    /**
+     * Retrieves or creates a [LeanFile] instance for the given VirtualFile.
+     */
     fun file(file: VirtualFile): LeanFile {
         val ret = file(LspUtil.quote(file.path))
         ret.virtualFile = file
         return ret
     }
 
+    /**
+     * Retrieves or creates a [LeanFile] instance for the given URI string.
+     */
     fun file(file: String) : LeanFile {
         return leanFiles.computeIfAbsent(file) { LeanFile(this, file) }
     }
 
+    /**
+     * Sets the initialized language server instance.
+     * Use this when the server has successfully started.
+     */
     fun setInitializedServer(languageServer: LanguageServer) {
         val result = this.languageServer.complete(LeanLanguageServer(languageServer as InternalLeanLanguageServer))
         if (!result) {
@@ -113,12 +135,22 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         }
     }
 
+    /**
+     * Sets the initialization result from the LSP server.
+     */
     fun setInitializedResult(initializeResult: InitializeResult) {
         this.initializeResult.complete(initializeResult)
     }
 
+    /**
+     * Suspends until the initialization result is available.
+     */
     suspend fun awaitInitializedResult() : InitializeResult = initializeResult.await()
 
+    /**
+     * Computes the relative path of a file with respect to the project base path.
+     * Useful for displaying shorter paths in the UI.
+     */
     fun getRelativePath(file: String): String {
         val unquotedFile = LspUtil.unquote(file)
         var prefix = project.basePath ?: return unquotedFile
@@ -132,20 +164,30 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     }
 
     /**
+     * Retrieves the current session ID for a file.
      * TODO move to [LeanFile] for session lifecycle handling
      */
     suspend fun getSession(uri: String) : String = file(uri).getSession()
 
+    /**
+     * Updates the caret position, triggering a goal refresh.
+     */
     fun updateCaret(params: PlainGoalParams) {
         scope.launch {
             _caretEvent.emit(params)
         }
     }
 
+    /**
+     * Makes a raw RPC call for a specific document.
+     */
     suspend fun rpcCallRaw(params: RpcCallParamsRaw): JsonElement? {
         return file(params.textDocument.uri).rpcCallRaw(params)
     }
 
+    /**
+     * Restarts the Lean Language Server.
+     */
     fun restartLsp() {
         // TODO should this be lock?
         _initializeResult = CompletableDeferred()
@@ -154,6 +196,9 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         LanguageServerManager.getInstance(project).start(Constants.LEAN_LANGUAGE_SERVER_ID)
     }
 
+    /**
+     * Resets the internal server state, effectively invalidating the current connection.
+     */
     fun resetServer() {
         // TODO should this be lock?
         _initializeResult = CompletableDeferred()
@@ -161,6 +206,7 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     }
 
     /**
+     * Checks if the current project is a valid Lean project by looking for the toolchain.
      * TODO [lean4ij.lsp.LeanLanguageServerProvider.setServerCommand] contains some duplicated logic for this
      */
     fun isLeanProject(): Boolean {
@@ -168,6 +214,10 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
             .toFile().isFile
     }
 
+    /**
+     * Updates the InfoView for the given document based on the current caret position.
+     * Finds the primary editor for the document.
+     */
     fun updateInfoviewFor(document: Document) {
         val file = FileDocumentManager.getInstance().getFile(document)?:return
         if (!LeanUtil.isLeanFile(file)) return
@@ -180,6 +230,12 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         file(file).updateCaret(editor, position)
     }
 
+    /**
+     * Updates the InfoView for the given editor and caret position.
+     *
+     * @param editor The editor instance.
+     * @param forceUpdate If true, forces an update even if the position hasn't changed (conceptually).
+     */
     fun updateInfoviewFor(editor: Editor, forceUpdate: Boolean = false) {
         val document = editor.document
         val file = FileDocumentManager.getInstance().getFile(document)?:return
@@ -193,57 +249,10 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
     }
 
     /**
-     * not sure why it's a list
-     * case for two results:
-     * ```
-     * [
-     *  {
-     *    "targetUri": "file:///home/onriv/.elan/toolchains/leanprover--lean4---v4.11.0-rc2/src/lean/Init/Core.lean",
-     *    "targetSelectionRange": {
-     *      "start": {
-     *        "line": 374,
-     *        "character": 2
-     *      },
-     *      "end": {
-     *        "line": 374,
-     *        "character": 7
-     *      }
-     *    },
-     *    "targetRange": {
-     *      "start": {
-     *        "line": 374,
-     *        "character": 2
-     *      },
-     *      "end": {
-     *        "line": 374,
-     *        "character": 7
-     *      }
-     *    }
-     *  },
-     *  {
-     *    "targetUri": "file:///home/onriv/.elan/toolchains/leanprover--lean4---v4.11.0-rc2/src/lean/Init/Core.lean",
-     *    "targetSelectionRange": {
-     *      "start": {
-     *        "line": 1248,
-     *        "character": 0
-     *      },
-     *      "end": {
-     *        "line": 1248,
-     *        "character": 8
-     *      }
-     *    },
-     *    "targetRange": {
-     *      "start": {
-     *        "line": 1248,
-     *        "character": 0
-     *      },
-     *      "end": {
-     *        "line": 1249,
-     *        "character": 12
-     *      }
-     *    }
-     *  }
-     * ```
+     * Navigates to the definition location specified in the targets list.
+     * Opens the file and moves the caret to the start of the target range.
+     *
+     * @param targets A list of definition targets. Only the first one is used.
      */
     fun getGoToLocation(targets: List<DefinitionTarget>) {
         targets.firstOrNull().let { target ->

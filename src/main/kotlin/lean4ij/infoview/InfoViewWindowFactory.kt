@@ -28,8 +28,15 @@ import lean4ij.setting.Lean4Settings
 import java.awt.BorderLayout
 
 /**
- * TODO do not show this if indexing, the doc seems saying it's an option for it
- *      maybe dumb-aware or something
+ * Factory for creating the Lean InfoView ToolWindow.
+ *
+ * This class is responsible for:
+ * 1. Creating the InfoView tool window content.
+ * 2. Configuring the toolbar for the InfoView.
+ * 3. Updating the InfoView content based on editor events (via [updateInteractiveGoal]).
+ * 4. Constructing the InfoView object model from LSP data.
+ *
+ * TODO: Add logic to suppress this window during indexing (DumbAware).
  */
 class InfoViewWindowFactory : ToolWindowFactory {
 
@@ -38,7 +45,10 @@ class InfoViewWindowFactory : ToolWindowFactory {
         val settings = service<Lean4Settings>()
 
         /**
-         * The id is from plugin.xml
+         * Retrieves the [LeanInfoViewWindow] component from the ToolWindowManager.
+         *
+         * @param project The current project.
+         * @return The [LeanInfoViewWindow] instance, or null if not found/initialized.
          */
         fun getLeanInfoview(project: Project): LeanInfoViewWindow? {
             val contents = ToolWindowManager.getInstance(project)
@@ -56,6 +66,22 @@ class InfoViewWindowFactory : ToolWindowFactory {
             return contents[0].component as LeanInfoViewWindow
         }
 
+        /**
+         * Constructs the InfoView content model using a DSL.
+         *
+         * This aggregates:
+         * - Current file and position info.
+         * - Interactive goals.
+         * - Expected type (Term Goal).
+         * - Messages/Diagnostics.
+         *
+         * @param file The virtual file being edited.
+         * @param position The cursor position.
+         * @param interactiveGoals Goal state from LSP.
+         * @param interactiveTermGoal Term goal (expected type) from LSP.
+         * @param interactiveDiagnostics Diagnostics for the current region.
+         * @param allMessage Diagnostics for the entire file.
+         */
         fun createInfoObjectModel(
             file: VirtualFile,
             position: Position,
@@ -136,11 +162,25 @@ class InfoViewWindowFactory : ToolWindowFactory {
         }
 
         /**
-         * TODO the implementation should absolutely be replaced by better rendering way
-         *      using raw text it's very inconvenient to update things like hovering event
-         *      but though vim/emacs has to do it this way maybe ...
-         * TODO passing things like editor etc seems cumbersome, maybe add some implement for context
-         * @param editor Editor that is currently selected. It's not the infoview tool window editor.
+         * Updates the InfoView content based on the current editor state.
+         *
+         * This function orchestrates the update process:
+         * 1. Retrieves the InfoView tool window.
+         * 2. Constructs the new content model via [createInfoObjectModel].
+         * 3. Dispatches the update to the UI thread (EDT).
+         * 4. Updates mouse listeners for interactivity.
+         *
+         * TODO: Refactor rendering logic. Using raw text/DSL is cumbersome for complex interactions (hover, click).
+         * TODO: Context passing (editor, project) is messy. Consider a context object.
+         *
+         * @param editor The editor where the cursor is located (source editor).
+         * @param project The current project.
+         * @param file The file being edited.
+         * @param position The cursor position.
+         * @param interactiveGoals Goal data.
+         * @param interactiveTermGoal Term goal data.
+         * @param interactiveDiagnostics Diagnostics data.
+         * @param allMessage All diagnostics data.
          */
         fun updateInteractiveGoal(
             editor: Editor,
@@ -185,7 +225,8 @@ class InfoViewWindowFactory : ToolWindowFactory {
     }
 
     /**
-     * TODO this seems called twice
+     * Entry point for creating the tool window content.
+     * Called by the IntelliJ Platform when the tool window is first opened.
      */
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         ApplicationManager.getApplication().invokeLater {
@@ -202,6 +243,10 @@ class InfoViewWindowFactory : ToolWindowFactory {
 
     override fun shouldBeAvailable(project: Project) = true
 
+    /**
+     * Configures the toolbar actions for the InfoView.
+     * Adds actions like restart, refresh, and settings toggles.
+     */
     fun configureToolbar(project: Project, toolWindow: ToolWindow): ActionToolbar {
         val actions = DefaultActionGroup()
         val manager = ActionManager.getInstance()

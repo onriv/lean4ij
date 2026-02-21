@@ -50,54 +50,121 @@ import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 
 /**
- * This class declares the suspend like method for the language server, and handling serialization serialization
- * which making the method type safe, for usage see [lean4ij.project.LeanFile], where handles things like session
- * outdated and is more biz relevant.
- * TODO here we don't impl getWidgets. It's implemented with react and we can no do it with swing anyway...
- *      for the external infoview, it's bridged transparently and doesn't require an explicit declaration
+ * A wrapper around the [InternalLeanLanguageServer] that provides type-safe, suspending methods
+ * for interacting with the Lean 4 Language Server.
+ *
+ * This class handles:
+ * - Asynchronous communication with the LSP server.
+ * - Serialization and deserialization of LSP messages using [Gson].
+ * - Specific Lean 4 RPC method calls (e.g., for InfoView).
+ *
+ * Usage:
+ * Typically accessed via [lean4ij.project.LeanFile] which handles session lifecycle and business logic.
  */
 class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
 
+    /**
+     * Retrieves the plain goal state at a specific position.
+     *
+     * @param params Parameters specifying the text document and position.
+     * @return The [PlainGoal] containing the goal state, or null if not available.
+     */
     suspend fun plainGoal(params: PlainGoalParams): PlainGoal? {
         return plainGoalAsync(params).await()
     }
 
+    /**
+     * Retrieves the plain term goal at a specific position.
+     *
+     * @param params Parameters specifying the text document and position.
+     * @return The [PlainTermGoal] containing the term goal, or null.
+     */
     suspend fun plainTermGoal(params: PlainTermGoalParams): PlainTermGoal? {
         return plainTermGoalAsync(params).await()
     }
 
+    /**
+     * Establishes an RPC session with the Lean server.
+     *
+     * @param params Connection parameters (usually containing the file URI).
+     * @return [RpcConnected] containing the session ID.
+     */
     suspend fun rpcConnect(params: RpcConnectParams): RpcConnected {
         return rpcConnectAsync(params).await()
     }
 
+    /**
+     * Executes a generic RPC call.
+     *
+     * @param params Parameters for the RPC call, including the method name and arguments.
+     * @return The result as a [JsonElement], or null.
+     */
     suspend fun rpcCall(params: RpcCallParams): JsonElement? {
         return rpcCallAsync(params).await()
     }
 
+    /**
+     * Retrieves interactive goals for the InfoView.
+     *
+     * @param params Parameters specifying the position and session.
+     * @return [InteractiveGoals] structure for rendering.
+     */
     suspend fun getInteractiveGoals(params: InteractiveGoalsParams): InteractiveGoals? {
         return getInteractiveGoalsAsync(params).await()
     }
 
+    /**
+     * Retrieves interactive term goals.
+     *
+     * @param params Parameters specifying the position and session.
+     * @return [InteractiveTermGoal] structure.
+     */
     suspend fun getInteractiveTermGoal(params: InteractiveTermGoalParams): InteractiveTermGoal? {
         return getInteractiveTermGoalAsync(params).await()
     }
 
+    /**
+     * Retrieves interactive diagnostics (errors, warnings) for the InfoView.
+     *
+     * @param params Parameters specifying the line range.
+     * @return A list of [InteractiveDiagnostics], or null.
+     */
     suspend fun getInteractiveDiagnostics(params: InteractiveDiagnosticsParams): List<InteractiveDiagnostics>? {
         return getInteractiveDiagnosticsAsync(params).await()
     }
 
+    /**
+     * Converts generic info to an interactive popup format.
+     *
+     * @param params Parameters containing the info to convert.
+     * @return [InfoPopup] content.
+     */
     suspend fun infoToInteractive(params: InteractiveInfoParams): InfoPopup {
         return infoToInteractiveAsync(params).await()
     }
 
+    /**
+     * Lazily resolves children of a trace message into interactive format.
+     *
+     * @param params Parameters specifying the trace node.
+     * @return A list of [TaggedText] containing [MsgEmbed] messages.
+     */
     suspend fun lazyTraceChildrenToInteractive(params: LazyTraceChildrenToInteractiveParams): List<TaggedText<MsgEmbed>>? {
         return lazyTraceChildrenToInteractiveAsync(params).await()
     }
 
+    /**
+     * Retrieves definition locations for "Go to Definition".
+     *
+     * @param params Parameters specifying the source location.
+     * @return A list of [DefinitionTarget] locations.
+     */
     suspend fun getGotoLocation(params: GetGoToLocationParams) : List<DefinitionTarget>? {
         return getGotoLocationAsync(params).await()
     }
 
+
+    // -- Async Wrapper Methods --
 
     fun plainGoalAsync(params: PlainGoalParams): CompletableFuture<PlainGoal?> {
         return languageServer.plainGoal(params)
@@ -134,8 +201,7 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
     }
 
     /**
-     * TODO weird, where is this params [InteractiveInfoParams] and return result [CodeWithInfos]
-     *      from?   it seems incorrect
+     * TODO: Investigate origin of [InteractiveInfoParams] and return type.
      */
     fun infoToInteractiveAsync(params: InteractiveInfoParams): CompletableFuture<InfoPopup> {
         return languageServer.rpcCall(params).thenApply {
@@ -144,7 +210,7 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
     }
 
     /**
-     * the rpc call for showing trace in infoview
+     * RPC call for showing trace details in InfoView.
      */
     fun lazyTraceChildrenToInteractiveAsync(params: LazyTraceChildrenToInteractiveParams): CompletableFuture<List<TaggedText<MsgEmbed>>?> {
         return languageServer.rpcCall(params).thenApply {
@@ -173,14 +239,20 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
 
     companion object {
         /**
-         * TODO here it can be some refactor to DRY
+         * Gson instance configured with custom deserializers for Lean 4 RPC types.
+         *
+         * Key configurations:
+         * - Registers [TaggedText] adapters for [SubexprInfo] and [MsgEmbed].
+         * - Custom deserializer for [MsgEmbed] to handle polymorphic types (expr, goal, trace).
+         * - Custom deserializer for [RpcCallParams] to map method names to parameter types.
+         * - Custom deserializer for [StrictOrLazy] to handle lazy loading structures.
          */
         val gson: Gson = GsonBuilder()
             .registerTaggedText<SubexprInfo>()
             .registerTaggedText<MsgEmbed>()
             .registerTypeAdapter(MsgEmbed::class.java, object : JsonDeserializer<MsgEmbed> {
                 override fun deserialize(p0: JsonElement, p1: Type, p2: JsonDeserializationContext): MsgEmbed {
-                    // TODO these and all around deserializer is very similar, maybe refactor them
+                    // TODO: Refactor similar deserializers to reduce duplication.
                     if (p0.isJsonObject && p0.asJsonObject.has("expr")) {
                         @Suppress("NAME_SHADOWING")
                         val p1 = p0.asJsonObject.getAsJsonObject("expr")
@@ -201,7 +273,7 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
                         return ret
                     }
                     if (p0.isJsonObject && p0.asJsonObject.has("widget")) {
-                        return MsgUnsupported("Widget message cannot be supported for technical reason. Please the jcef version infoview.")
+                        return MsgUnsupported("Widget message cannot be supported for technical reason. Please use the jcef version infoview.")
                     }
                     throw IllegalStateException(p0.toString())
                 }
@@ -224,7 +296,6 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
                     throw IllegalStateException("Unsupported RPC method: $method")
                 }
             })
-            // TODO here it's quit idle too
             .registerTypeAdapter(
                 StrictOrLazy::class.java,
                 object : JsonDeserializer<StrictOrLazy<List<TaggedText<MsgEmbed>>, ContextInfo>> {
@@ -254,12 +325,15 @@ class LeanLanguageServer(val languageServer: InternalLeanLanguageServer) {
 }
 
 /**
- * this is hinted by copilot
- * TODO does it already exists in some library? I think it must be
- * TODO add the log for it with the old scala log also for similar purpose
- *      and in fact the only crucial part it
- *      val type = object : TypeToken<TaggedText<T>>() {}.type
- *      all other is already support in Gson (kind of forgetting this)
+ * Registers a [TaggedText] adapter for a specific [InfoViewContent] type [T].
+ *
+ * This extension function allows Gson to handle the recursive and polymorphic nature of [TaggedText].
+ * It handles three cases:
+ * 1. `tag`: A tagged text node (e.g., semantic info).
+ * 2. `append`: A list of tagged text nodes.
+ * 3. `text`: A raw string.
+ *
+ * @param T The type of content within the tag (e.g., [SubexprInfo], [MsgEmbed]).
  */
 inline fun <reified T> GsonBuilder.registerTaggedText(): GsonBuilder where T : InfoViewContent {
     val type = object : TypeToken<TaggedText<T>>() {}.type

@@ -7,6 +7,11 @@ import com.intellij.openapi.util.IconLoader.getIcon
 import javax.swing.Icon
 
 
+/**
+ * Definition of the Lean4 Language.
+ *
+ * Inherits from [PlainTextLanguage] as a base, but provides specific support for Lean 4 syntax and features.
+ */
 class Lean4Language : Language(PlainTextLanguage.INSTANCE, "lean4") {
 
     companion object {
@@ -15,6 +20,9 @@ class Lean4Language : Language(PlainTextLanguage.INSTANCE, "lean4") {
 
 }
 
+/**
+ * Container for icons used in the Lean 4 plugin.
+ */
 class Lean4Icons {
     companion object {
         // check https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries for making icons to respect theme
@@ -22,6 +30,11 @@ class Lean4Icons {
     }
 }
 
+/**
+ * The file type definition for Lean 4 files.
+ *
+ * Associates the `.lean` extension with [Lean4Language].
+ */
 object Lean4FileType : LanguageFileType(Lean4Language.INSTANCE) {
     override fun getName(): String {
         return "lean4"

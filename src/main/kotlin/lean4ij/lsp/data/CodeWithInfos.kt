@@ -9,24 +9,42 @@ import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
 /**
- * copy from src/Lean/Widget/InteractiveCode.lean:45
- * The polymorphism is achieved via class inheritance
- * TODO using Kotlin's property for getter/setter and avoid
- *      all fields being public
- * TODO this maybe should be renamed
+ * Interface for content that can be displayed in the InfoView.
+ *
+ * This mirrors the polymorphic nature of Lean's widget system.
+ * Implementations (like [MsgEmbed] and [SubexprInfo]) provide logic to:
+ * - Render themselves into the InfoView object model ([toInfoObjectModel]).
+ * - Provide context info for specific offsets ([contextInfo]).
+ * - Handle highlighting ([mayHighlight]).
  */
 interface InfoViewContent {
+    /**
+     * Retrieves context information (e.g., type info, definition location) for a given offset.
+     */
     fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>?
+
+    /**
+     * Applies highlighting to the InfoView content based on its state (e.g., diff status).
+     */
     fun mayHighlight(sb: InfoviewRender, startOffset: Int, endOffset: Int) {}
+
+    /**
+     * Converts this content into the internal object model used for rendering the InfoView.
+     */
     fun toInfoObjectModel(): InfoObjectModel
 }
 
 /**
- * check src/Lean/Widget/TaggedText.lean 104 lines --16%--
- * This implementation still looses some information at the runtime,
- * which is not very convenient while debugging
- * maybe it can be reified, check
- * https://discuss.kotlinlang.org/t/reified-generics-on-class-level/16711/4
+ * A recursive data structure representing text tagged with metadata.
+ *
+ * It corresponds to `Lean.Widget.TaggedText` in Lean 4.
+ *
+ * Structure:
+ * - [TaggedTextText]: A leaf node containing a raw string.
+ * - [TaggedTextAppend]: A list of `TaggedText` nodes (concatenation).
+ * - [TaggedTextTag]: A wrapper that applies a tag of type [T] to a child `TaggedText`.
+ *
+ * @param T The type of the tag (metadata), which must implement [InfoViewContent].
  */
 abstract class TaggedText<T> where T : InfoViewContent {
     @Transient
@@ -42,13 +60,22 @@ abstract class TaggedText<T> where T : InfoViewContent {
     var parent: TaggedText<T>? = null
 
     /**
-     * The `t` here is only use in TaggedTextText
+     * Recursively searches for the context info at the given offset.
+     *
+     * @param offset The absolute offset in the rendered text.
+     * @param t The tag associated with the current node (passed down during recursion).
      */
     abstract fun getCodeText(offset: Int, t: T?): Triple<ContextInfo, Int, Int>?
 
+    /**
+     * Converts this node into the InfoView object model.
+     */
     abstract fun toInfoObjectModel(): InfoObjectModel
 }
 
+/**
+ * Leaf node representing raw text.
+ */
 class TaggedTextText<T>(val text: String) : TaggedText<T>() where T : InfoViewContent {
 
     /**
@@ -67,6 +94,8 @@ class TaggedTextText<T>(val text: String) : TaggedText<T>() where T : InfoViewCo
         if (t == null) return null
         // TODO the implementation currently is trying to make it generic and avoid type check,
         //      but as time pass it becomes hard to read
+        //      Logic: If the tag is an expression (MsgEmbedExpr), extract the inner SubexprInfo
+        //      and check if the offset falls within its range.
         (t as? MsgEmbedExpr)?.let {
             (it.expr as? TaggedTextTag<SubexprInfo>)?.let {
                 if (it.startOffset <= offset && offset < it.endOffset) {
@@ -79,6 +108,9 @@ class TaggedTextText<T>(val text: String) : TaggedText<T>() where T : InfoViewCo
     }
 }
 
+/**
+ * Node wrapping a child with a metadata tag [f0].
+ */
 class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where T : InfoViewContent {
 
     override fun toInfoObjectModel(): InfoObjectModel = info {
@@ -95,6 +127,9 @@ class TaggedTextTag<T>(val f0: T, val f1: TaggedText<T>) : TaggedText<T>() where
     }
 }
 
+/**
+ * Node representing a sequence of [TaggedText] elements.
+ */
 class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<T>() where T : InfoViewContent {
 
     override fun toInfoObjectModel(): InfoObjectModel = info {
@@ -113,8 +148,15 @@ class TaggedTextAppend<T>(private val append: List<TaggedText<T>>) : TaggedText<
     }
 }
 
+/**
+ * Base class for messages embedded in the InfoView.
+ * Corresponds to `Lean.Widget.MsgEmbed`.
+ */
 abstract class MsgEmbed : InfoViewContent
 
+/**
+ * Represents an embedded expression.
+ */
 class MsgEmbedExpr(val expr: TaggedText<SubexprInfo>) : MsgEmbed() {
     override fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>? {
         return expr.getCodeText(offset, null)
@@ -125,6 +167,9 @@ class MsgEmbedExpr(val expr: TaggedText<SubexprInfo>) : MsgEmbed() {
     }
 }
 
+/**
+ * Represents an embedded goal state.
+ */
 class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
     override fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>? {
         // TODO when does this happen? Mostly when error happens
@@ -138,8 +183,13 @@ class MsgEmbedGoal(val goal: InteractiveGoal) : MsgEmbed() {
 }
 
 /**
- * TODO trace! Not implement yet, check src/Lean/Widget/InteractiveDiagnostic.lean" 221 lines --11%--
- *      the definition of MsgEmbed
+ * Represents a trace message, which can be expanded lazily.
+ *
+ * @property indent Indentation level.
+ * @property cls CSS class/category of the trace.
+ * @property collapsed Initial state.
+ * @property children Children of the trace, either strictly loaded or lazy (requiring RPC call).
+ * @property msg The content of the trace message itself.
  */
 class MsgEmbedTrace(
     val indent: Int, val cls: String, private val collapsed: Boolean,
@@ -220,6 +270,9 @@ class MsgEmbedTrace(
     }
 }
 
+/**
+ * Fallback for unsupported message types.
+ */
 class MsgUnsupported(val message: String) : MsgEmbed() {
     override fun contextInfo(offset: Int, startOffset: Int, endOffset: Int): Triple<ContextInfo, Int, Int>? {
         return null
@@ -229,10 +282,8 @@ class MsgUnsupported(val message: String) : MsgEmbed() {
 }
 
 /**
- * class corresponding to the lean inductive with the same name
- * in Lean/Widget/InteractiveDiagnostic.lean:15
- * This is kind of same as Either
- * Strict or lazy may largely be used by kotlin
+ * Helper class for data that can be either strictly present [A] or lazily loaded [B].
+ * Corresponds to the `StrictOrLazy` inductive type in Lean.
  */
 abstract class StrictOrLazy<A, B>
 data class StrictOrLazyStrict<A, B>(val strict: A) : StrictOrLazy<A, B>()

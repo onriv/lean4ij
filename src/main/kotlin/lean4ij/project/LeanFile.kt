@@ -189,7 +189,11 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                 }
                 firstLineHighlighter!!.lineMarkerRenderer = leanFileProgressFinishedFillingLineMarkerRender
                 for (highlighter in highlighters) {
-                    markupModel.removeHighlighter(highlighter)
+                    try {
+                        markupModel.removeHighlighter(highlighter)
+                    } catch (_: Throwable) {
+                        // Fix #148/#209: highlighter may belong to a stale document or different editor
+                    }
                 }
                 for (processingInfo in info.processing) {
                     val startLine = processingInfo.range.start.line.let {
@@ -203,18 +207,19 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                     val endLine = min(processingInfo.range.end.line, document.lineCount)
                     val startLineOffset = StringUtil.lineColToOffset(document.charsSequence, startLine, 0)
                     val endLineOffset = StringUtil.lineColToOffset(document.charsSequence, min(endLine, document.lineCount-1), 0)
-                    // TODO Here it may incur an exception:
-                    //      https://github.com/onriv/lean4ij/issues/148
-                    //      In a large chance it may be caused by the file is edited currently
-                    //      For a temporary solution, just ignore it
-                    if (endLineOffset == -1 || startLineOffset == -1) {
+                    // Fix #148: offsets can be invalid when the file is edited concurrently
+                    if (endLineOffset == -1 || startLineOffset == -1 || startLineOffset > endLineOffset) {
                         continue
                     }
-                    val rangeHighlighter = markupModel.addRangeHighlighter(
-                        leanFileProgressEmptyTextAttributesKey,
-                        startLineOffset, endLineOffset, HighlighterLayer.LAST, HighlighterTargetArea.LINES_IN_RANGE)
-                    rangeHighlighter.lineMarkerRenderer = leanFileProgressFillingLineMarkerRender
-                    ret.add(rangeHighlighter)
+                    try {
+                        val rangeHighlighter = markupModel.addRangeHighlighter(
+                            leanFileProgressEmptyTextAttributesKey,
+                            startLineOffset, endLineOffset, HighlighterLayer.LAST, HighlighterTargetArea.LINES_IN_RANGE)
+                        rangeHighlighter.lineMarkerRenderer = leanFileProgressFillingLineMarkerRender
+                        ret.add(rangeHighlighter)
+                    } catch (_: Throwable) {
+                        // Fix #148: document may have changed between offset calculation and highlighter creation
+                    }
                 }
             }
         }

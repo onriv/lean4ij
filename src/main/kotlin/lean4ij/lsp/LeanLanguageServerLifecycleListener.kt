@@ -80,16 +80,13 @@ class LeanLanguageServerLifecycleListener(val project: Project) {
             if (message.id in hoverRequests) {
                 // get current hover results for showing highlight of current content
                 hoverRequests.remove(message.id)
-                // TODO here I got a cast Exception earlier, but
-                //      but unable to reproduce it in develop environment yet
-                //      Checking LSP the message.result do be a Hover object
-                //      in org.eclipse.lsp4j.services.TextDocumentService.hover
-                //      So why could it fail to cast to Hover?
+                // Fix #143: message.result can be an ArrayList instead of Hover in some LSP
+                // edge cases (e.g., race conditions or malformed responses). Log and skip
+                // rather than crashing.
                 try {
                     leanProjectService.highlightCurrentContent(message.result as Hover?)
-                } catch (e: Exception) {
-                    thisLogger().error("Failed to cast message.result to Hover with result ${message.result}", e)
-                    throw e
+                } catch (e: ClassCastException) {
+                    thisLogger().warn("Unexpected hover result type: ${message.result?.javaClass}, skipping highlight", e)
                 }
             }
             // This is not customize used in yet

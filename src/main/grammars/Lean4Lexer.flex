@@ -55,10 +55,10 @@ KEYWORD_COMMAND_PREFIX   = local|private|protected|scoped|partial|noncomputable|
 KEYWORD_MODIFIER        = renaming|hiding|where|extends|using|with|at|rec|deriving
 KEYWORD_COMMAND2        = syntax|elab|elab_rules|macro_rules|macro
 KEYWORD_COMMAND3        = namespace|section|end
-KEYWORD_COMMAND4        = class|def|lemma|example|theorem|instance|structure|set_option|vairable|infixr
-KEYWORD_COMMAND5        = #check|#guard_msgs|#eval|#reduce|#synth|#help
-KEYWORD_COMMAND6        = match|have|with|by|in|fun
-KEYWORD_SORRY = sorry
+KEYWORD_COMMAND4        = class|def|lemma|example|theorem|instance|structure|set_option|variable|infixr|infixl|infix|prefix|postfix|notation|abbrev|inductive|coinductive|constant|axiom|opaque|nonrec
+KEYWORD_COMMAND5        = #check|#guard_msgs|#eval|#reduce|#synth|#help|#print|#check_failure
+KEYWORD_COMMAND6        = match|have|with|by|in|fun|do|return|let|if|then|else|for|unless|try|catch|finally|throw
+KEYWORD_SORRY = sorry|admit
 DEFAUTL_TYPE = Type|(Type \*)
 
  // special

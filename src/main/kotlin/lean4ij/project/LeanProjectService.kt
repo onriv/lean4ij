@@ -320,7 +320,13 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                 }
             }
             if (hoverRangeHighlighter != null) {
-                markupModel.removeHighlighter(hoverRangeHighlighter!!)
+                try {
+                    markupModel.removeHighlighter(hoverRangeHighlighter!!)
+                } catch (e: Throwable) {
+                    // Fix #209: The highlighter may belong to a different editor's markup model
+                    // (e.g., when switching files), causing an AssertionError
+                }
+                hoverRangeHighlighter = null
             }
 
             if (hover == null) {
@@ -361,7 +367,12 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
                 hoverListener = object : EditorMouseMotionListener {
                     override fun mouseMoved(e: EditorMouseEvent) {
                         if (!e.isOverText) {
-                            editor.markupModel.removeHighlighter(hoverRangeHighlighter!!)
+                            try {
+                                hoverRangeHighlighter?.let { editor.markupModel.removeHighlighter(it) }
+                            } catch (_: Throwable) {
+                                // Fix #209: highlighter may belong to a different editor's tree
+                            }
+                            hoverRangeHighlighter = null
                         }
                     }
                 }

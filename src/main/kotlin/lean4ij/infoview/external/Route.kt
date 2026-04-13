@@ -38,8 +38,30 @@ import java.awt.Color
 private val logger = logger<ExternalInfoViewService>()
 
 /**
- * copy from https://github.com/ktorio/ktor-samples/blob/main/sse/src/main/kotlin/io/ktor/samples/sse/SseApplication.kt
- * define all routes for external infoview
+ * Defines all HTTP and WebSocket routes for the external infoview server.
+ *
+ * ## Routes
+ * - **`/` (SPA)**: Serves the bundled React infoview application (index.html + assets).
+ * - **`/ws` (WebSocket)**: Bidirectional communication channel between the infoview frontend
+ *   and the plugin backend. Handles:
+ *   - **Outgoing** (server → client): Theme updates, server initialization signals, cursor
+ *     location changes, and all LSP notifications. On new connections, replays buffered
+ *     notification history so late-connecting clients catch up.
+ *   - **Incoming** (client → server): RPC requests in the format `requestId,method,jsonData`.
+ *     Supported methods:
+ *     - `createRpcSession`: Creates an RPC session for a file URI
+ *     - `sendClientRequest`: Forwards RPC calls to the Lean server (with special handling
+ *       for `getGoToLocation` to navigate in the editor)
+ *     - `applyEdit`: Applies text edits suggested by the infoview ("Try this")
+ * - **`/rpc/debug` (POST)**: Debug endpoint for manually sending RPC calls.
+ *
+ * ## Theme Integration
+ * Generates CSS custom properties from the current IntelliJ editor color scheme and sends
+ * them as `updateTheme` events. Also subscribes to [EditorColorsListener] to push theme
+ * updates when the user changes their IDE theme.
+ *
+ * @param project The IntelliJ project
+ * @param service The external infoview service providing RPC and event access
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) : Route.() -> Unit = {
@@ -251,6 +273,18 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
 }
 
 /**
+ * Generates CSS custom properties from an IntelliJ editor color scheme for the infoview frontend.
+ *
+ * Maps IntelliJ's color scheme attributes to CSS variables expected by the React infoview:
+ * - `--vscode-editor-background/foreground`: Editor base colors
+ * - `--vscode-goal-hyp-color`: Color for hypothesis names (mapped from instance field color)
+ * - `--vscode-goal-inaccessible`: Color for inaccessible hypotheses (mapped from comment color)
+ * - Font family and size from the editor scheme
+ * - Scrollbar styles from [JBCefScrollbarsHelper] for native-looking scrollbars
+ *
+ * The CSS variable names use `--vscode-*` prefix for compatibility with the upstream
+ * lean4-infoview React component (originally designed for VS Code).
+ *
  * TODO the vscode prefix is unnecessary?
  * TODO absolutely this require some refactor
  */
@@ -274,20 +308,27 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
     theme.forEach { (t, u) ->
         if (!u.contains(".")) {
             val colorKey = ColorKey.find(u)
-            themeSb.append("    ${t}: ${scheme.getColor(colorKey)!!.toHexRgba()};\n")
+            val color = scheme.getColor(colorKey)
+            if (color != null) {
+                themeSb.append("    ${t}: ${color.toHexRgba()};\n")
+            } else {
+                // Fallback to foreground/background when the specific color key is not defined in the theme
+                themeSb.append("    ${t}: $foreground;\n")
+            }
             return@forEach
         }
         val (keyStr, attrStr) = u.split(".")
         val attrKey = TextAttributesKey.find(keyStr)
         val attr = scheme.getAttributes(attrKey)
+        // Fix #170: some themes return null for foreground/background colors
         if (attrStr == "foreground") {
-            // TODO some theme gives NPE here
-            themeSb.append("    ${t}: ${attr.foregroundColor.toHexRgba()};\n")
+            val color = attr?.foregroundColor
+            themeSb.append("    ${t}: ${color?.toHexRgba() ?: foreground};\n")
         }
         if (attrStr == "background") {
-            themeSb.append("    ${t}: ${attr.backgroundColor.toHexRgba()};\n")
+            val color = attr?.backgroundColor
+            themeSb.append("    ${t}: ${color?.toHexRgba() ?: background};\n")
         }
-        // themeSb.append("\n")
     }
     // TODO should define some TextAttributesKey for this
 
@@ -295,8 +336,9 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
 
     // check https://plugins.jetbrains.com/docs/intellij/jcef.html?from=jetbrains.org#disposing-resources
     val scrollbarStyle = JBCefScrollbarsHelper.buildScrollbarsStyle()
+    val headerForeground = scheme.getAttributes(Lean4TextAttributesKeys.Header.key)?.foregroundColor?.toHexRgba() ?: foreground
     return """:root {
-${themeSb}    --header-foreground-color: ${scheme.getAttributes(Lean4TextAttributesKeys.Header.key).foregroundColor.toHexRgba()};
+${themeSb}    --header-foreground-color: $headerForeground;
     --vscode-editor-background: $background;
     --vscode-editor-foreground: $foreground;
     /* fonts */

@@ -7,10 +7,27 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 /**
+ * Persistent application-level settings for the Lean 4 plugin.
+ *
+ * All settings are stored in `Lean4.xml` and survive IDE restarts. This class uses IntelliJ's
+ * [PersistentStateComponent] pattern where the state object is the component itself.
+ *
+ * ## Adding a New Setting
+ * 1. Add a field with a default value in this class
+ * 2. Add a corresponding UI control in [Lean4SettingsView.createComponent]
+ * 3. For non-persistent settings, also update `Lean4NonPersistentSetting`
+ *
+ * ## Setting Categories
+ * - **General**: Editor features like file progress bar, hover highlight, heuristic syntax
+ *   highlighting, comment style, and live template behavior
+ * - **Inlay Hints**: Diagnostics lens and goal hint prefix configuration
+ * - **Language Server**: Enablement, starting strategy (eager/lazy), file progress triggering,
+ *   workspace symbol behavior, and server logging
+ * - **Infoview**: Preferred infoview type (JCEF vs Swing), native infoview popup dimensions,
+ *   auto-update behavior, and content visibility toggles
+ *
  * TODO this in fact can be different to implement the immutable state directly rather than using an
  *      extra class
- * for adding a new setting, create a new field here, and add it in [Lean4SettingsView.createComponent]
- * for non persistent typed setting, add it to [Lean4NonPersistentSetting] too
  */
 @State(
     name = "Lean4Settings",

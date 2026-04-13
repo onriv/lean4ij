@@ -14,6 +14,19 @@ import kotlinx.coroutines.withContext
 import lean4ij.project.LeanProjectService
 import java.awt.Dimension
 
+/**
+ * A lightweight, floating infoview panel that shows the current goal type near the cursor.
+ *
+ * Unlike the full [LeanInfoViewWindow] which lives in a tool window, the mini-infoview
+ * appears as a small popup near the caret position, showing just the goal's "⊢ type" line.
+ * This provides quick feedback without switching focus to the infoview panel.
+ *
+ * The editor is created on EDT and wrapped in a [CompletableDeferred] since the panel may
+ * be accessed before EDT initialization completes. The editor has scrollbars, caret, and
+ * caret-row highlighting disabled for a minimal appearance.
+ *
+ * @see MiniInfoviewService for the lifecycle and popup management
+ */
 class MiniInfoview(val project: Project) : SimpleToolWindowPanel(true) {
     private val editor : CompletableDeferred<EditorEx> = CompletableDeferred()
 

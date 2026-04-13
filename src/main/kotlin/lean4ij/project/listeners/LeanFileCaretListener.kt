@@ -13,6 +13,21 @@ import lean4ij.util.LeanUtil
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 
+/**
+ * Listens for caret position changes in Lean files and triggers infoview updates.
+ *
+ * This is a project-level service that attaches itself as a [CaretListener] to the currently
+ * active editor. When the caret moves in a Lean file, it delegates to [LeanFile.updateCaret]
+ * which fetches interactive goals/diagnostics and updates all infoview panels.
+ *
+ * ## Editor Tracking
+ * The [update] method is called by [LeanFileEditorManagerListener] whenever the active editor
+ * changes. It moves the caret listener registration from the old editor to the new one,
+ * ensuring only one editor is tracked at a time.
+ *
+ * @see LeanFile.updateCaret for the downstream update logic
+ * @see LeanFileEditorManagerListener for the editor change trigger
+ */
 @Service(Service.Level.PROJECT)
 class LeanFileCaretListener(private val project: Project) : CaretListener/*, PropertyChangeListener */{
 

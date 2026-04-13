@@ -8,7 +8,24 @@ import lean4ij.project.LeanProjectService
 import java.awt.event.FocusEvent
 
 /**
- * ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/4578776718354-How-do-I-listen-for-editor-focus-events
+ * Controls LSP server enablement based on editor focus state.
+ *
+ * The Lean language server is only enabled when an editor has focus, which prevents
+ * unnecessary LSP activity when the user is interacting with other tool windows.
+ * [LeanLanguageServerFactory.isEnabled] checks the `isEnable` flag set by this listener.
+ *
+ * ## Focus Gained
+ * Sets `isEnable` to `true` in [LeanProjectService], allowing the LSP server to start
+ * or continue processing.
+ *
+ * ## Focus Lost
+ * Currently does NOT set `isEnable` to `false`, because doing so would break features
+ * like "Go to Declaration" popups which require the LSP server while the editor briefly
+ * loses focus.
+ *
+ * @see LeanLanguageServerFactory.isEnabled which reads the flag
+ * @see <a href="https://intellij-support.jetbrains.com/hc/en-us/community/posts/4578776718354">
+ *   JetBrains support: listening for editor focus events</a>
  */
 class Lean4EditorFocusChangeListener : FocusChangeListener {
     override fun focusGained(editor: Editor) {

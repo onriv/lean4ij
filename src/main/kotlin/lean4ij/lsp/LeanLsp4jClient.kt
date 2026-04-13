@@ -10,7 +10,20 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonNotification
 
 
 /**
- * class for handling lsp notification
+ * Custom LSP client for handling Lean 4-specific server notifications.
+ *
+ * While the standard LSP protocol defines notifications like `textDocument/publishDiagnostics`,
+ * Lean 4 introduces custom notifications such as `$/lean/fileProgress` that report compilation
+ * progress per file. This client extends LSP4IJ's [LanguageClientImpl] to handle these
+ * Lean-specific notifications.
+ *
+ * ## Handled Notifications
+ * - **`$/lean/fileProgress`**: Receives [FileProgressProcessingInfo] from the server indicating
+ *   which line ranges of a file are currently being processed by the Lean elaborator. This data
+ *   drives the vertical progress bar in the editor gutter and the background progress indicator.
+ *
+ * @param project The IntelliJ project this client belongs to
+ * @see LeanFile.updateFileProcessingInfo for how file progress is consumed downstream
  */
 class LeanLsp4jClient(project: Project) : LanguageClientImpl(project) {
 

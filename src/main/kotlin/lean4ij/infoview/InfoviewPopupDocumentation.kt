@@ -35,6 +35,15 @@ import javax.swing.JTextPane
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.HyperlinkEvent
 
+/**
+ * Calculates preferred popup width based on content length using a heuristic similar to
+ * IntelliJ's [com.intellij.codeInsight.documentation.DocumentationEditorPane.getPreferredContentWidth].
+ *
+ * The width scales linearly between configurable min/max bounds based on text length:
+ * - Text shorter than [Lean4Settings.nativeInfoviewPopupMinWidthTextLengthUpperBound] → min width
+ * - Text longer than [Lean4Settings.nativeInfoviewPopupMaxWidthTextLengthLowerBound] → max width
+ * - Text in between → linearly interpolated width
+ */
 class InfoviewPopupContentMeasurement(val lean4Settings: Lean4Settings) {
     /**
      * code copied from [com.intellij.codeInsight.documentation.DocumentationEditorPane.getPreferredContentWidth]

@@ -50,9 +50,23 @@ import java.util.Collections.synchronizedMap
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
-// location is either line or absolute pos, depending on the type of hint
+/**
+ * A single inlay hint to display in the editor.
+ *
+ * @param position Range marker indicating where the hint should appear
+ * @param content Full text content of the hint
+ * @param collapseSize Character threshold: hints shorter than this are always expanded
+ * @param collapsedText Text shown when the hint is collapsed (e.g., ": ..." or "...")
+ */
 class Hint(val position: RangeMarker, val content: String, val collapseSize: Int, val collapsedText: String)
 
+/**
+ * A collection of [Hint]s to be rendered as inlay hints in the editor.
+ *
+ * Hints are accumulated during computation and then dumped into the IntelliJ inlay hint
+ * sink. Each hint is rendered as a collapsible inline presentation at its marker position.
+ * Hints shorter than [MIN_EVER_COLLAPSED] characters are always shown expanded.
+ */
 class HintSet {
     companion object {
         const val MIN_EVER_COLLAPSED = 10
@@ -98,6 +112,15 @@ class HintSet {
     }
 }
 
+/**
+ * Two-level cache for inlay hint computation results.
+ *
+ * - **[ongoingCache]**: Maps (file, modification stamp) → in-progress or completed computation.
+ *   If the file hasn't been modified since the last computation, returns the cached future.
+ *   If modified, cancels the old computation and returns null to trigger recomputation.
+ * - **[dirtyCache]**: Stores the last completed [HintSet] per file, used as a fallback while
+ *   a new computation is in progress. This prevents hints from disappearing during recomputation.
+ */
 class HintCache {
     var ongoingCache = ConcurrentHashMap<LeanFile, Pair<Long, CompletableFuture<HintSet>>>()
     // items that may not be valid
@@ -134,7 +157,21 @@ class HintCache {
 }
 
 
-// Base functionality
+/**
+ * Base class for Lean inlay hint collectors that query the language server for type information.
+ *
+ * Subclasses implement [computeFor] to define what hints to compute for a given file.
+ * The base class handles:
+ * - **Caching**: Uses [HintCache] to avoid redundant server queries when the file hasn't changed
+ * - **Dirty fallback**: Shows stale hints while new ones are being computed
+ * - **Debounced recomputation**: After hints are computed, schedules a UI refresh with a small
+ *   delay to batch multiple rapid updates
+ *
+ * ## Collection Strategy
+ * Despite implementing [SharedBypassCollector.collectFromElement], hints are collected at the
+ * **file level** (only processes [PsiFile] elements, not individual PSI nodes). This is because
+ * Lean hints require server-side type information that isn't available from the PSI tree alone.
+ */
 abstract class InlayHintBase(protected val editor: Editor, protected val project: Project?) : SharedBypassCollector {
     var hintCache = HintCache()
 
@@ -325,6 +362,20 @@ class OmitTypeInlayHintsProvider : InlayHintsProvider {
 }
 
 
+/**
+ * Computes inlay hints showing the current goal state at user-marked positions.
+ *
+ * Users can mark positions for goal display by adding a comment with a configurable prefix
+ * (default: `---`). For example:
+ * ```lean
+ * theorem foo : 1 + 1 = 2 := by
+ *   --- ← goal hint will appear here
+ *   rfl
+ * ```
+ *
+ * At each marked position, queries the server for interactive goals (tactic mode) or
+ * interactive term goals (term mode) and displays the type as an inlay hint.
+ */
 class GoalInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
 
     companion object {
@@ -395,6 +446,16 @@ class GoalInlayHintsProvider : InlayHintsProvider {
     }
 }
 
+/**
+ * Computes inlay hints showing the inferred type of placeholder terms (`_`).
+ *
+ * When a Lean file contains placeholder `_` terms, this collector queries the language
+ * server's hover information to extract the synthesized type. If the hover result contains
+ * "placeholder", the inferred type is displayed as an inline hint after the `_`.
+ *
+ * Uses the standard LSP hover request (not Lean RPC) since placeholder types are available
+ * through the basic hover protocol.
+ */
 class PlaceHolderInlayHintsCollector(editor: Editor, project: Project?) : InlayHintBase(editor, project) {
 
     override suspend fun computeFor(file: LeanFile, content: String): HintSet {
@@ -457,6 +518,7 @@ class PlaceHolderInlayHintsProvider : InlayHintsProvider {
 }
 
 
+/** Text attributes for diagnostic inlay hints, using the IDE's default inlay colors. */
 object InlayTextAttributes: UnmodifiableTextAttributes() {
     override fun getBackgroundColor(): Color? {
         val scheme = EditorColorsManager.getInstance().globalScheme
@@ -469,6 +531,13 @@ object InlayTextAttributes: UnmodifiableTextAttributes() {
     }
 }
 
+/**
+ * Renderer for diagnostic inlay hints that appear at the end of lines.
+ *
+ * Displays clipped diagnostic descriptions (max [MAX_LEN] chars) using the editor font
+ * and default inlay text attributes. Used by [DiagInlayManager] to show `#check`, `#print`,
+ * etc. results inline.
+ */
 class InlayRenderer(info: HighlightInfo): HintRenderer(clipDescription(info.description)) {
     companion object {
         const val MAX_LEN = 140;
@@ -489,7 +558,24 @@ class InlayRenderer(info: HighlightInfo): HintRenderer(clipDescription(info.desc
     }
 }
 
-// https://github.com/chylex/IntelliJ-Inspection-Lens/blob/main/src/main/kotlin/com/chylex/intellij/inspectionlens/editor/LensMarkupModelListener.kt
+/**
+ * Manages inline diagnostic hints that appear after line ends in Lean files.
+ *
+ * Inspired by the [IntelliJ Inspection Lens](https://github.com/chylex/IntelliJ-Inspection-Lens)
+ * plugin, this class listens to the document markup model for diagnostic range highlighters
+ * and creates corresponding inlay hints. It shows `WEAK_WARNING` severity diagnostics
+ * (which Lean uses for `#check`, `#print`, `#eval` output) as inline text after the line.
+ *
+ * ## Lifecycle
+ * Created per editor when a Lean file is opened (via [LeanFileOpenedListener]). Automatically
+ * disposed when either the plugin or the editor is disposed, using lifetime intersection.
+ *
+ * ## Update Mechanism
+ * - [afterAdded]: Creates an inlay when a new diagnostic highlighter appears
+ * - [attributesChanged]: Updates the inlay text when the diagnostic changes
+ * - [beforeRemoved]: Disposes the inlay when the diagnostic is removed
+ * - [refresh]: Full rebuild — clears all inlays and recreates from current highlighters
+ */
 class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
     var currentHints: IdentityHashMap<RangeHighlighterEx, Inlay<InlayRenderer>> = IdentityHashMap()
 

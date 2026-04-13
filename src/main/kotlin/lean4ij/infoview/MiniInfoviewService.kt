@@ -27,6 +27,25 @@ import lean4ij.lsp.data.Position
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
+/**
+ * Manages the mini-infoview popup lifecycle and content updates.
+ *
+ * The mini-infoview is a toggleable floating popup that displays the current goal type
+ * (the "⊢ type" line) near the editor caret. It provides a quick-glance view of the proof
+ * state without requiring the full infoview tool window.
+ *
+ * ## Behavior
+ * - **Toggle**: Users can show/hide via [toggleVisibility]. When shown, it follows the caret.
+ * - **Content**: Only displays when there is exactly one goal (or term goal if [ALLOW_TERM_GOALS]).
+ *   Multiple goals are too complex for the mini format.
+ * - **Scroll handling**: When the editor scrolls, the popup is temporarily hidden and
+ *   re-shown after 500ms of scroll inactivity to avoid visual jitter.
+ * - **Popup reuse**: The popup and its editor are reused across caret movements. A new popup
+ *   is only created when switching editors.
+ *
+ * @param project The IntelliJ project
+ * @param scope Coroutine scope for async operations (provided by IntelliJ service infrastructure)
+ */
 @Service(Service.Level.PROJECT)
 class MiniInfoviewService(private val project: Project, val scope: CoroutineScope) {
 

@@ -11,8 +11,19 @@ import java.net.Proxy
 import java.net.URL
 import java.nio.file.Path
 
+/** Represents a single GitHub tag entry from the GitHub API response. */
 data class GitHubTag(val name: String)
 
+/**
+ * Service for interacting with the elan toolchain manager.
+ *
+ * Provides utilities for locating elan/lake binaries, fetching available Lean toolchain
+ * versions (both from a bundled list and the GitHub API), and constructing command lines
+ * for running elan commands.
+ *
+ * This is a project-level service because elan commands need to run in the project's
+ * working directory.
+ */
 @Service(Service.Level.PROJECT)
 class ElanService {
 
@@ -102,8 +113,18 @@ class ElanService {
 }
 
 /**
- * TODO this is project level service
- *      there should be a global service similar for system level elan/lake
+ * Project-level service that stores resolved Lean toolchain paths.
+ *
+ * Once [LeanLanguageServerProvider] successfully resolves the toolchain from the
+ * `lean-toolchain` file, it populates this service with the paths to:
+ * - The toolchain root directory (e.g., `~/.elan/toolchains/leanprover--lean4---v4.x.0`)
+ * - The `lake` binary used for building and serving the language server
+ * - The `lean` binary used for running Lean files
+ *
+ * Other components (run configurations, file runners) use this service to construct
+ * command lines without re-resolving the toolchain.
+ *
+ * TODO this is project level service; there should be a global service similar for system level elan/lake
  */
 @Service(Service.Level.PROJECT)
 class ToolchainService(val project: Project) {

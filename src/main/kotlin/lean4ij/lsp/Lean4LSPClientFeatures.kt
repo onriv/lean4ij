@@ -12,7 +12,30 @@ import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.InitializeParams
 
 /**
- * per project with the getProject method in the base class
+ * Configures LSP client-side features specific to Lean 4.
+ *
+ * This class customizes how LSP4IJ interacts with the Lean language server by overriding
+ * default feature behavior. It is instantiated per-project (the base class provides `getProject()`).
+ *
+ * ## Feature Configuration
+ * - **Completion**: Uses [LeanLSPCompletionFeature] which fixes a bug where accepting a completion
+ *   would erase text before the cursor (due to missing `textEdit` from the server).
+ * - **Diagnostics**: Always enabled for Lean files.
+ * - **Workspace symbols**: Disabled at the LSP4IJ level because the Lean server does not handle
+ *   `cancelRequest` well, leading to performance issues. Instead, workspace symbol search is
+ *   implemented manually via [lean4ij.language.Lean4WorkspaceSymbolContributor].
+ *
+ * ## File Enablement
+ * Controls which files trigger LSP communication based on the `fileProgressTriggeringStrategy`
+ * setting:
+ * - **OnlySelectedEditor** (default): Only the currently focused editor triggers file processing.
+ * - **AllOpenedEditor**: All open editors trigger file processing (higher resource usage).
+ *
+ * ## Initialize Params
+ * Announces `insertReplaceSupport` capability so the Lean LSP provides `textEdit` data in
+ * completion responses when available.
+ *
+ * @see LeanLSPCompletionFeature for the completion bug workaround
  */
 class Lean4LSPClientFeatures : LSPClientFeatures() {
     private val lean4Settings = service<Lean4Settings>()

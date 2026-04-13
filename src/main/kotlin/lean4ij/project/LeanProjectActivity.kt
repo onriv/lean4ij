@@ -17,11 +17,24 @@ import lean4ij.sdk.SdkService
 import lean4ij.util.leanProjectService
 
 /**
- * see: [defining-project-level-listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html#defining-project-level-listeners)
- * this is copied from [ConnectDocumentToLanguageServerSetupParticipant](https://github.com/redhat-developer/lsp4ij/blob/cb04e064f93ec8c2bb22b216e54b6a7fb1c75496/src/main/java/com/redhat/devtools/lsp4ij/ConnectDocumentToLanguageServerSetupParticipant.java#L29)
- * no more from the above, now it implements [ProjectActivity]
- * ref: https://plugins.jetbrains.com/docs/intellij/plugin-components.html#project-and-application-close
- * and https://github.com/JetBrains/intellij-sdk-code-samples/blob/main/max_opened_projects/src/main/kotlin/org/intellij/sdk/maxOpenProjects/ProjectOpenStartupActivity.kt
+ * Startup activity that initializes the Lean 4 plugin when a project opens.
+ *
+ * This is the entry point that bootstraps the entire plugin infrastructure for a project.
+ * It runs as a [ProjectActivity] (the modern replacement for `StartupActivity`) and performs
+ * the following initialization steps:
+ *
+ * 1. **Project detection**: Checks if this is a Lean project (has `lean-toolchain` file).
+ *    If not, returns early without initializing any Lean services.
+ * 2. **SDK setup**: Configures the module SDK via [SdkService] (skipped during project creation).
+ * 3. **Editor listeners**: Registers [Lean4EditorFocusChangeListener] (controls LSP enablement
+ *    based on editor focus) and [Lean4DocumentListener] (triggers infoview updates on edits).
+ * 4. **Core services**: Initializes [LeanProjectService], [LeanFileCaretListener], and
+ *    [ExternalInfoViewService] (which starts the embedded HTTP server for the JCEF infoview).
+ * 5. **Run configurations**: Adds default Lake run configurations (`lake build`, `lake update`,
+ *    and `lake exe cache get` for Mathlib projects).
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html#defining-project-level-listeners">
+ *   IntelliJ Plugin Listeners documentation</a>
  */
 class LeanProjectActivity : ProjectActivity {
 

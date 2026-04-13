@@ -10,9 +10,28 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import java.util.concurrent.CompletableFuture
 
 /**
- * defining interface for language server
- * Here it's a raw interface/contract for LSP4IJ, and there is a class wrap this, that still is not used directly but
- * handle dispatching, serialization, and async stuff, see [LeanLanguageServer]
+ * Raw LSP interface contract for the Lean 4 language server, extending the standard LSP protocol.
+ *
+ * This interface defines the Lean-specific JSON-RPC methods that go beyond the standard
+ * [LanguageServer] and [TextDocumentService] protocols. LSP4IJ uses this interface to
+ * generate the JSON-RPC proxy that communicates with the `lake serve` process.
+ *
+ * **Important**: This interface is not used directly by plugin code. Instead, [LeanLanguageServer]
+ * wraps this interface and provides higher-level methods that handle RPC session management,
+ * Gson deserialization, and async dispatch.
+ *
+ * ## Lean-Specific Methods
+ * - **`$/lean/plainGoal`**: Returns the plain-text goal state at a cursor position.
+ * - **`$/lean/plainTermGoal`**: Returns the expected type at a cursor position.
+ * - **`$/lean/rpc/connect`**: Establishes an RPC session for a file, returning a session ID.
+ * - **`$/lean/rpc/call`**: Generic RPC call endpoint that dispatches to various Lean widget
+ *   methods (e.g., `getInteractiveGoals`, `getInteractiveDiagnostics`) based on the `method`
+ *   field in params.
+ * - **`$/lean/rpc/keepAlive`**: Heartbeat to prevent RPC session timeout.
+ *
+ * @see LeanLanguageServer for the high-level wrapper that dispatches typed RPC calls
+ * @see <a href="https://github.com/leanprover/lean4/blob/master/src/Lean/Data/Lsp/Extra.lean">
+ *   Lean LSP Extra definitions</a>
  */
 interface InternalLeanLanguageServer : LanguageServer, TextDocumentService {
 

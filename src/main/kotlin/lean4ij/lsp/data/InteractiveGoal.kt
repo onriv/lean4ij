@@ -4,6 +4,25 @@ import lean4ij.infoview.Lean4TextAttributesKeys
 import lean4ij.infoview.dsl.InfoObjectModel
 import lean4ij.infoview.dsl.info
 
+/**
+ * Represents an interactive goal from the Lean 4 language server's `getInteractiveGoals` response.
+ *
+ * An interactive goal contains rich, structured data about the current proof state at a
+ * cursor position. Unlike the plain-text `PlainGoal`, interactive goals carry:
+ * - **Hypotheses** ([hyps]): Each hypothesis bundle includes names, types (as [TaggedText]
+ *   with subexpression info for hover interaction), and diff markers (inserted/removed).
+ * - **Goal type** ([type]): The target type to prove, as interactive tagged text.
+ * - **Context info** ([ctx]): Information about the proof context for hover-to-inspect.
+ * - **Goal prefix** ([goalPrefix]): Display prefix (e.g., "⊢" or "case").
+ * - **Case name** ([userName]): For named cases, enables folding in the infoview.
+ *
+ * ## Rendering
+ * [toInfoObjectModel] converts this goal into the DSL tree used by the internal (Swing) infoview.
+ * Named cases are wrapped in a foldable region; unnamed goals render flat.
+ *
+ * @see InteractiveGoals for the container holding multiple goals
+ * @see TaggedText for the rich text format with subexpression hover support
+ */
 class InteractiveGoal(
     val userName: String? = null,
     val type: TaggedText<SubexprInfo>,

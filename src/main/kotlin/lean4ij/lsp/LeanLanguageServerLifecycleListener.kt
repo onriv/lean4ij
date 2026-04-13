@@ -19,6 +19,31 @@ import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
 import java.lang.reflect.Proxy
 
+/**
+ * Intercepts LSP lifecycle events and messages for the Lean language server.
+ *
+ * This listener handles two categories of events:
+ *
+ * ## Server Status Changes ([handleStatusChanged])
+ * - When the server stops or resets, clears the cached server reference in [LeanProjectService].
+ * - When the server starts, captures the initialized server instance for RPC communication.
+ *
+ * ## LSP Message Interception ([handleLSPMessage])
+ * Inspects raw LSP messages flowing between client and server to extract information that
+ * is not directly available through the standard LSP4IJ API:
+ *
+ * - **Hover responses**: Tracks hover request/response pairs by message ID. When a hover
+ *   response arrives, extracts the [Hover] result to drive the "highlight current content"
+ *   feature in the editor.
+ * - **InitializeResult**: Captures the server's initialization result, which is forwarded to
+ *   the external (JCEF) infoview to signal that the server is ready.
+ * - **Notification messages**: Forwards all server notifications (e.g., diagnostics, file
+ *   progress) to [LeanProjectService] for event-driven processing. Also specifically handles
+ *   `textDocument/publishDiagnostics` to update per-file diagnostic state.
+ *
+ * @param project The IntelliJ project this listener belongs to
+ * @see LeanLanguageServerLifecycleListenerProxyFactory for why this uses dynamic proxying
+ */
 class LeanLanguageServerLifecycleListener(val project: Project) {
     private val leanProjectService: LeanProjectService = project.service()
 
@@ -85,13 +110,28 @@ class LeanLanguageServerLifecycleListener(val project: Project) {
 }
 
 /**
- * temporally implement [LanguageServerLifecycleListener] for it's marked as internal,
- * but I don't have enough time to refactor it yet
- * But it does need to be removed, see https://github.com/redhat-developer/lsp4ij/discussions/1324
- * Currently the reason for using the listener is:
- * - There are some features like vertical status bar for file progressing, requires knowing the status of language protocol server
- * - Hover highlight requires the start/end information of Hover
- * TODO remove this
+ * Factory that creates a dynamic proxy implementing LSP4IJ's internal [LanguageServerLifecycleListener].
+ *
+ * LSP4IJ marks [LanguageServerLifecycleListener] as an internal API, meaning it cannot be
+ * implemented directly without risking breakage across versions. This factory uses Java's
+ * [Proxy] mechanism to create a compatible implementation at runtime, delegating calls to
+ * [LeanLanguageServerLifecycleListener].
+ *
+ * ## Why this is needed
+ * The Lean plugin requires access to lifecycle events that are not exposed through LSP4IJ's
+ * public API:
+ * - **Server status tracking**: To know when the server starts/stops for managing RPC sessions.
+ * - **Message interception**: To capture hover responses for editor highlighting and to forward
+ *   server notifications to the external infoview.
+ *
+ * ## Proxy Method Mapping
+ * - `handleLSPMessage(Message, MessageConsumer, LanguageServerWrapper)` → delegates to target
+ * - `handleStatusChanged(LanguageServerWrapper)` → delegates to target
+ * - All other methods → no-op
+ *
+ * @see <a href="https://github.com/redhat-developer/lsp4ij/discussions/1324">LSP4IJ discussion</a>
+ *   for the public API request
+ * TODO remove this once LSP4IJ provides a public API for lifecycle events
  */
 object LeanLanguageServerLifecycleListenerProxyFactory {
     fun create(project: Project): Any {

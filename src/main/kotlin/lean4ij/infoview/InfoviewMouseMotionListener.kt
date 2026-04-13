@@ -20,6 +20,28 @@ import lean4ij.lsp.data.ContextInfo
 import lean4ij.setting.Lean4Settings
 import java.awt.Color
 
+/**
+ * Handles mouse hover events in the internal infoview editor.
+ *
+ * When the user hovers over a term in the infoview, this listener:
+ * 1. Looks up the [ContextInfo] for the hovered offset via [InfoObjectModel.getCodeContext]
+ * 2. Highlights the hovered term with a hyperlink-style background color
+ * 3. After a configurable delay ([Lean4Settings.hoveringTimeBeforePopupNativeInfoviewDoc]),
+ *    triggers an [InfoviewPopupDocumentation] popup showing the term's type and documentation
+ *
+ * ## Debounce Logic
+ * Uses a [Channel]-based approach: each mouse move sends the current hover target to a
+ * processing coroutine. The coroutine uses `withTimeout` to implement the hover delay.
+ * If the mouse moves to a different term before the timeout, the previous popup is cancelled.
+ * If the mouse stays on the same term past the timeout, the popup is shown.
+ *
+ * ## Hyperlink Highlighting
+ * Creates a temporary [RangeHighlighter] with the IDE's identifier-under-caret background
+ * color to visually indicate the hovered term. The highlight is removed when the mouse
+ * moves away.
+ *
+ * @param context The infoview context containing the rendered content and project references
+ */
 class InfoviewMouseMotionListener(val context: LeanInfoviewContext) : EditorMouseMotionListener {
 
     private val lean4Settings = service<Lean4Settings>()

@@ -1,5 +1,16 @@
 package lean4ij.util
 
+/**
+ * Utilities for converting between file paths and LSP URI format.
+ *
+ * The LSP protocol uses `file://` URIs while IntelliJ uses plain file paths internally.
+ * This utility handles the conversion, accounting for platform differences:
+ * - **Unix/macOS**: `file:///path/to/file` ↔ `/path/to/file`
+ * - **Windows**: `file:///C:/path/to/file` ↔ `C:/path/to/file`
+ *
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specification/#uri">
+ *   LSP URI specification</a>
+ */
 object LspUtil {
     private val PREFIX = if (OsUtil.isWindows()) {
         "file:///"

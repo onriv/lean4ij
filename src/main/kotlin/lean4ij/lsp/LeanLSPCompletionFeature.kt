@@ -11,8 +11,26 @@ import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 
 /**
- * Add an impl for disable lsp completion for lean
- * for sometimes it's slow...
+ * Custom LSP completion feature for Lean 4 that fixes a critical text-erasure bug.
+ *
+ * ## The Bug
+ * When the Lean LSP does not provide a `textEdit` in completion items (which is common),
+ * LSP4IJ falls back to using semantic token positions to determine the replacement range.
+ * However, typing a character invalidates the semantic token map, and the fallback logic
+ * returns offset 0 (start of file) as the prefix position. Accepting the completion then
+ * erases all text from the file start to the cursor.
+ *
+ * ## The Fix
+ * When `item.textEdit` is null, this feature creates a synthetic [TextEdit] using the PSI
+ * element at the cursor position. The edit range spans from the PSI element's start offset
+ * to the current cursor offset, ensuring only the token being completed is replaced.
+ *
+ * ## Enable/Disable
+ * LSP completion can be disabled entirely via [Lean4Settings.enableLspCompletion] for users
+ * who experience slowness.
+ *
+ * @see Lean4LSPClientFeatures.initializeParams which announces `insertReplaceSupport` to get
+ *   server-provided textEdits when available
  */
 class LeanLSPCompletionFeature : LSPCompletionFeature() {
     private val lean4Settings = service<Lean4Settings>()

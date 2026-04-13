@@ -17,6 +17,10 @@ import javax.swing.JComponent
 import javax.swing.JList
 import kotlin.reflect.KMutableProperty0
 
+/**
+ * Custom list cell renderer that shows tooltip text for each item in a [ComboBox].
+ * Used in settings dropdowns to provide explanatory descriptions for each option.
+ */
 class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListCellRenderer() {
     override fun getListCellRendererComponent(list: JList<*>, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
         val comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
@@ -27,6 +31,7 @@ class ToolTipListCellRenderer(private val toolTips: List<String>) : DefaultListC
     }
 }
 
+/** Wrapper around a checkbox setting row, providing [enabledIf] chaining and [selected] predicate. */
 class BooleanSetting(private val row: Row, private val checkbox: JBCheckBox) {
 
     fun enabledIf(predicate: ComponentPredicate): BooleanSetting {
@@ -38,6 +43,7 @@ class BooleanSetting(private val row: Row, private val checkbox: JBCheckBox) {
 
 }
 
+/** Wrapper around a combobox setting row, providing [enabledIf] chaining and [isSelecting] predicate. */
 class SelectSetting(private val row: Row, private val comboBox: ComboBox<String>) {
     fun enabledIf(predicate: ComponentPredicate) : SelectSetting {
         row.enabledIf(predicate)
@@ -49,6 +55,16 @@ class SelectSetting(private val row: Row, private val comboBox: ComboBox<String>
     fun isSelecting(target: String) : ComponentPredicate = comboBox.selectedValueMatches { it == target }
 }
 
+/**
+ * View model for the Lean 4 settings panel.
+ *
+ * Provides DSL-like methods ([boolean], [string], [int], [select]) for building settings UI
+ * within IntelliJ's Kotlin UI DSL. Each method creates a UI component, registers apply/reset/
+ * isModified callbacks, and returns a wrapper for conditional enablement chaining.
+ *
+ * The actual UI layout is defined in [createComponent] (extension function on this class,
+ * located in Lean4Settings.kt).
+ */
 class Lean4SettingsView {
     private val lean4Settings = service<Lean4Settings>()
 
@@ -131,6 +147,12 @@ class Lean4SettingsView {
     val isChangedPredicates : MutableList<()->Boolean> = mutableListOf()
 }
 
+/**
+ * IntelliJ configurable for the Lean 4 settings page (Settings → Languages → Lean4).
+ *
+ * Delegates all logic to [Lean4SettingsView] which manages the UI components and their
+ * binding to [Lean4Settings].
+ */
 class Lean4Configurable : SearchableConfigurable {
     private var settingsView: Lean4SettingsView? = null
 

@@ -20,6 +20,31 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
+/**
+ * Provides the process connection for the Lean 4 language server.
+ *
+ * This class is responsible for resolving the correct `lake serve` command from the project's
+ * toolchain and starting the language server process. It also registers a lifecycle listener
+ * to track server status changes and intercept LSP messages.
+ *
+ * ## Toolchain Resolution Strategy
+ * Instead of invoking `elan which lake` (which may trigger a toolchain download), this class
+ * manually resolves the toolchain path by:
+ * 1. Reading the `lean-toolchain` file in the project root
+ * 2. Converting the toolchain name to the elan directory format (e.g., `leanprover/lean4:v4.x.0`
+ *    becomes `leanprover--lean4---v4.x.0`)
+ * 3. Locating the `lake` binary under `~/.elan/toolchains/<toolchainDir>/bin/`
+ *
+ * This avoids unwanted automatic downloads during IDE startup.
+ *
+ * ## Initialization Options
+ * Sends `hasWidgets: true` to the server so that RPC calls like
+ * `Lean.Widget.getInteractiveDiagnostics` return rich widget data instead of plain text.
+ *
+ * @param project The IntelliJ project this server serves
+ * @see LeanLanguageServerFactory which creates instances of this class
+ * @see ToolchainService which stores the resolved toolchain paths
+ */
 internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamConnectionProvider() {
 
     private val lean4Settings = service<Lean4Settings>()

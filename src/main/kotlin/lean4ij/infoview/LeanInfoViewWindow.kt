@@ -20,6 +20,14 @@ import lean4ij.project.LeanProjectService
 import javax.swing.BorderFactory
 
 
+/**
+ * Factory for creating read-only [EditorEx] instances used to render infoview content.
+ *
+ * The internal (Swing) infoview renders Lean goal states, hypotheses, and diagnostics as
+ * syntax-highlighted text in an IntelliJ editor component. This factory configures the editor
+ * for display-only use: no line numbers, no margins, soft wraps enabled, and caret visible
+ * but non-editing.
+ */
 class InfoViewEditorFactory(val project: Project) {
     /**
      * create an editorEx for rendering the info view
@@ -62,8 +70,33 @@ class InfoViewEditorFactory(val project: Project) {
 
 }
 /**
- * check :https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html#ui-dsl-basics
- * for some cleaner way to write ui stuff
+ * The main panel for the internal (Swing-based) Lean infoview tool window.
+ *
+ * This is the native alternative to the JCEF/browser-based infoview. It renders interactive
+ * goal states, hypotheses, term goals, and diagnostics using an IntelliJ [EditorEx] component,
+ * which provides syntax highlighting, folding, and text selection.
+ *
+ * ## Components
+ * - **Main editor**: Displays the rendered infoview content (goals + diagnostics). Created
+ *   asynchronously on EDT via [CompletableDeferred] since editor creation requires the EDT.
+ * - **Popup editor**: A secondary editor used for rendering popup expression documentation
+ *   when hovering over terms in the infoview.
+ *
+ * ## Interaction
+ * - **Right-click menu**: Installed via [installPopupHandler], provides actions like
+ *   "Go to Definition" from the infoview context menu.
+ * - **Mouse motion**: [InfoviewMouseMotionListener] handles hover highlighting and popup
+ *   documentation on terms.
+ * - **Mouse click**: [InfoviewMouseListener] handles click actions (e.g., expanding lazy traces).
+ *
+ * ## Update Flow
+ * Content is updated via [updateEditorMouseMotionListener] which:
+ * 1. Clears existing markup
+ * 2. Renders the [InfoObjectModel] tree into the editor (text + syntax highlights + fold regions)
+ * 3. Reinstalls mouse listeners with the new context
+ *
+ * @see InfoViewWindowFactory for how this window is registered in the tool window system
+ * @see LeanInfoviewContext for the data model backing each render
  */
 class LeanInfoViewWindow(val toolWindow: ToolWindow) : SimpleToolWindowPanel(true) {
     /**

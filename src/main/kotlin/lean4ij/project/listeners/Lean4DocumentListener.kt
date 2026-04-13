@@ -14,7 +14,18 @@ import lean4ij.project.LeanProjectService
 import lean4ij.util.LeanUtil
 
 /**
- * ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/360006419280-DocumentListener-for-getting-what-line-was-changed
+ * Triggers infoview updates when the user edits a Lean document.
+ *
+ * While [LeanFileCaretListener] handles cursor movements, this listener handles text
+ * changes. When the user types in a Lean file, the document content changes but the caret
+ * position might not trigger a caret event. This listener ensures the infoview is updated
+ * after edits by calling [LeanFile.updateCaret] at the edit position.
+ *
+ * Note: This may produce duplicate updates with caret events when both fire simultaneously.
+ * A debounce mechanism could help but is not yet implemented.
+ *
+ * @see <a href="https://intellij-support.jetbrains.com/hc/en-us/community/posts/360006419280">
+ *   JetBrains support: DocumentListener for getting what line was changed</a>
  */
 class Lean4DocumentListener(private val project: Project) : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {

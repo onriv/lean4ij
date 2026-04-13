@@ -17,6 +17,12 @@ import lean4ij.lsp.data.SubexprInfo
 import lean4ij.lsp.data.TaggedText
 import java.lang.ProcessHandle.Info
 
+/**
+ * Creates an [InfoObjectModel] with a click action handler using a DSL builder.
+ *
+ * @param click Action invoked when this model node is clicked in the infoview
+ * @param init Builder block for constructing the content tree
+ */
 fun info(click: LeanInfoviewContext.(InfoObjectModel) -> Unit, init: InfoObjectBuilder.()->Unit) : InfoObjectModel {
     val infoObjectBuilder = InfoObjectBuilder().apply {
         init()
@@ -26,6 +32,18 @@ fun info(click: LeanInfoviewContext.(InfoObjectModel) -> Unit, init: InfoObjectB
     }
 }
 
+/**
+ * Creates an [InfoObjectModel] using a DSL builder, without a click action.
+ *
+ * Example usage:
+ * ```kotlin
+ * val model = info {
+ *     h1("Goals")
+ *     p("⊢ ", Lean4TextAttributesKeys.SwingInfoviewGoalSymbol)
+ *     add(type.toInfoObjectModel())
+ * }
+ * ```
+ */
 fun info(init: InfoObjectBuilder.()->Unit) : InfoObjectModel {
     val infoObjectBuilder = InfoObjectBuilder().apply {
         init()
@@ -33,6 +51,19 @@ fun info(init: InfoObjectBuilder.()->Unit) : InfoObjectModel {
     return infoObjectBuilder.build()
 }
 
+/**
+ * DSL builder for constructing [InfoObjectModel] trees that represent infoview content.
+ *
+ * The builder provides methods mirroring HTML-like elements:
+ * - [h1], [h2], [h3]: Heading text with appropriate styling
+ * - [p]: Paragraph/inline text with optional text attributes and click handlers
+ * - [br]: Line break
+ * - [fold]: Foldable region (collapsed/expanded)
+ * - [add]: Insert a pre-built [InfoObjectModel] subtree
+ * - [createGoalObjectModel]: Renders a complete goal with hypotheses and turnstile
+ *
+ * The unary `+` operator on strings provides a shorthand for plain text: `+"some text"`
+ */
 class InfoObjectBuilder {
 
     private val data: MutableList<InfoObjectModel> = mutableListOf()
@@ -157,6 +188,28 @@ class InfoObjectBuilder {
 
 
 /**
+ * A tree node representing a segment of infoview content.
+ *
+ * The infoview content is modeled as a tree of [InfoObjectModel] nodes, where each node
+ * has optional text, text attributes (for syntax highlighting), children, fold regions,
+ * and click actions. This tree is built by the DSL ([InfoObjectBuilder]) and then rendered
+ * into an IntelliJ [EditorEx] by [output].
+ *
+ * ## Rendering Pipeline ([output] / [toStringAndEditorActions])
+ * 1. **Flatten to string**: Recursively concatenates all text into a [StringBuilder],
+ *    recording each node's [start] and [end] offsets in the final string.
+ * 2. **Collect editor actions**: For each node with text attributes, creates a lambda that
+ *    adds a range highlighter to the editor's markup model.
+ * 3. **Collect fold regions**: For nodes with [fold] data, records fold region boundaries.
+ * 4. **Apply**: Sets the document text, applies all highlighters, then creates fold regions
+ *    in a batch folding operation.
+ *
+ * ## Interaction Support
+ * - [getCodeContext]: Given an offset in the rendered text, walks the tree to find the
+ *   deepest node with a [ContextInfo] (used for hover documentation).
+ * - [getChild]: Given an offset, finds the deepest child node (used for click dispatch).
+ * - [click]: Invokes this node's [clickAction] with the current [LeanInfoviewContext].
+ *
  * TODO all fields are quite lenient access scope
  */
 class InfoObjectModel(

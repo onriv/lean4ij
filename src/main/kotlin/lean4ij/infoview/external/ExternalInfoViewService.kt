@@ -36,7 +36,29 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 
 /**
- * External infoview service, bridging the http service and the lean project service
+ * Bridge service between the embedded HTTP/WebSocket server and the Lean language server.
+ *
+ * The external infoview (used by both the JCEF panel and standalone browsers) communicates
+ * with this service via HTTP and WebSocket. This service:
+ *
+ * ## Server Startup
+ * On initialization (for Lean projects), starts a Ktor/Netty embedded server on a random
+ * available port. The server hosts:
+ * - A single-page application (the React-based infoview, bundled as resources)
+ * - A WebSocket endpoint (`/ws`) for bidirectional LSP event streaming
+ * - A debug POST endpoint (`/rpc/debug`) for manual RPC testing
+ *
+ * ## Event Forwarding
+ * Subscribes to two flows from [LeanProjectService]:
+ * - **Caret events**: Converts cursor position changes to `changedCursorLocation` events
+ *   for the infoview frontend
+ * - **Server notifications**: Forwards all LSP notifications (diagnostics, file progress)
+ *   as `serverNotification` events, also buffering them for late-connecting clients
+ *
+ * ## RPC Proxying
+ * Delegates RPC calls from the frontend (e.g., `getInteractiveGoals`) through to the
+ * Lean language server via [LeanProjectService], managing session IDs transparently.
+ *
  * TODO maybe switch to intellij's extension point to remove ktor for reducing plugin size
  * TODO should this be merged with [JcefInfoviewService]?
  */

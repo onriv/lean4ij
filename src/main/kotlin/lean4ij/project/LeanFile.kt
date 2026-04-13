@@ -69,6 +69,46 @@ import kotlin.math.max
 import kotlin.math.min
 
 
+/**
+ * Represents a single Lean source file and manages all its LSP-related state.
+ *
+ * Each open Lean file in the project gets a [LeanFile] instance (created lazily by
+ * [LeanProjectService.file]). This class is the central hub for per-file operations:
+ *
+ * ## File Progress Tracking
+ * Receives `$/lean/fileProgress` notifications via [updateFileProcessingInfo] and drives:
+ * - The vertical progress bar in the editor gutter (colored line markers showing which
+ *   lines are being elaborated)
+ * - The background progress indicator in the IDE status bar
+ * - Build tool window events (start/end of file compilation)
+ *
+ * ## RPC Session Management
+ * Maintains an RPC session with the Lean server for this file. Sessions are used for
+ * interactive widget queries (goals, diagnostics, term goals). Key behaviors:
+ * - **Lazy initialization**: Session is created on first use via `$/lean/rpc/connect`
+ * - **Auto-reconnect**: If an RPC call fails with "Outdated RPC session" (-32900),
+ *   the session is refreshed and the call is retried
+ * - **Keep-alive**: A background coroutine sends `$/lean/rpc/keepAlive` every 9 seconds
+ *   to prevent session expiration
+ * - **Concurrency**: Session updates use a [Mutex] to prevent multiple concurrent reconnections
+ *
+ * ## Infoview Updates
+ * When the caret moves ([updateCaret]), fetches interactive goals, term goals, and diagnostics
+ * in parallel, then updates both the internal (Swing) infoview and the mini-infoview popup.
+ *
+ * ## Diagnostics & All Messages
+ * Aggregates `textDocument/publishDiagnostics` notifications to build a complete list of
+ * interactive diagnostics for the file. Uses a timeout-based debounce: after diagnostics
+ * stop arriving for 1 second, fetches the full interactive diagnostics via RPC.
+ *
+ * ## Text Edits
+ * Supports applying edits from the external infoview (e.g., "Try this" suggestions) via
+ * [applyEdit], which sorts changes from end-to-start to preserve offsets.
+ *
+ * @param leanProjectService The project-level service this file belongs to
+ * @param file The file URI (e.g., `file:///path/to/Foo.lean`)
+ * @see LeanProjectService.file for how instances are created and cached
+ */
 class LeanFile(private val leanProjectService: LeanProjectService, private val file: String) {
 
     private val lean4Settings = service<Lean4Settings>()

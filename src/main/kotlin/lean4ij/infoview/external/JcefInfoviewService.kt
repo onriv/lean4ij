@@ -30,6 +30,29 @@ import javax.swing.event.DocumentEvent
 import kotlin.reflect.KProperty0
 
 /**
+ * Manages the JCEF (Chromium Embedded Framework) browser panel for the external infoview.
+ *
+ * This service provides an embedded browser ([JBCefBrowser]) that renders the React-based
+ * Lean infoview within an IntelliJ tool window. The JCEF infoview provides the same
+ * experience as VS Code's Lean infoview, including:
+ * - Interactive goal display with collapsible sections
+ * - Hover-to-inspect subexpressions
+ * - "Try this" code action suggestions
+ * - Diagnostic messages with source links
+ *
+ * ## Browser Features
+ * - **URL management**: Loads the infoview URL from [ExternalInfoViewService] after the
+ *   embedded server starts
+ * - **Zoom controls**: Increase/decrease/reset zoom level
+ * - **Find in page**: Integrated search text field with keyboard navigation (Enter/Shift+Enter
+ *   for next/prev, Escape to dismiss)
+ * - **External links**: Links that point outside the infoview URL are opened in the system
+ *   browser via [InfoviewCefRequestHandler]
+ *
+ * ## Compatibility
+ * Uses a dynamic proxy for [CefRequestHandler] to maintain compatibility across IntelliJ
+ * versions (2025.3 introduced a new method in the interface).
+ *
  * TODO the name like infoview and infoView is inconsistent in the whole codebase...
  */
 @Service(Service.Level.PROJECT)

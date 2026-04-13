@@ -18,7 +18,27 @@ import org.eclipse.lsp4j.services.LanguageServer
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * The language server factory as LSP4IJ describe
+ * Factory class for creating and configuring the Lean 4 language server integration with LSP4IJ.
+ *
+ * This class serves as the main entry point for the LSP4IJ framework to bootstrap the Lean language
+ * server. It implements both [LanguageServerFactory] (to provide server/client instances) and
+ * [LanguageServerEnablementSupport] (to control when the server should be active).
+ *
+ * ## Responsibilities
+ * - **Enablement control**: The language server is only enabled when a Lean editor has focus,
+ *   preventing unnecessary server startups when working in non-Lean files.
+ * - **Connection provider**: Creates [LeanLanguageServerProvider] which resolves the `lake serve`
+ *   command from the project's toolchain.
+ * - **Client creation**: Provides [LeanLsp4jClient] to handle Lean-specific LSP notifications
+ *   (e.g., `$/lean/fileProgress`).
+ * - **Server interface**: Declares [InternalLeanLanguageServer] as the server contract, which
+ *   extends the standard LSP interface with Lean-specific RPC methods.
+ * - **Client features**: Configures [Lean4LSPClientFeatures] for completion, diagnostics, and
+ *   workspace symbol behavior customization.
+ *
+ * @see LeanLanguageServerProvider for how the server process is started
+ * @see LeanLsp4jClient for Lean-specific notification handling
+ * @see Lean4LSPClientFeatures for client-side feature configuration
  */
 class LeanLanguageServerFactory : LanguageServerFactory, LanguageServerEnablementSupport {
 

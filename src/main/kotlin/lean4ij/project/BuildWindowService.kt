@@ -22,14 +22,36 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/** Base class for build events, identified by the file being built. */
 open class BuildEvent(val file: String)
+/** Signals that compilation of [file] has started. */
 class BuildStart(file: String): BuildEvent(file)
+/** Signals that compilation of [file] has finished. */
 class BuildEnd(file: String): BuildEvent(file)
+/** A diagnostic or log message emitted during compilation of [file]. */
 class BuildMessage(file: String, val message: String): BuildEvent(file)
 
 
 /**
- * A simple service for build tool window
+ * Manages the Build tool window to display Lean file compilation progress.
+ *
+ * This service bridges Lean's `$/lean/fileProgress` notifications with IntelliJ's Build
+ * tool window API ([SyncViewManager]). It provides a familiar "build output" experience
+ * where each file being elaborated appears as a child node with its diagnostic messages.
+ *
+ * ## Architecture
+ * Uses a [MutableSharedFlow] of [BuildEvent]s to decouple event producers (LSP notifications)
+ * from the UI consumer. Events are collected in a coroutine that manages the lifecycle of
+ * [BuildProgress] nodes:
+ * - [BuildStart] creates a new child progress node for the file
+ * - [BuildMessage] appends output text to the file's progress node
+ * - [BuildEnd] finishes (closes) the file's progress node
+ *
+ * ## Error Detection
+ * If a build message contains "error: build failed", the corresponding file's progress
+ * is cancelled and removed from tracking.
+ *
+ * @param project The IntelliJ project this service belongs to
  */
 @Service(Service.Level.PROJECT)
 @Suppress("UnstableApiUsage")

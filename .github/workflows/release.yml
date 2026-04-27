@@ -18,6 +18,19 @@ jobs:
       pull-requests: write
     steps:
 
+      # Fail fast on beta tags — JetBrains Marketplace does not accept beta
+      # versions, so the release would land on GitHub but never reach the
+      # Marketplace. Reject early instead of going through the whole pipeline.
+      # See https://github.com/onriv/lean4ij/issues/109
+      - name: Reject beta versions
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [[ "$TAG" == *beta* ]]; then
+            echo "::error::Refusing to publish beta tag '$TAG'. JetBrains Marketplace does not accept beta versions."
+            exit 1
+          fi
+
       # Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
         uses: jlumbroso/free-disk-space@v1.3.1

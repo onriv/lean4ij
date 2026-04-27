@@ -10,6 +10,8 @@ import java.net.HttpURLConnection
 import java.net.Proxy
 import java.net.URL
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 /** Represents a single GitHub tag entry from the GitHub API response. */
 data class GitHubTag(val name: String)
@@ -50,7 +52,31 @@ class ElanService {
      * curl https://api.github.com/repos/leanprover/lean4/tags |grep name|awk '{print $2}'
      */
     fun toolchains(includeRemote: Boolean): List<String> {
-        return javaClass.classLoader.getResource("toolchains.txt").readText().split("\n")
+        val bundled = javaClass.classLoader.getResource("toolchains.txt")
+            ?.readText()?.split("\n")?.filter { it.isNotBlank() } ?: emptyList()
+        // Also include locally installed toolchains from elan
+        val local = try {
+            val toolchainsDir = elanHomePath.resolve("toolchains").toFile()
+            if (toolchainsDir.isDirectory) {
+                toolchainsDir.listFiles()
+                    ?.filter { it.isDirectory }
+                    ?.map { it.name.replace("--", "/").replace("---", ":") }
+                    ?: emptyList()
+            } else emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+        // Merge: local installed first, then bundled (deduplicated)
+        val seen = mutableSetOf<String>()
+        val result = mutableListOf<String>()
+        // Extract version tag from full toolchain name for dedup (e.g. "leanprover/lean4:v4.29.0" -> "v4.29.0")
+        fun versionKey(s: String): String = s.substringAfterLast(":")
+            .substringAfterLast("/").let { if (it == s) s else it }
+        for (v in local + bundled) {
+            val key = versionKey(v)
+            if (seen.add(key)) result.add(v)
+        }
+        return result.ifEmpty { bundled }
     }
 
     /**
@@ -145,6 +171,37 @@ class ToolchainService(val project: Project) {
 
         fun expectedToolchainPath(project: Project): Path {
             return Path.of(project.basePath!!, TOOLCHAIN_FILE_NAME)
+        }
+
+        /**
+         * Convert a toolchain name (e.g. "leanprover/lean4:v4.29.0") to the elan
+         * directory name (e.g. "leanprover--lean4---v4.29.0").
+         *
+         * Elan uses `--` for `/` and `---` for `:` in directory names.
+         * Order matters: replace `:/` patterns before standalone `/`.
+         */
+        fun toolchainToDirName(toolchain: String): String {
+            return toolchain.replace("/", "--").replace(":", "---")
+        }
+
+        /**
+         * Resolve the elan toolchain directory path from a toolchain name.
+         * Returns null if the directory does not exist.
+         */
+        fun resolveToolchainPath(toolchain: String): Path? {
+            val dirName = toolchainToDirName(toolchain)
+            val path = Path.of(System.getProperty("user.home"), ".elan", "toolchains", dirName)
+            return if (path.exists()) path else null
+        }
+
+        /**
+         * Read and parse the lean-toolchain file for the given project.
+         * Returns the trimmed toolchain string, or null if the file doesn't exist or is invalid.
+         */
+        fun readToolchain(project: Project): String? {
+            val toolchainFile = expectedToolchainPath(project)
+            if (!toolchainFile.exists() || !toolchainFile.isRegularFile()) return null
+            return toolchainFile.toFile().readText().trim().ifBlank { null }
         }
     }
 

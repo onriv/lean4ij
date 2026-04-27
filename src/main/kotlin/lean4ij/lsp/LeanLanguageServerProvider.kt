@@ -79,41 +79,21 @@ internal class LeanLanguageServerProvider(val project: Project) : ProcessStreamC
      */
     private fun setServerCommand() {
 
-        val toolchainFile = ToolchainService.expectedToolchainPath(project);
-        if (!toolchainFile.exists()) {
-            // more than likely this means that
-            // the user is using an intellij ide
-            // so it's annoying to notify the user about this
-            // 'error'
-            //
-            // if ever the user does open a lean file
-            // and we're not in a lean project,
-            // then we notify the error there instead
-            // (see LeanFileOpenedListener)
+        val toolchain = ToolchainService.readToolchain(project)
+        if (toolchain == null) {
+            // No lean-toolchain file — not a lean project or file is invalid.
+            // Error is shown when user opens a lean file (see LeanFileOpenedListener).
             return
         }
-        if (!toolchainFile.isRegularFile()) {
-            val content = "File $toolchainFile lean-toolchain is not a regular file. Please check if the project is setup correctly"
-            project.notifyErr(content)
-            return
-        }
-        val toolchain = toolchainFile.toFile().readText().trim()
-        // TODO Here rather than using elan or lake to determine the lake executable file
-        //      We do it manually for currently trying to avoid automatically setting up the environment during
-        //      the lsp client start
-        //      But don't know if the format will change or not though
-        //      Currently we replace slash to double dash and colon to triple dash...
-        val toolchainDir = toolchain.replace("/", "--").replace(":", "---")
-        // toolchain path is $HOME/.elan/toolchains/<toolchainDir>
-        val toolchainPath = Path.of(System.getProperty("user.home"), ".elan", "toolchains", toolchainDir)
-        if (!toolchainPath.exists()) {
-            val content = "Path $toolchainPath does not exist. Please try to setup the toolchain outside the IDE."
-            project.notifyErr(content)
+        val toolchainPath = ToolchainService.resolveToolchainPath(toolchain)
+        if (toolchainPath == null) {
+            val dirName = ToolchainService.toolchainToDirName(toolchain)
+            val expected = Path.of(System.getProperty("user.home"), ".elan", "toolchains", dirName)
+            project.notifyErr("Path $expected does not exist. Please try to setup the toolchain outside the IDE.")
             return
         }
         if (!toolchainPath.isDirectory()) {
-            val content = "Path $toolchainPath is not a directory. Please check if the toolchain setup correctly."
-            project.notifyErr(content)
+            project.notifyErr("Path $toolchainPath is not a directory. Please check if the toolchain setup correctly.")
             return
         }
         val lakeName = if (OsUtil.isWindows()) {"lake.exe"} else {"lake"}

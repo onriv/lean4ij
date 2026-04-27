@@ -457,11 +457,12 @@ class Lean4ModuleBuilder(private val leanWizard: LeanProjectWizard = LeanProject
             // TODO running this command directly here may block the ui
             val result = command.execute(File(quickStarterModel.locationProperty.get()), envs)
 
-            // TODO could this really be null in our case?
             project.basePath?.let { basePath ->
                 val version = quickStarterModel.versionProperty.get()
-                // TODO this and some other code in this method/file etc should be refactored into ElanService
-                Path.of(basePath, "lean-toolchain").toFile().writeText("leanprover/lean4:${version}")
+                // If the version already contains a full toolchain ref (e.g. "leanprover/lean4:v4.29.0"),
+                // use it as-is; otherwise prepend the standard prefix.
+                val toolchainContent = if (version.contains("/")) version else "leanprover/lean4:${version}"
+                Path.of(basePath, "lean-toolchain").toFile().writeText(toolchainContent)
             }
 
             // TODO DRY with lean4ij.project.LeanProjectActivity.addRunConfigurations

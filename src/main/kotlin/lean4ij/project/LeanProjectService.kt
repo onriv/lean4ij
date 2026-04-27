@@ -210,8 +210,15 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      * TODO [lean4ij.lsp.LeanLanguageServerProvider.setServerCommand] contains some duplicated logic for this
      */
     fun isLeanProject(): Boolean {
-        return ToolchainService.expectedToolchainPath(project)
-            .toFile().isFile
+        val basePath = project.basePath ?: return false
+        // Check lean-toolchain first (primary indicator)
+        if (ToolchainService.expectedToolchainPath(project).toFile().isFile) {
+            return true
+        }
+        // Fallback: check for lakefile.lean or lakefile.toml (project may exist without lean-toolchain)
+        val lakefileLean = Path(basePath, "lakefile.lean")
+        val lakefileToml = Path(basePath, "lakefile.toml")
+        return lakefileLean.toFile().isFile || lakefileToml.toFile().isFile
     }
 
     /**

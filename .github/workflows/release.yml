@@ -84,11 +84,20 @@ jobs:
         run: gh release upload ${{ github.event.release.tag_name }} ./build/distributions/*
 
       # Create a pull request
+      # Run when patchChangelog produced an actual diff (#189). The previous
+      # condition referenced steps.properties.outputs.changelog, but no step
+      # with id `properties` exists, so the expression always evaluated to
+      # `'' != ''` and the PR step never ran.
       - name: Create Pull Request
-        if: ${{ steps.properties.outputs.changelog != '' }}
+        if: ${{ github.event.release.body != '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if git diff --quiet; then
+            echo "No changelog changes to commit; skipping PR."
+            exit 0
+          fi
+
           VERSION="${{ github.event.release.tag_name }}"
           BRANCH="changelog-update-$VERSION"
           LABEL="release changelog"
@@ -99,7 +108,7 @@ jobs:
           git checkout -b $BRANCH
           git commit -am "Changelog update - $VERSION"
           git push --set-upstream origin $BRANCH
-          
+
           gh label create "$LABEL" \
             --description "Pull requests with release changelog update" \
             --force \

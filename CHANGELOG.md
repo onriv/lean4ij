@@ -5,6 +5,15 @@
 ## [Unreleased]
 
 - #165, fix #164, Fix completions deleting everything before the caret
+- Support IntelliJ 2026.x / 2027.1 EAP:
+  - declare an optional dependency on `com.intellij.modules.jcef`; since 2026.x JCEF lives in a separate bundled
+    plugin and the external infoview failed with `NoClassDefFoundError: com/intellij/ui/jcef/JBCefApp`
+  - cope with lsp4j 1.0.0 (`Diagnostic.message` became `Either<String, MarkupContent>`) and the now nullable
+    `Editor.getVirtualFile()`
+- Fix `IllegalArgumentException: Incorrect offsets` thrown from the file progress line marker when the Lean server
+  reports an empty/inverted processing range (related to #148)
+- Build: Kotlin 2.4.21, IntelliJ Platform Gradle Plugin 2.19.0 with its Grammar-Kit subplugin, JDK 25 toolchain
+  (bytecode still targets Java 21), optional `platformLocalPath` to compile against an installed IDE
 
 ## [0.2.7] - 2025-04-13
 

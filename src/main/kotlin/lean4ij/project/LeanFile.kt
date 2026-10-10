@@ -31,6 +31,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import lean4ij.setting.Lean4Settings
+import lean4ij.util.Lsp4jCompat
 import lean4ij.infoview.InfoViewWindowFactory
 import lean4ij.infoview.MiniInfoviewService
 import lean4ij.infoview.external.data.ApplyEditChange
@@ -141,7 +142,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         val ret = mutableListOf<RangeHighlighter>()
         if (!lean4Settings.enableFileProgressBar) return ret
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
-            if (editor.virtualFile.path == unquotedFile) {
+            if (editor.virtualFile?.path == unquotedFile) {
                 val document = editor.document
                 val markupModel = editor.markupModel
                 if (firstLineHighlighter == null) {
@@ -168,6 +169,13 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
                     //      In a large chance it may be caused by the file is edited currently
                     //      For a temporary solution, just ignore it
                     if (endLineOffset == -1 || startLineOffset == -1) {
+                        continue
+                    }
+                    // The start line is bumped to 1 when the server reports line 0 (see above), and the end line
+                    // is clamped to the document size; both can leave startLineOffset > endLineOffset, which makes
+                    // addRangeHighlighter throw "IllegalArgumentException: Incorrect offsets: start=8; end=0".
+                    // Such a range has nothing to mark, so skip it.
+                    if (endLineOffset < startLineOffset) {
                         continue
                     }
                     val rangeHighlighter = markupModel.addRangeHighlighter(
@@ -423,14 +431,14 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
      */
     suspend fun restart() {
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
-            if (editor.virtualFile.path == unquotedFile) {
+            if (editor.virtualFile?.path == unquotedFile) {
                 session = null
                 val languageServer = leanProjectService.languageServer.await()
                 val didCloseParams = DidCloseTextDocumentParams(TextDocumentIdentifier(file))
                 languageServer.didClose(didCloseParams)
                 val textDocumentItem = TextDocumentItem(
                     file, Constants.LEAN_LANGUAGE_ID, 0,
-                    String(editor.virtualFile.contentsToByteArray(), StandardCharsets.UTF_8)
+                    String(editor.virtualFile!!.contentsToByteArray(), StandardCharsets.UTF_8)
                 )
                 val didOpenTextDocumentParams = DidOpenTextDocumentParams(textDocumentItem)
                 languageServer.didOpen(didOpenTextDocumentParams)
@@ -497,7 +505,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
 
     private fun updateCaretIntermediately() {
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
-            if (editor.virtualFile.path == unquotedFile) {
+            if (editor.virtualFile?.path == unquotedFile) {
                 updateCaret(editor, editor.caretModel.logicalPosition)
             }
         }
@@ -519,7 +527,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
             diagnosticsChannel.send(diagnostics.diagnostics)
         }
         for (d in diagnostics.diagnostics) {
-            buildWindowService.addBuildEvent(file, d.message)
+            buildWindowService.addBuildEvent(file, Lsp4jCompat.messageOf(d))
         }
     }
 
@@ -533,7 +541,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
         // TODO this is kind of duplicated with tryAddLineMarker?
         //      maybe the logic for getting editor can be abstract and unify
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
-            if (editor.virtualFile.path == unquotedFile) {
+            if (editor.virtualFile?.path == unquotedFile) {
                 val document = editor.document
                 var text = document.text
                 changes.map { change ->

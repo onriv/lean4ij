@@ -5,7 +5,6 @@ package lean4ij.language
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import com.google.common.util.concurrent.ExecutionError
 import com.google.common.util.concurrent.UncheckedExecutionException
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.navigation.ChooseByNameContributorEx
@@ -216,7 +215,8 @@ class WorkspaceSymbolsCache(private val project: Project) {
             return symbolDataList
         } catch (e: Exception) {
             when {
-                e is ExecutionException || e is UncheckedExecutionException || e is ExecutionError ->
+                // ExecutionError is an Error, it can never be caught by `catch (e: Exception)` above
+                e is ExecutionException || e is UncheckedExecutionException ->
                     thisLogger().info(e)
                 else ->
                     thisLogger().error(e)

@@ -54,7 +54,7 @@ class WebSocketClient {
                 const callback = this.responseMap.get(resp.requestId);
                 if (callback) {
                     this.responseMap.delete(resp.requestId);
-                    callback(resp.data);
+                    callback(resp);
                 }
             }
             if (resp.method == 'serverNotification') {
@@ -64,9 +64,11 @@ class WebSocketClient {
     }
 
     sendMessage(method, message: any): Promise<any> {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const id = this.requestId++;
-            this.responseMap.set(id, resolve);
+            // the server answers every request either with `data` or with an RPC `error` ({code, message});
+            // rejecting with the error lets the infoview show it and apply its own retry logic
+            this.responseMap.set(id, (resp) => resp.error ? reject(resp.error) : resolve(resp.data));
             // TODO all the frontend need better design
             this.socket.send(`${id},${method},${message}`);
         });

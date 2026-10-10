@@ -8,10 +8,9 @@ import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
-import org.jetbrains.grammarkit.tasks.GenerateLexerTask
-import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 import java.net.http.HttpClient
@@ -46,6 +45,8 @@ plugins {
     id("io.ktor.plugin") version "3.3.3"
     alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.intelliJPlatform) // IntelliJ Platform Gradle Plugin
+    // Grammar-Kit/JFlex generation; replaces the archived `org.jetbrains.grammarkit` plugin
+    alias(libs.plugins.intelliJPlatformGrammarKit)
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
     alias(libs.plugins.qodana) // Gradle Qodana Plugin
     alias(libs.plugins.kover) // Gradle Kover Plugin
@@ -54,7 +55,6 @@ plugins {
     // TODO maybe later we can do kotlin-multiplatform
     //      see: https://stackoverflow.com/questions/78493876/kotlin-gradle-multiplatform-not-producing-nodejs-artifact
     id("com.github.node-gradle.node") version "7.1.0"
-    id("org.jetbrains.grammarkit") version "2023.3.0.1"
 
 }
 
@@ -64,9 +64,21 @@ version = providers.gradleProperty("pluginVersion").get()
 // group = properties("pluginGroup").get()
 // version = properties("pluginVersion").get()
 
-// Set the JVM language level used to build the project.
+// JDK used to *run* the build. IDEs from 2026.x on are compiled for Java 25 (class file version 69), so javac and
+// the Grammar-Kit/JFlex generators need a 25 toolchain to read platform classes. The produced bytecode still
+// targets Java 21 (see `jvmTarget`/`release` below) so the plugin keeps running on 2024.2+ IDEs (JBR 21).
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
+}
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions.jvmTarget = JvmTarget.JVM_21
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+tasks.withType<JavaCompile>().configureEach {
+    options.release = 21
 }
 
 // Configure project's dependencies
@@ -120,7 +132,15 @@ dependencies {
 
     intellijPlatform {
 
-        create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
+        // Compile against a locally installed IDE when `platformLocalPath` is set (useful for nightly builds that
+        // are not published to the artifact repository), otherwise download platformType/platformVersion.
+        val platformLocalPath = providers.gradleProperty("platformLocalPath").orNull?.trim().orEmpty()
+        if (platformLocalPath.isNotEmpty()) {
+            println("Using local IDE installation at: $platformLocalPath")
+            local(platformLocalPath)
+        } else {
+            create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
+        }
 
         // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
@@ -143,18 +163,20 @@ dependencies {
 
         testFramework(TestFrameworkType.Platform)
 
-        plugins(platformPlugins)
+        // Grammar-Kit and JFlex binaries for the generateParser/generateLexer tasks
+        grammarKit()
+        jflex()
     }
-}
-
-// Set the JVM language level used to build the project.
-kotlin {
-    jvmToolchain(21)
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 // this is copied from https://github.com/redhat-developer/intellij-quarkus/blob/main/build.gradle.kts
 intellijPlatform {
+    // Bytecode instrumentation (UI Designer forms, @NotNull assertions) is not needed: there are no .form files
+    // and the sources are Kotlin. It also requires `java-compiler-ant-tasks` for the exact platform build, which
+    // does not exist for nightly builds used through `platformLocalPath`.
+    instrumentCode = false
+
     pluginConfiguration {
         name = providers.gradleProperty("pluginName")
         version = providers.gradleProperty("pluginVersion")
@@ -265,26 +287,28 @@ tasks {
         dependsOn("buildBrowserInfoview")
     }
 
-    val genLean4Lexer = register<GenerateLexerTask>("genLean4Lexer") {
-        description = "Generates lexer"
-        group = "build setup"
-        sourceFile.set(file("src/main/grammars/Lean4Lexer.flex"))
-        targetOutputDir.set(file("src/gen/java/lean4ij/language"))
-        purgeOldFiles.set(true)
-    }
-
-    val genLean4Parser = register<GenerateParserTask>("genLean4Parser") {
-        description = "Generates parser"
-        group = "build setup"
-        sourceFile.set(file("src/main/grammars/Lean4Parser.bnf"))
-        targetRootOutputDir.set(file("src/gen/java/"))
-        pathToParser.set("src/gen/java/lean4ij/language/Lean4Parser.java")
-        pathToPsiRoot.set("src/gen/java/lean4ij/language/")
-        purgeOldFiles.set(true)
-    }
-
     val deleteGen = register<Delete>("deleteGen") {
         delete("src/gen/java")
+    }
+
+    // Both generators write into the shared root `src/gen/java` (git-ignored, see `sourceSets` above).
+    // The parser task purges the PSI directory, which is the same package the lexer lives in, so the lexer
+    // must be generated after the parser.
+    generateParser {
+        sourceFile = file("src/main/grammars/Lean4Parser.bnf")
+        targetRootOutputDir = file("src/gen/java")
+        pathToParser = "lean4ij/language/Lean4Parser.java"
+        pathToPsiRoot = "lean4ij/language"
+        purgeOldFiles = true
+        mustRunAfter(deleteGen)
+    }
+
+    generateLexer {
+        sourceFile = file("src/main/grammars/Lean4Lexer.flex")
+        targetRootOutputDir = file("src/gen/java")
+        pathToClass = "lean4ij/language/Lean4Lexer.java"
+        purgeOldFiles = true
+        mustRunAfter(deleteGen, generateParser)
     }
 
     val genLiveTemplate = register("genLiveTemplate") {
@@ -297,9 +321,13 @@ tasks {
 
     withType<KotlinCompile>().configureEach {
         dependsOn(deleteGen)
-        dependsOn(genLean4Parser)
-        dependsOn(genLean4Lexer)
+        dependsOn(generateParser)
+        dependsOn(generateLexer)
         dependsOn(genLiveTemplate)
+    }
+    withType<JavaCompile>().configureEach {
+        dependsOn(generateParser)
+        dependsOn(generateLexer)
     }
 
 

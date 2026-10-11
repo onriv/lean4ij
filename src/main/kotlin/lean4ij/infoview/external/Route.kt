@@ -24,6 +24,8 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -135,6 +137,10 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
      * TODO weird, sometimes it seems that all messages no result?
      */
     webSocket("/ws") {
+        logger.info("infoview websocket connected: ${call.request.local.remoteAddress}:${call.request.local.remotePort}")
+        // one connection per websocket session; disconnected in `finally` so reconnecting clients do not pile up
+        // listeners that send into dead sessions
+        val messageBusConnection = project.messageBus.connect()
         try {
             val outgoingJob = launch {
                 // TODO this is a temporary try catch for https://github.com/onriv/lean4ij/issues/57
@@ -143,14 +149,14 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                     val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
                     sendWithLog(wsGson.toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme))))
 
-                    // TODO maybe this should be removed if disconnected for avoiding leak?
-                    project.messageBus.connect().subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener {
+                    messageBusConnection.subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener {
                         val scheme = it ?: EditorColorsManager.getInstance().globalScheme
                         scopeIO.launch {
                             @Suppress("NAME_SHADOWING")
                             val themeJson = wsGson.toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(scheme))))
                             logger.trace(themeJson)
-                            sendWithLog(themeJson)
+                            runCatching { sendWithLog(themeJson) }
+                                .onFailure { e -> logger.info("could not send theme update, websocket is probably closed: $e") }
                         }
                     })
 
@@ -178,6 +184,11 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                     service.events().collect {
                         sendWithLog(wsGson.toJson(it))
                     }
+                } catch (e: CancellationException) {
+                    // the incoming loop cancels this job when the client disconnects; not an error
+                    throw e
+                } catch (e: ClosedSendChannelException) {
+                    logger.info("infoview websocket closed while sending: $e")
                 } catch (e: Exception) {
                     thisLogger().error(e)
                 }
@@ -220,22 +231,23 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                     }
                 }
             }.onFailure { exception ->
-                // TODO handle it seriously
-                exception.printStackTrace()
-                exception.cause?.printStackTrace()
-                exception.cause?.cause?.printStackTrace()
-                thisLogger().error(exception)
-                // kotlinx.coroutines.channels.ClosedReceiveChannelException: Channel was closed
+                when (exception) {
+                    // `incoming` is closed when the client goes away (page reload, tab closed, JCEF dropped the
+                    // connection after sleep...). The browser infoview reconnects on its own, so this is routine.
+                    is ClosedReceiveChannelException, is CancellationException ->
+                        logger.info("infoview websocket disconnected: ${closeReason.await()}")
+                    else -> thisLogger().error(exception)
+                }
             }.also {
-                // TODO check what also means
                 outgoingJob.cancel()
             }
             outgoingJob.join()
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: Exception) {
-            ex.cause?.cause?.printStackTrace()
-            ex.cause?.printStackTrace()
-            ex.printStackTrace()
             thisLogger().error(ex)
+        } finally {
+            messageBusConnection.disconnect()
         }
     }
 

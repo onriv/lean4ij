@@ -23,54 +23,103 @@ import "react-contexify/dist/ReactContexify.css";
 const MENU_ID = "menu-id";
 
 
+/**
+ * `RpcNeedsReconnect` from `@leanprover/infoview`'s `RpcErrorCode`: the infoview treats a request failing with it as
+ * "recreate the RPC session and retry" instead of showing an error, which is exactly what a dropped websocket needs.
+ */
+const RPC_NEEDS_RECONNECT = -32900
+
+const RECONNECT_DELAY_INITIAL_MS = 500
+const RECONNECT_DELAY_MAX_MS = 10_000
+
+/**
+ * Websocket to the ktor server inside the IDE. The connection can drop while the page stays alive (observed after
+ * the laptop slept with the lid closed: the JCEF tool window kept showing the last goal and never updated again,
+ * while a freshly opened browser tab worked), so the client reconnects with backoff. On every (re)connection the
+ * server replays `updateTheme`, `serverRestarted` and the last cursor location, which makes the infoview drop its RPC
+ * sessions and re-render the current position.
+ */
 class WebSocketClient {
-    private socket: WebSocket;
+    private socket: WebSocket | undefined;
     private responseMap: Map<number, (response: any) => void>;
     private requestId: number;
+    private reconnectDelayMs = RECONNECT_DELAY_INITIAL_MS;
     infoViewApi: InfoviewApi;
 
-    constructor(url: string) {
-        this.socket = new WebSocket(url);
+    constructor(private readonly url: string) {
         this.responseMap = new Map();
         this.requestId = 0;
+        this.connect();
+    }
 
-        this.socket.addEventListener('message', (event) => {
-            const resp  = JSON.parse(event.data)
-            if (resp.method == 'updateTheme') {
-                const style = document.querySelector('style')
-                if (style) {
-                    style.textContent = resp.data.theme
-                }
-            }
-            if (resp.method == 'serverRestarted') {
-                this.infoViewApi.serverRestarted(resp.data)
-                return
-            }
-            if (resp.method == 'changedCursorLocation') {
-                this.infoViewApi.changedCursorLocation(resp.data)
-                return
-            }
-            if (resp.method == 'rpcResponse') {
-                const callback = this.responseMap.get(resp.requestId);
-                if (callback) {
-                    this.responseMap.delete(resp.requestId);
-                    callback(resp);
-                }
-            }
-            if (resp.method == 'serverNotification') {
-                this.infoViewApi.gotServerNotification(resp.data.method, resp.data.params)
-            }
+    private connect() {
+        const socket = new WebSocket(this.url);
+        this.socket = socket;
+        socket.addEventListener('open', () => {
+            console.log('infoview websocket connected');
+            this.reconnectDelayMs = RECONNECT_DELAY_INITIAL_MS;
         });
+        socket.addEventListener('message', (event) => this.onMessage(event));
+        socket.addEventListener('close', (event) => this.onClose(socket, event));
+    }
+
+    private onClose(socket: WebSocket, event: CloseEvent) {
+        if (socket !== this.socket) {
+            return;
+        }
+        console.warn(`infoview websocket closed (code ${event.code}), reconnecting in ${this.reconnectDelayMs}ms`);
+        this.socket = undefined;
+        // nobody will answer the requests that were in flight on the old connection; fail them so the infoview retries
+        const pending = Array.from(this.responseMap.values());
+        this.responseMap.clear();
+        for (const callback of pending) {
+            callback({error: {code: RPC_NEEDS_RECONNECT, message: 'infoview websocket closed'}});
+        }
+        setTimeout(() => this.connect(), this.reconnectDelayMs);
+        this.reconnectDelayMs = Math.min(this.reconnectDelayMs * 2, RECONNECT_DELAY_MAX_MS);
+    }
+
+    private onMessage(event: MessageEvent) {
+        const resp  = JSON.parse(event.data)
+        if (resp.method == 'updateTheme') {
+            const style = document.querySelector('style')
+            if (style) {
+                style.textContent = resp.data.theme
+            }
+        }
+        if (resp.method == 'serverRestarted') {
+            this.infoViewApi.serverRestarted(resp.data)
+            return
+        }
+        if (resp.method == 'changedCursorLocation') {
+            this.infoViewApi.changedCursorLocation(resp.data)
+            return
+        }
+        if (resp.method == 'rpcResponse') {
+            const callback = this.responseMap.get(resp.requestId);
+            if (callback) {
+                this.responseMap.delete(resp.requestId);
+                callback(resp);
+            }
+        }
+        if (resp.method == 'serverNotification') {
+            this.infoViewApi.gotServerNotification(resp.data.method, resp.data.params)
+        }
     }
 
     sendMessage(method, message: any): Promise<any> {
         return new Promise((resolve, reject) => {
+            const socket = this.socket;
+            if (socket === undefined || socket.readyState !== WebSocket.OPEN) {
+                reject({code: RPC_NEEDS_RECONNECT, message: 'infoview websocket is not connected'});
+                return;
+            }
             const id = this.requestId++;
             // the server answers every request either with `data` or with an RPC `error` ({code, message});
             // rejecting with the error lets the infoview show it and apply its own retry logic
             this.responseMap.set(id, (resp) => resp.error ? reject(resp.error) : resolve(resp.data));
             // TODO all the frontend need better design
-            this.socket.send(`${id},${method},${message}`);
+            socket.send(`${id},${method},${message}`);
         });
     }
 }

@@ -21,6 +21,16 @@ class LeanLSPCompletionFeature : LSPCompletionFeature() {
         return lean4Settings.enableLspCompletion
     }
 
+    /**
+     * LSP4IJ resolves the item synchronously on the EDT inside `handleInsert` when this returns true.
+     * The Lean server's `completionItem/resolve` only fills `detail`/`documentation` (no additional text edits
+     * or commands), so nothing is lost by skipping it, and it avoids a second EDT freeze path
+     * (see [LeanCompletionProposal]).
+     */
+    override fun shouldResolveOnApply(item: CompletionItem, file: PsiFile): Boolean {
+        return false
+    }
+
     override fun createLookupElement(
         item: CompletionItem,
         context: LSPCompletionContext
@@ -75,6 +85,11 @@ class LeanLSPCompletionFeature : LSPCompletionFeature() {
             val textEdit = InsertReplaceEdit(item.label, range, range)
             item.textEdit = Either.forRight(textEdit)
         }
-        return super.createLookupElement(item, context)
+        if (item.label.isNullOrBlank()) {
+            // same guard as LSPCompletionFeature.createLookupElement
+            return null
+        }
+        val parameters = context.parameters
+        return LeanCompletionProposal(item, context, this, parameters.originalFile.project, parameters.editor)
     }
 }

@@ -49,6 +49,8 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var commentPrefixForGoalHint: String = "---"
 
     var enableDiagnosticsLens = true
+    var enableMultiLineDiagnosticsLens = true
+    var diagnosticsLensMaxLines = 20
     var enableLspCompletion = true
 
     // TODO use constant or enum for this
@@ -101,7 +103,9 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Enable both spaced and non spaced live templates", settings::enableBothSpaceAndNonSpaceLiveTemplates)
     }
     group("Inlay Hints Settings ") {
-        boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)
+        val enableDiagnosticsLens = boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)
+        boolean("Show multi-line messages as a block below the command (otherwise glued into one line)", settings::enableMultiLineDiagnosticsLens).enabledIf(enableDiagnosticsLens.selected)
+        int("Max lines shown by the multi-line diagnostics lens (0 = unlimited)", settings::diagnosticsLensMaxLines, 0, 1000).enabledIf(enableDiagnosticsLens.selected)
         string("Comment prefix for goal hints", settings::commentPrefixForGoalHint)
     }
     group("Language Server Settings") {

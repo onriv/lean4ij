@@ -41,3 +41,7 @@ an embedded ktor server and shown in a JCEF tool window). Upstream: https://gith
 ## Conventions
 - Commit messages and code comments in English.
 - When fixing a crash seen in an IDE log, record the stack trace + root cause in `notes/` and link the upstream issue if any.
+- Every "fix this" request ends with a commit and a rebuilt plugin zip, unless told otherwise. If the change
+  consists of several independent fixes, make one commit per logical fix (notes/CLAUDE.md updates go together
+  with the fix they describe, or in a separate commit when standalone). Then run the `buildPlugin` command above
+  (against the installed IDE when targeting a nightly) and report the path to `build/distributions/*.zip`.

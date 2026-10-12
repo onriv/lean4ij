@@ -360,6 +360,10 @@ tasks.test {
     // ref: https://intellij-support.jetbrains.com/hc/en-us/community/posts/4407334950290-jarFiles-is-not-set-for-PluginDescriptor
     // for resolving error "jarFiles is not set for PluginDescriptor"
     systemProperty("idea.force.use.core.classloader", "true")
+    // One JVM per test class: a BasePlatformTestCase loads the whole plugin (and LSP4IJ) into the shared test
+    // application, after which ParsingTestCase's mock application fails with an NPE in
+    // LSPSemanticTokensFileViewProviderFactory (LanguageServersRegistry.getInstance() is null).
+    setForkEvery(1)
 }
 
 // ref: https://github.com/hfhbd/kobol/blob/main/intellij-plugin/build.gradle.kts#L30

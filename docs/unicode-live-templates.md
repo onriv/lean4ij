@@ -10,18 +10,18 @@ In other case like for typing some unicode for an identifier, the autocomplete c
 
 ![live_templates1](https://github.com/user-attachments/assets/c2e913cd-f8ad-4c95-8800-dc4f2cebeddb)
 
-For providing few options they are split in three group:
+The templates are split in three groups (Editor/Live Templates):
 
-- Editor/Live Templates/Lean4
-- Editor/Live Templates/Lean4Pair
-- Editor/Live Templates/Lean4Space
+- `Lean4`: the abbreviations, basically the same behavior as vscode-lean4.
+- `Lean4Pair`: automatically inserting the right part of a pair when typing the left part (`\<` gives `⟨⟩`).
+- `Lean4Space`: the same abbreviations as `Lean4` but with a trailing space baked into the template.
 
-The group `Lean4` is basically the same behavior as vscode-lean4. And the group `Lean4Pair` is for automatically adding inserting pairs when typing the left part. The group `Lean4Space`
-is for avoiding type the space again.
+In the settings (Languages & Frameworks/Lean4) two options control this:
 
-In the settings there are 3 options for control this. 
-- add whitespace after live templates for unicode: this will enable the whitespace group and disable the default group
-- autocomplete live templates for pair unicode: this will enable the pair group
-- enable both spaced and non spaced live templates: and this will enable both the whitespace and the default group
-
-<img width="371" alt="image" src="https://github.com/user-attachments/assets/343ac2c1-ec3d-4c44-a783-0a123fb2ecbd" />
+- *Space after unicode abbreviation*:
+  - *Only when expanded with Space* (default): `\neg<Space>` inserts `¬ ` and `\neg<Tab>` (or Enter, or a click
+    in the completion popup) inserts `¬`, like in nvim/vscode. This uses the `Lean4` group; the space is added by
+    the plugin when the abbreviation is expanded with the Space key.
+  - *Always*: every expansion adds a trailing space (the `Lean4Space` group is enabled instead of `Lean4`).
+  - *Never*: no expansion adds a space (the `Lean4` group alone).
+- *Autocomplete live templates for pair unicode*: enables the `Lean4Pair` group.

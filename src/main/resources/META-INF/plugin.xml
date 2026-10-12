@@ -38,6 +38,14 @@
                 contextId="Lean4Pair"
                 implementation="lean4ij.language.Lean4PairContext"/>
 
+        <!-- "\neg<Space>" inserts the symbol plus a space, "\neg<Tab>" (Enter, click) only the symbol;
+             see Lean4AbbreviationSpaceHandler.kt. Both must run before the platform's SpaceHandler /
+             LiveTemplateCharFilter, which swallow the space. -->
+        <typedHandler implementation="lean4ij.language.Lean4AbbreviationSpaceTypedHandler"
+                      id="lean4AbbreviationSpace" order="first"/>
+        <lookup.charFilter implementation="lean4ij.language.Lean4AbbreviationCharFilter"
+                           id="lean4Abbreviation" order="first, before liveTemplate"/>
+
 
 
 

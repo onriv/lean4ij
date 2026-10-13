@@ -69,6 +69,7 @@
         <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/>
         <lang.commenter language="lean4" implementationClass="lean4ij.language.Lean4Commenter"/>
         <lang.braceMatcher language="lean4" implementationClass="lean4ij.language.Lean4PairedBraceMatcher"/>
+        <langCodeStyleSettingsProvider implementation="lean4ij.language.Lean4CodeStyleSettingsProvider"/>
 
         <!--
         TODO

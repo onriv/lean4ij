@@ -120,7 +120,7 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Autocomplete live templates for pair unicode", settings::autoCompletePairLiveTemplates)
     }
     group("Inlay Hints Settings ") {
-        val enableDiagnosticsLens = boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)
+        val enableDiagnosticsLens = boolean("Enable diagnostics lens for #check, #print, exact?, etc; click a lens to copy its text (restart to take effect)", settings::enableDiagnosticsLens)
         boolean("Show multi-line messages as a block below the command (otherwise glued into one line)", settings::enableMultiLineDiagnosticsLens).enabledIf(enableDiagnosticsLens.selected)
         int("Max lines shown by the multi-line diagnostics lens (0 = unlimited)", settings::diagnosticsLensMaxLines, 0, 1000).enabledIf(enableDiagnosticsLens.selected)
         string("Comment prefix for goal hints", settings::commentPrefixForGoalHint)

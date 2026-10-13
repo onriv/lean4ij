@@ -4,6 +4,9 @@ import com.google.common.base.MoreObjects
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HintRenderer
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.lang.ASTNode
@@ -14,6 +17,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -45,7 +50,9 @@ import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.GraphicsUtil
 import java.awt.Color
 import java.awt.Font
@@ -53,6 +60,8 @@ import java.awt.FontMetrics
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
+import java.awt.datatransfer.StringSelection
+import java.awt.event.MouseEvent
 import java.util.*
 import java.util.Collections.synchronizedMap
 import java.util.concurrent.CompletableFuture
@@ -478,10 +487,33 @@ object InlayTextAttributes: UnmodifiableTextAttributes() {
 }
 
 /**
+ * Common part of the diagnostics lens renderers: the complete, unclipped message, so that a click on the lens
+ * can copy the whole text even when only a prefix (or only the first lines) is painted.
+ */
+interface DiagnosticLensRenderer {
+    val fullText: String
+
+    companion object {
+        private val TRY_THIS = Regex("""^Try this:\s*""")
+
+        /**
+         * What gets copied for a lens: `exact?`, `apply?`, `simp?`, `rw?` etc. report `Try this: <tactic>`, and the
+         * useful part to paste into the proof is the tactic itself, so the prefix is dropped. Any other message is
+         * copied verbatim.
+         */
+        fun textToCopy(message: String): String {
+            return TRY_THIS.replace(message.trimEnd(), "")
+        }
+    }
+}
+
+/**
  * Single-line renderer used when a diagnostic message fits on one line: the lens is shown
  * after the end of the line, like the IntelliJ inspection lens.
  */
-class InlayRenderer(text: String): HintRenderer(clipLine(text)) {
+class InlayRenderer(text: String): HintRenderer(clipLine(text)), DiagnosticLensRenderer {
+    override val fullText: String = text
+
     companion object {
         const val MAX_LEN = 140
 
@@ -508,7 +540,9 @@ class InlayRenderer(text: String): HintRenderer(clipLine(text)) {
  * the indentation of the line, keeping the original line structure of the message instead of gluing it into
  * one line as [HintRenderer] does.
  */
-class MultiLineInlayRenderer(text: String, private val maxLines: Int) : EditorCustomElementRenderer {
+class MultiLineInlayRenderer(text: String, private val maxLines: Int) : EditorCustomElementRenderer, DiagnosticLensRenderer {
+    override val fullText: String = text
+
     companion object {
         const val HORIZONTAL_PADDING = 6
         const val ARC = 8
@@ -603,10 +637,39 @@ class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
 
         val pluginLifetime = ApplicationManager.getApplication().service<lean4ij.services.MyProjectDisposableService>().createLifetime()
         val editorLifetime = editor.createLifetime()
+        val disposable = pluginLifetime.intersect(editorLifetime).createNestedDisposable("lean4ijDiagEditorLifetime")
 
-        model?.addMarkupModelListener(pluginLifetime.intersect (editorLifetime).createNestedDisposable("lean4ijDiagEditorLifetime"), this)
+        model?.addMarkupModelListener(disposable, this)
+        editor.editor.addEditorMouseListener(LensClickListener(), disposable)
 
         refresh()
+    }
+
+    /**
+     * The lens is painted by a custom renderer, so its text is not part of the document and cannot be selected.
+     * A left click on it copies the message to the clipboard instead (see [DiagnosticLensRenderer.textToCopy]).
+     */
+    private inner class LensClickListener : EditorMouseListener {
+        override fun mouseClicked(event: EditorMouseEvent) {
+            val mouseEvent = event.mouseEvent
+            if (event.isConsumed || mouseEvent.button != MouseEvent.BUTTON1 || mouseEvent.clickCount != 1) return
+            val ed = editor.editor
+            val inlay = event.inlay ?: ed.inlayModel.getElementAt(mouseEvent.point) ?: return
+            val renderer = inlay.renderer as? DiagnosticLensRenderer ?: return
+            if (!currentHints.containsValue(inlay)) return
+
+            val text = DiagnosticLensRenderer.textToCopy(renderer.fullText)
+            if (text.isEmpty()) return
+            CopyPasteManager.getInstance().setContents(StringSelection(text))
+            event.consume()
+
+            val hint = LightweightHint(HintUtil.createInformationLabel("Copied to clipboard"))
+            HintManagerImpl.getInstanceImpl().showEditorHint(
+                hint, ed, mouseEvent.point,
+                HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or HintManager.HIDE_BY_SCROLLING,
+                1500, false
+            )
+        }
     }
 
     fun model() : MarkupModelEx? {

@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.LineColumn
 import com.intellij.openapi.util.text.StringUtil
@@ -268,6 +269,8 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
         }
     }
 
+    /** Editor the hover listener/highlighter below are currently attached to. Accessed on EDT only. */
+    private var hoverEditor : Editor? = null
     private var hoverListener : EditorMouseMotionListener? = null
     private var hoverRangeHighlighter : RangeHighlighter? = null
 
@@ -279,99 +282,102 @@ class LeanProjectService(val project: Project, val scope: CoroutineScope)  {
      * we do not do it this way yet though
      * TODO MAYBE this should be refactor out to some editor related service or other stuff
      *      too many things in [LeanProjectService]
-     * The catch in the following definition in fact cannot block the plugin notifying an
-     * error when we are trying to remove a non-exist listener
-     * check [com.intellij.openapi.editor.impl.EditorImpl.removeEditorMouseMotionListener] and
-     * [com.intellij.openapi.diagnostic.Logger.assertTrue]
-     * The error is notified at the point the error is created not the point it's caught
-     * Removing non-existent listener may be caused by duplicated removal, we try to fix
-     * this by set it to null after removal
+     *
+     * This is called from the LSP reader thread, the actual work is scheduled on EDT.
+     * The listener and the highlighter are always removed from the editor they were added to
+     * ([hoverEditor]), not from the currently selected one: the selection may have changed in between
+     * (e.g. another file was opened) and `EditorImpl.removeEditorMouseMotionListener` logs an
+     * `Assertion failed` error (via `Logger.assertTrue`, not catchable) for an unknown listener.
      */
     fun highlightCurrentContent(hover: Hover?) {
         if (!service<Lean4Settings>().enableHoverHighlight) {
             return
         }
-
-        FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
-            val document = editor.document
-            val markupModel = editor.markupModel
-
-            if (hoverListener != null) {
-                try {
-                    thisLogger().debug("remove hover listener $hoverListener for $editor")
-                    editor.removeEditorMouseMotionListener(hoverListener!!)
-                    hoverListener = null
-                } catch (e: Throwable) {
-                    // There are cases that we remove non-exist listener
-                    // Here we just ignore it
-                    // Some concrete exception is:
-                    //   java.lang.Throwable: Assertion failed
-                    //   	at com.intellij.openapi.diagnostic.Logger.assertTrue(Logger.java:469)
-                    //   	at com.intellij.openapi.diagnostic.Logger.assertTrue(Logger.java:478)
-                }
-            }
-            if (hoverRangeHighlighter != null) {
-                markupModel.removeHighlighter(hoverRangeHighlighter!!)
-            }
-
+        scope.launch(Dispatchers.EDT) {
+            clearHoverHighlight()
             if (hover == null) {
-                return
+                return@launch
             }
+            val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@launch
+            if (editor.isDisposed) {
+                return@launch
+            }
+            addHoverHighlight(editor, hover)
+        }
+    }
 
-            // TODO DRY DRY, duplicated with
-            //      lean4ij.infoview.InfoviewMouseMotionListener.mouseMoved
-            // TODO this should add some setting page for it too
-            val attr = object : TextAttributes() {
-                override fun getBackgroundColor(): Color {
-                    // TODO document this
-                    // TODO should scheme be cache?
-                    val scheme = EditorColorsManager.getInstance().globalScheme
-                    // TODO customize attr? or would backgroundColor null?
-                    //      indeed here it can be null, don't know why Kotlin does not mark it as error
-                    // TODO there is cases here the background of identifier under current caret is null
-                    // TODO do this better in a way
-                    var color = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
-                    if (color != null) {
-                        return color
-                    }
-                    color = scheme.getColor(EditorColors.CARET_COLOR)
-                    if (color != null) {
-                        return color
-                    }
-                    return scheme.defaultBackground
-                }
-            }
-            try {
-                hoverRangeHighlighter = markupModel.addRangeHighlighter(
-                    StringUtil.lineColToOffset(document.charsSequence, hover.range.start.line, hover.range.start.character),
-                    StringUtil.lineColToOffset(document.charsSequence, hover.range.end.line, hover.range.end.character),
-                    HighlighterLayer.LAST,
-                    attr,
-                    HighlighterTargetArea.EXACT_RANGE
-                )
-                hoverListener = object : EditorMouseMotionListener {
-                    override fun mouseMoved(e: EditorMouseEvent) {
-                        if (!e.isOverText) {
-                            editor.markupModel.removeHighlighter(hoverRangeHighlighter!!)
-                        }
-                    }
-                }
-                thisLogger().debug("add hover listener $hoverListener for $editor")
-                editor.addEditorMouseMotionListener(hoverListener!!)
-            } catch (e: AssertionError) {
-                // There may be the following exception, it may be caused by concurrently changing the content in the editor and the hover event is triggered
-                // TODO Nevertheless when editing the content the hover event should not be triggered theoretically, throttled the hover event when editing rather than
-                //      simply catching the exception
-                /**
-                 * java.lang.AssertionError: 446 (class com.intellij.openapi.editor.impl.RangeHighlighterTree); this: 902(class com.intellij.openapi.editor.impl.RangeHighlighterTree)
-                 * 	at com.intellij.openapi.editor.impl.IntervalTreeImpl.checkBelongsToTheTree(IntervalTreeImpl.java:938)
-                 * 	at com.intellij.openapi.editor.impl.IntervalTreeImpl.removeInterval(IntervalTreeImpl.java:969)
-                 * 	at com.intellij.openapi.editor.impl.MarkupModelImpl.removeHighlighter(MarkupModelImpl.java:200)
-                 * 	at lean4ij.project.LeanProjectService$highlightCurrentContent$1$1.mouseMoved(LeanProjectService.kt:337)
-                 * 	at com.intellij.openapi.editor.impl.EditorImpl$MyMouseMotionListener.mouseMoved(EditorImpl.java:4857)
-                 */
+    @RequiresEdt
+    private fun clearHoverHighlight() {
+        val editor = hoverEditor
+        hoverListener?.let { listener ->
+            if (editor != null && !editor.isDisposed) {
+                thisLogger().debug("remove hover listener $listener for $editor")
+                editor.removeEditorMouseMotionListener(listener)
             }
         }
+        // dispose() detaches the highlighter from whatever markup model it belongs to and is a no-op
+        // when it is already invalid, unlike MarkupModel.removeHighlighter on a foreign model
+        hoverRangeHighlighter?.dispose()
+        hoverListener = null
+        hoverRangeHighlighter = null
+        hoverEditor = null
+    }
+
+    @RequiresEdt
+    private fun addHoverHighlight(editor: Editor, hover: Hover) {
+        val document = editor.document
+        val range = hover.range ?: return
+        val textLength = document.textLength
+        val startOffset = StringUtil.lineColToOffset(document.charsSequence, range.start.line, range.start.character)
+            .coerceIn(0, textLength)
+        val endOffset = StringUtil.lineColToOffset(document.charsSequence, range.end.line, range.end.character)
+            .coerceIn(0, textLength)
+        if (startOffset >= endOffset) {
+            return
+        }
+
+        // TODO DRY DRY, duplicated with
+        //      lean4ij.infoview.InfoviewMouseMotionListener.mouseMoved
+        // TODO this should add some setting page for it too
+        val attr = object : TextAttributes() {
+            override fun getBackgroundColor(): Color {
+                // TODO document this
+                // TODO should scheme be cache?
+                val scheme = EditorColorsManager.getInstance().globalScheme
+                // TODO customize attr? or would backgroundColor null?
+                //      indeed here it can be null, don't know why Kotlin does not mark it as error
+                // TODO there is cases here the background of identifier under current caret is null
+                // TODO do this better in a way
+                var color = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
+                if (color != null) {
+                    return color
+                }
+                color = scheme.getColor(EditorColors.CARET_COLOR)
+                if (color != null) {
+                    return color
+                }
+                return scheme.defaultBackground
+            }
+        }
+        val highlighter = editor.markupModel.addRangeHighlighter(
+            startOffset,
+            endOffset,
+            HighlighterLayer.LAST,
+            attr,
+            HighlighterTargetArea.EXACT_RANGE
+        )
+        val listener = object : EditorMouseMotionListener {
+            override fun mouseMoved(e: EditorMouseEvent) {
+                if (!e.isOverText) {
+                    highlighter.dispose()
+                }
+            }
+        }
+        thisLogger().debug("add hover listener $listener for $editor")
+        editor.addEditorMouseMotionListener(listener)
+        hoverEditor = editor
+        hoverListener = listener
+        hoverRangeHighlighter = highlighter
     }
 
     /**

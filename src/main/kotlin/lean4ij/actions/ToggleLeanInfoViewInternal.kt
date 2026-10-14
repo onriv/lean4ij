@@ -27,7 +27,8 @@ class ToggleLeanInfoViewInternal : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val editor = e.dataContext.getData<Editor>(CommonDataKeys.EDITOR)?:return
-        if (!LeanUtil.isLeanFile(editor.virtualFile)) {
+        val virtualFile = editor.virtualFile
+        if (virtualFile == null || !LeanUtil.isLeanFile(virtualFile)) {
             e.presentation.isVisible = false
         }
     }

@@ -44,7 +44,15 @@ import lean4ij.util.LeanUtil
 import lean4ij.util.LspUtil
 import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.util.TextRange
+import com.intellij.util.ui.GraphicsUtil
 import java.awt.Color
+import java.awt.Font
+import java.awt.FontMetrics
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
 import java.util.*
 import java.util.Collections.synchronizedMap
 import java.util.concurrent.CompletableFuture
@@ -469,10 +477,15 @@ object InlayTextAttributes: UnmodifiableTextAttributes() {
     }
 }
 
-class InlayRenderer(info: HighlightInfo): HintRenderer(clipDescription(info.description)) {
+/**
+ * Single-line renderer used when a diagnostic message fits on one line: the lens is shown
+ * after the end of the line, like the IntelliJ inspection lens.
+ */
+class InlayRenderer(text: String): HintRenderer(clipLine(text)) {
     companion object {
-        const val MAX_LEN = 140;
-        fun clipDescription(desc: String): String {
+        const val MAX_LEN = 140
+
+        fun clipLine(desc: String): String {
             return if (desc.length < MAX_LEN) {
                 desc
             } else {
@@ -489,9 +502,101 @@ class InlayRenderer(info: HighlightInfo): HintRenderer(clipDescription(info.desc
     }
 }
 
+/**
+ * Multi-line renderer used for diagnostic messages that contain line breaks (typical for `#print`, `#eval`
+ * of structures, `#check` of long signatures). It is shown as a block inlay below the command, aligned with
+ * the indentation of the line, keeping the original line structure of the message instead of gluing it into
+ * one line as [HintRenderer] does.
+ */
+class MultiLineInlayRenderer(text: String, private val maxLines: Int) : EditorCustomElementRenderer {
+    companion object {
+        const val HORIZONTAL_PADDING = 6
+        const val ARC = 8
+
+        fun splitLines(text: String, maxLines: Int): List<String> {
+            val all = text.trimEnd().lines().map { InlayRenderer.clipLine(it.trimEnd()) }
+            if (maxLines <= 0 || all.size <= maxLines) {
+                return all
+            }
+            return all.take(maxLines) + "… (${all.size - maxLines} more lines)"
+        }
+    }
+
+    private val lines: List<String> = splitLines(text, maxLines)
+
+    private fun font(editor: Editor): Font {
+        return editor.colorsScheme.getFont(EditorFontType.PLAIN)
+    }
+
+    private fun fontMetrics(editor: Editor): FontMetrics {
+        return editor.contentComponent.getFontMetrics(font(editor))
+    }
+
+    /**
+     * x coordinate of the first non-blank character of the line the inlay is attached to,
+     * so that the block is aligned with the command it describes.
+     */
+    private fun indentX(inlay: Inlay<*>): Int {
+        val editor = inlay.editor
+        val document = editor.document
+        val offset = inlay.offset.coerceIn(0, document.textLength)
+        val line = document.getLineNumber(offset)
+        val lineStart = document.getLineStartOffset(line)
+        val lineEnd = document.getLineEndOffset(line)
+        val text = document.getText(TextRange(lineStart, lineEnd))
+        val firstNonBlank = text.indexOfFirst { !it.isWhitespace() }
+        val anchor = if (firstNonBlank < 0) lineStart else lineStart + firstNonBlank
+        return editor.offsetToXY(anchor, false, true).x
+    }
+
+    private fun textWidth(editor: Editor): Int {
+        val metrics = fontMetrics(editor)
+        return lines.maxOfOrNull { metrics.stringWidth(it) } ?: 0
+    }
+
+    override fun calcWidthInPixels(inlay: Inlay<*>): Int {
+        return indentX(inlay) + textWidth(inlay.editor) + 2 * HORIZONTAL_PADDING
+    }
+
+    override fun calcHeightInPixels(inlay: Inlay<*>): Int {
+        return inlay.editor.lineHeight * lines.size
+    }
+
+    override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
+        val editor = inlay.editor
+        if (lines.isEmpty()) return
+        val g2 = g.create() as Graphics2D
+        try {
+            GraphicsUtil.setupAAPainting(g2)
+            val metrics = fontMetrics(editor)
+            val lineHeight = editor.lineHeight
+            val x = targetRegion.x + indentX(inlay)
+            val width = textWidth(editor) + 2 * HORIZONTAL_PADDING
+            val height = lineHeight * lines.size
+
+            val background = InlayTextAttributes.backgroundColor
+            if (background != null) {
+                g2.color = background
+                g2.fillRoundRect(x, targetRegion.y, width, height, ARC, ARC)
+            }
+
+            g2.font = font(editor)
+            g2.color = InlayTextAttributes.foregroundColor ?: editor.colorsScheme.defaultForeground
+            val baselineOffset = (lineHeight - metrics.height) / 2 + metrics.ascent
+            var y = targetRegion.y + baselineOffset
+            for (line in lines) {
+                g2.drawString(line, x + HORIZONTAL_PADDING, y)
+                y += lineHeight
+            }
+        } finally {
+            g2.dispose()
+        }
+    }
+}
+
 // https://github.com/chylex/IntelliJ-Inspection-Lens/blob/main/src/main/kotlin/com/chylex/intellij/inspectionlens/editor/LensMarkupModelListener.kt
 class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
-    var currentHints: IdentityHashMap<RangeHighlighterEx, Inlay<InlayRenderer>> = IdentityHashMap()
+    var currentHints: IdentityHashMap<RangeHighlighterEx, Inlay<*>> = IdentityHashMap()
 
     init {
         val model = model()
@@ -530,36 +635,40 @@ class DiagInlayManager(var editor: TextEditor) : MarkupModelListener {
     }
 
     fun updateHint(range: RangeHighlighterEx) {
-        val info = HighlightInfo.fromRangeHighlighter(range) ?: return
-
-        val inlay = this.currentHints[range] ?: return
-
-        ApplicationManager.getApplication().invokeLater {
-            if (info.description == null) {
-                inlay.dispose()
-            }
-            else {
-                inlay.renderer.text = info.description
-            }
-        }
+        if (!this.currentHints.containsKey(range)) return
+        // The message may switch between single-line and multi-line, which means a different kind of inlay
+        // (after-line-end vs block), so the hint is simply recreated.
+        hideHint(range)
+        showHint(range)
     }
 
     fun showHint(range: RangeHighlighterEx) {
         val info = HighlightInfo.fromRangeHighlighter(range) ?: return
 
         // seems that it's always marked as weak warning
-        if (info.description == null || info.severity != HighlightSeverity.WEAK_WARNING) {
+        val description = info.description
+        if (description == null || info.severity != HighlightSeverity.WEAK_WARNING) {
             return
         }
 
-        val renderer = InlayRenderer(info)
-        val properties = InlayProperties()
-            .relatesToPrecedingText(true)
-            .disableSoftWrapping(true)
+        val settings = service<Lean4Settings>()
+        val text = description.trimEnd()
+        val multiLine = settings.enableMultiLineDiagnosticsLens && text.contains('\n')
+        val offset = maxOf(info.actualStartOffset, info.actualEndOffset - 1)
 
         ApplicationManager.getApplication().invokeLater {
-            info.endOffset
-            val hint = editor.editor.inlayModel.addAfterLineEndElement(info.actualEndOffset - 1, properties, renderer) ?: return@invokeLater
+            if (offset < 0 || offset > editor.editor.document.textLength) return@invokeLater
+            val hint: Inlay<*>? = if (multiLine) {
+                val renderer = MultiLineInlayRenderer(text, settings.diagnosticsLensMaxLines)
+                editor.editor.inlayModel.addBlockElement(offset, true, false, 0, renderer)
+            } else {
+                val renderer = InlayRenderer(text)
+                val properties = InlayProperties()
+                    .relatesToPrecedingText(true)
+                    .disableSoftWrapping(true)
+                editor.editor.inlayModel.addAfterLineEndElement(offset, properties, renderer)
+            }
+            if (hint == null) return@invokeLater
 
             this.currentHints[range] = hint
         }

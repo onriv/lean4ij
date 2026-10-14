@@ -48,7 +48,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle
@@ -99,7 +99,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle
@@ -156,7 +156,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
 
       # Run Qodana inspections
       - name: Qodana - Code Inspection
@@ -188,7 +188,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
       - name: Check space
         run: df -h
       # Setup Gradle

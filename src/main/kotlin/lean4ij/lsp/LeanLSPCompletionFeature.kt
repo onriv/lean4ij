@@ -7,7 +7,7 @@ import com.intellij.psi.util.startOffset
 import com.redhat.devtools.lsp4ij.client.features.LSPCompletionFeature
 import lean4ij.setting.Lean4Settings
 import org.eclipse.lsp4j.CompletionItem
-import org.eclipse.lsp4j.TextEdit
+import org.eclipse.lsp4j.InsertReplaceEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 
 /**
@@ -19,6 +19,16 @@ class LeanLSPCompletionFeature : LSPCompletionFeature() {
 
     override fun isEnabled(file: PsiFile): Boolean {
         return lean4Settings.enableLspCompletion
+    }
+
+    /**
+     * LSP4IJ resolves the item synchronously on the EDT inside `handleInsert` when this returns true.
+     * The Lean server's `completionItem/resolve` only fills `detail`/`documentation` (no additional text edits
+     * or commands), so nothing is lost by skipping it, and it avoids a second EDT freeze path
+     * (see [LeanCompletionProposal]).
+     */
+    override fun shouldResolveOnApply(item: CompletionItem, file: PsiFile): Boolean {
+        return false
     }
 
     override fun createLookupElement(
@@ -65,12 +75,21 @@ class LeanLSPCompletionFeature : LSPCompletionFeature() {
             val startPos = org.eclipse.lsp4j.Position(lineNum, elementStart - lineOffset)
             val endPos = org.eclipse.lsp4j.Position(lineNum, elementEnd - lineOffset)
 
-            val textEdit = TextEdit(
-                org.eclipse.lsp4j.Range(startPos, endPos),
-                item.label
-            )
-            item.textEdit = Either.forLeft(textEdit)
+            // Use InsertReplaceEdit, not TextEdit: LSP4IJ sends the (mutated) item back to the server in
+            // `completionItem/resolve`, and the Lean server declares `CompletionItem.textEdit?` as
+            // `Option InsertReplaceEdit` (newText/insert/replace). A plain `{range, newText}` TextEdit makes
+            // the server reject the request with "Cannot parse request params ... Natural number expected",
+            // which surfaces as an exception on the EDT while the lookup is shown (see notes/2026-10-10-*).
+            // LSP4IJ reads the range from `insert` when applying the edit.
+            val range = org.eclipse.lsp4j.Range(startPos, endPos)
+            val textEdit = InsertReplaceEdit(item.label, range, range)
+            item.textEdit = Either.forRight(textEdit)
         }
-        return super.createLookupElement(item, context)
+        if (item.label.isNullOrBlank()) {
+            // same guard as LSPCompletionFeature.createLookupElement
+            return null
+        }
+        val parameters = context.parameters
+        return LeanCompletionProposal(item, context, this, parameters.originalFile.project, parameters.editor)
     }
 }

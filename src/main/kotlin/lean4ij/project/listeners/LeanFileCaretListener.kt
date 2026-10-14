@@ -23,10 +23,12 @@ class LeanFileCaretListener(private val project: Project) : CaretListener/*, Pro
      */
     override fun caretPositionChanged(event: CaretEvent) {
         // TODO passing things like editor etc seems cumbersome, maybe add some implement for context
-        if (!LeanUtil.isLeanFile(event.editor.virtualFile.path)) {
+        // Editor.getVirtualFile() is nullable (e.g. for editors not backed by a file)
+        val virtualFile = event.editor.virtualFile ?: return
+        if (!LeanUtil.isLeanFile(virtualFile.path)) {
             return
         }
-        leanProjectService.file(event.editor.virtualFile).updateCaret(event.editor, event.newPosition)
+        leanProjectService.file(virtualFile).updateCaret(event.editor, event.newPosition)
     }
 
     private var editor: Editor? = null

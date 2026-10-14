@@ -23,7 +23,8 @@ class RestartCurrentFile : AnAction() {
         e.project?.let {project ->
             val leanProjectService : LeanProjectService = project.service()
             FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
-                val file = editor.virtualFile.path
+                // Editor.getVirtualFile() is nullable (e.g. for editors not backed by a file)
+                val file = editor.virtualFile?.path ?: return@let
                 leanProjectService.scope.launch {
                     leanProjectService.file(file).restart()
                 }

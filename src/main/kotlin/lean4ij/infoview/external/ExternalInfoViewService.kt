@@ -34,6 +34,7 @@ import java.io.File
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * External infoview service, bridging the http service and the lean project service
@@ -90,7 +91,12 @@ class ExternalInfoViewService(val project: Project) {
         val fakeFile = "externalInfoViewService"
         buildWindowService.startBuild(fakeFile)
         val module: Application.() -> Unit = {
-            install(WebSockets)
+            install(WebSockets) {
+                // Detect half-open connections (e.g. the JCEF page's socket dying while the machine sleeps):
+                // without pings a dead session keeps collecting events forever and nobody notices.
+                pingPeriod = 15.seconds
+                timeout = 30.seconds
+            }
             routing(externalInfoViewRoute(project, this@ExternalInfoViewService))
         }
         // TODO maybe fixed port or making it a configuration

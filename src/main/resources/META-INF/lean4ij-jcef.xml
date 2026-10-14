@@ -1,0 +1,5 @@
+<!-- Loaded only when the `com.intellij.modules.jcef` module is available (2026.x+ IDEs).
+     Intentionally empty: all JCEF related tool windows and actions are registered in plugin.xml and guard
+     themselves with JBCefApp.isSupported(); this file only exists because an optional dependency requires one. -->
+<idea-plugin>
+</idea-plugin>

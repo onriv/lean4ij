@@ -39,11 +39,17 @@ class InfoViewWindowFactory : ToolWindowFactory {
 
         /**
          * The id is from plugin.xml
+         *
+         * This may be called from any thread (e.g. from the LSP coroutines on `Dispatchers.Default`), so it must not
+         * touch [ToolWindow.getContentManager]: that getter lazily creates the content and asserts EDT
+         * ("Access is allowed from Event Dispatch Thread (EDT) only" in `ToolWindowImpl.createContentIfNeeded`).
+         * [ToolWindow.getContentManagerIfCreated] only reads the already created manager and is thread-safe;
+         * if the tool window was never opened there is nothing to update anyway and `null` is returned.
          */
         fun getLeanInfoview(project: Project): LeanInfoViewWindow? {
             val contents = ToolWindowManager.getInstance(project)
                 .getToolWindow("LeanInfoViewWindow")
-                ?.contentManager?.contents
+                ?.contentManagerIfCreated?.contents
             // If the project just startup and teh tool window never opened before
             // it may be null
             if (contents == null) {
@@ -53,7 +59,7 @@ class InfoViewWindowFactory : ToolWindowFactory {
             if (contents.isEmpty()) {
                 return null
             }
-            return contents[0].component as LeanInfoViewWindow
+            return contents[0].component as? LeanInfoViewWindow
         }
 
         fun createInfoObjectModel(
@@ -155,8 +161,6 @@ class InfoViewWindowFactory : ToolWindowFactory {
             if (file == null) {
                 return
             }
-            val infoViewWindow = getLeanInfoview(project) ?: return
-
             val infoObjectModel = createInfoObjectModel(file, position, interactiveGoals, interactiveTermGoal, interactiveDiagnostics, allMessage)
 
             // TODO render message
@@ -164,10 +168,12 @@ class InfoViewWindowFactory : ToolWindowFactory {
             // TODO maybe it's too broad, maybe only createEditor in EDT
             var leanProjectService = project.service<LeanProjectService>()
             val scope = leanProjectService.scope
-            // The scope.launch here is mainly for the editor
+            // The scope.launch here is mainly for the editor and the tool window: this method is called from the
+            // LSP coroutines on a background dispatcher, and tool window access is EDT-only.
             // ref: https://plugins.jetbrains.com/docs/intellij/coroutine-tips-and-tricks.html
             // TODO minimize the invoke later range
             scope.launch(Dispatchers.EDT) {
+                val infoViewWindow = getLeanInfoview(project) ?: return@launch
                 val context = LeanInfoviewContext(leanProjectService, infoViewWindow, infoViewWindow.getEditor(), file, position, infoObjectModel)
                 infoViewWindow.updateEditorMouseMotionListener(context)
             }

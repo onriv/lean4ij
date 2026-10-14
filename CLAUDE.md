@@ -43,5 +43,8 @@ an embedded ktor server and shown in a JCEF tool window). Upstream: https://gith
 - When fixing a crash seen in an IDE log, record the stack trace + root cause in `notes/` and link the upstream issue if any.
 - Every "fix this" request ends with a commit and a rebuilt plugin zip, unless told otherwise. If the change
   consists of several independent fixes, make one commit per logical fix (notes/CLAUDE.md updates go together
-  with the fix they describe, or in a separate commit when standalone). Then run the `buildPlugin` command above
-  (against the installed IDE when targeting a nightly) and report the path to `build/distributions/*.zip`.
+  with the fix they describe, or in a separate commit when standalone). Each commit that changes user-visible
+  behaviour also adds a short entry to the `[Unreleased]` block of `CHANGELOG.md` (what changed for the user,
+  not the implementation details; `### Added` / `### Fixed` / `### Build` subsections). Then run the `buildPlugin`
+  command above (against the installed IDE when targeting a nightly) and report the path to
+  `build/distributions/*.zip`.

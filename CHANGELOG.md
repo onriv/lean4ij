@@ -4,16 +4,43 @@
 
 ## [Unreleased]
 
-- #165, fix #164, Fix completions deleting everything before the caret
-- Support IntelliJ 2026.x / 2027.1 EAP:
-  - declare an optional dependency on `com.intellij.modules.jcef`; since 2026.x JCEF lives in a separate bundled
-    plugin and the external infoview failed with `NoClassDefFoundError: com/intellij/ui/jcef/JBCefApp`
-  - cope with lsp4j 1.0.0 (`Diagnostic.message` became `Either<String, MarkupContent>`) and the now nullable
-    `Editor.getVirtualFile()`
-- Fix `IllegalArgumentException: Incorrect offsets` thrown from the file progress line marker when the Lean server
+## [0.2.9] - 2026-10-14
+
+### Added
+
+- Unicode abbreviations: `\neg<Space>` now inserts `¬ ` (with a space) while `\neg<Tab>`/Enter inserts `¬`, as in
+  VS Code. The old "add space" flags are replaced by one setting, "Space after unicode abbreviation"
+  (Only when expanded with Space / Always / Never)
+- Multi-line messages of the diagnostics lens (`#print`, `#eval`, `#check`, ...) are shown as a block below the command
+  instead of being squashed into one line. New settings: "Show multi-line messages as a block below the command"
+  and "Max lines shown by the multi-line diagnostics lens"
+- "Lean 4" page in Settings | Editor | Code Style with two-space indentation by default
+
+### Fixed
+
+- `let`, `if`/`then`/`else`, `do`, `return`, `show`, `from`, `calc` and `variable` are highlighted as keywords
+  instead of identifiers/tactics
+- IDE freezes while typing: the completion popup no longer blocks the UI waiting for `completionItem/resolve`,
+  and the workspace symbol search no longer stalls the editor from Markdown-like files in a Lean project
+- The JCEF infoview went blank after an edit on 2026.x IDEs and stopped updating after the laptop slept;
+  it now reconnects to the server automatically
+- "Assertion failed" after switching editors while hovering, "no build for ..." fatal error on start-up,
+  EDT assertion when updating the internal infoview, `completionItem/resolve` errors from a synthesized text edit,
+  and "Range must be inside element being annotated" errors while typing at the end of a file
+- Support IntelliJ 2026.x / 2027.1 EAP: the external infoview failed with
+  `NoClassDefFoundError: com/intellij/ui/jcef/JBCefApp` (JCEF moved to a separate bundled plugin), lsp4j 1.0.0
+  changed `Diagnostic.message`, and `Editor.getVirtualFile()` became nullable
+- `IllegalArgumentException: Incorrect offsets` thrown from the file progress line marker when the Lean server
   reports an empty/inverted processing range (related to #148)
-- Build: Kotlin 2.4.21, IntelliJ Platform Gradle Plugin 2.19.0 with its Grammar-Kit subplugin, JDK 25 toolchain
+
+### Build
+
+- Kotlin 2.4.21, IntelliJ Platform Gradle Plugin 2.19.0 with its Grammar-Kit subplugin, JDK 25 toolchain
   (bytecode still targets Java 21), optional `platformLocalPath` to compile against an installed IDE
+
+## [0.2.8] - 2025-11-24
+
+- #165, fix #164, Fix completions deleting everything before the caret
 
 ## [0.2.7] - 2025-04-13
 
@@ -294,7 +321,9 @@ Depends on platformPlugins: [com.redhat.devtools.lsp4ij:0.7.0-20241006-013203@ni
 - Some more snippets involving the cursor
 - A setting page
 
-[Unreleased]: https://github.com/onriv/lean4ij/compare/v0.2.7...HEAD
+[Unreleased]: https://github.com/onriv/lean4ij/compare/0.2.9...HEAD
+[0.2.9]: https://github.com/onriv/lean4ij/compare/0.2.8...0.2.9
+[0.2.8]: https://github.com/onriv/lean4ij/compare/v0.2.7...0.2.8
 [0.2.7]: https://github.com/onriv/lean4ij/compare/v0.2.5...v0.2.7
 [0.2.5]: https://github.com/onriv/lean4ij/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/onriv/lean4ij/compare/v0.2.2...v0.2.4

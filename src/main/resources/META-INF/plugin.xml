@@ -7,6 +7,12 @@
     <!-- we must depend on com.intellij.modules.platform for compatibility with Pycharm/Clion/RustRover etc -->
     <depends>com.intellij.modules.platform</depends>
     <depends>com.redhat.devtools.lsp4ij</depends>
+    <!-- Since 2026.x JCEF (com.intellij.ui.jcef.*) lives in a separate plugin `com.intellij.modules.jcef`
+         (plugins/jcef-plugin in the IDE distribution) instead of the platform core. Without this dependency the
+         plugin classloader cannot see JBCefApp/JBCefBrowser and the external infoview fails with
+         NoClassDefFoundError: com/intellij/ui/jcef/JBCefApp. It is optional so that older IDEs (where the module
+         does not exist, JCEF is part of the platform) and IDEs without JCEF keep loading the plugin. -->
+    <depends optional="true" config-file="lean4ij-jcef.xml">com.intellij.modules.jcef</depends>
     <!-- For the creating new project feature the java dependence is necessary -->
 
     <resource-bundle>messages.MyBundle</resource-bundle>
@@ -32,6 +38,14 @@
                 contextId="Lean4Pair"
                 implementation="lean4ij.language.Lean4PairContext"/>
 
+        <!-- "\neg<Space>" inserts the symbol plus a space, "\neg<Tab>" (Enter, click) only the symbol;
+             see Lean4AbbreviationSpaceHandler.kt. Both must run before the platform's SpaceHandler /
+             LiveTemplateCharFilter, which swallow the space. -->
+        <typedHandler implementation="lean4ij.language.Lean4AbbreviationSpaceTypedHandler"
+                      id="lean4AbbreviationSpace" order="first"/>
+        <lookup.charFilter implementation="lean4ij.language.Lean4AbbreviationCharFilter"
+                           id="lean4Abbreviation" order="first, before liveTemplate"/>
+
 
 
 
@@ -55,6 +69,7 @@
         <lang.parserDefinition language="lean4" implementationClass="lean4ij.language.Lean4ParserDefinition"/>
         <lang.commenter language="lean4" implementationClass="lean4ij.language.Lean4Commenter"/>
         <lang.braceMatcher language="lean4" implementationClass="lean4ij.language.Lean4PairedBraceMatcher"/>
+        <langCodeStyleSettingsProvider implementation="lean4ij.language.Lean4CodeStyleSettingsProvider"/>
 
         <!--
         TODO

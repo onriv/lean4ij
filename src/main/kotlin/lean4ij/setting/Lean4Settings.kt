@@ -26,9 +26,12 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var enableHeuristicDefinition = true
     var enableHoverHighlight = true
 
-    var addSpaceAfterLiveTemplates = true
+    /**
+     * When to add a space after an expanded unicode abbreviation (`\neg`, `\->`, ...).
+     * One of [SPACE_NEVER], [SPACE_ALWAYS], [SPACE_ONLY_WITH_SPACE_KEY]; a string rather than an enum for persistence.
+     */
+    var spaceAfterUnicodeAbbreviation = SPACE_ONLY_WITH_SPACE_KEY
     var autoCompletePairLiveTemplates = true
-    var enableBothSpaceAndNonSpaceLiveTemplates = false
 
     /**
      * TODO add project level configuration for this
@@ -49,6 +52,8 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     var commentPrefixForGoalHint: String = "---"
 
     var enableDiagnosticsLens = true
+    var enableMultiLineDiagnosticsLens = true
+    var diagnosticsLensMaxLines = 20
     var enableLspCompletion = true
 
     // TODO use constant or enum for this
@@ -78,6 +83,13 @@ class Lean4Settings : PersistentStateComponent<Lean4Settings> {
     fun getCommentPrefixForGoalHintRegex() : Regex {
         return Regex("""(\n\s*${Regex.escape(commentPrefixForGoalHint)})\s*?\n\s*\S""")
     }
+
+    companion object {
+        const val SPACE_NEVER = "Never"
+        const val SPACE_ALWAYS = "Always"
+        const val SPACE_ONLY_WITH_SPACE_KEY = "Only when expanded with Space"
+        val SPACE_AFTER_UNICODE_ABBREVIATION_OPTIONS = arrayOf(SPACE_ONLY_WITH_SPACE_KEY, SPACE_ALWAYS, SPACE_NEVER)
+    }
 }
 
 /**
@@ -96,12 +108,21 @@ fun Lean4SettingsView.createComponent(settings: Lean4Settings) = panel {
         boolean("Comment at first column", settings::commentAtFirstColumn)
         boolean("Use space after line comment", settings::useSpaceAfterLineComment)
         boolean("Comment empty line", settings::commentEmptyLine)
-        boolean("Add whitespace after live templates for unicode", settings::addSpaceAfterLiveTemplates)
+        select("Space after unicode abbreviation (\\neg, \\->, ...)",
+            Lean4Settings.SPACE_AFTER_UNICODE_ABBREVIATION_OPTIONS,
+            settings::spaceAfterUnicodeAbbreviation,
+            listOf(
+                "Space adds the symbol and a space; Tab, Enter or a click in the completion popup add only the symbol",
+                "Every expansion adds a trailing space",
+                "No expansion adds a trailing space",
+            )
+        )
         boolean("Autocomplete live templates for pair unicode", settings::autoCompletePairLiveTemplates)
-        boolean("Enable both spaced and non spaced live templates", settings::enableBothSpaceAndNonSpaceLiveTemplates)
     }
     group("Inlay Hints Settings ") {
-        boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)
+        val enableDiagnosticsLens = boolean("Enable diagnostics lens for #check, #print, etc (restart to take effect)", settings::enableDiagnosticsLens)
+        boolean("Show multi-line messages as a block below the command (otherwise glued into one line)", settings::enableMultiLineDiagnosticsLens).enabledIf(enableDiagnosticsLens.selected)
+        int("Max lines shown by the multi-line diagnostics lens (0 = unlimited)", settings::diagnosticsLensMaxLines, 0, 1000).enabledIf(enableDiagnosticsLens.selected)
         string("Comment prefix for goal hints", settings::commentPrefixForGoalHint)
     }
     group("Language Server Settings") {

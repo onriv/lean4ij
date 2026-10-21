@@ -14,13 +14,18 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
 import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import io.ktor.server.application.*
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
+import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
 import io.ktor.server.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -36,6 +41,17 @@ import lean4ij.util.fromJson
 import java.awt.Color
 
 private val logger = logger<ExternalInfoViewService>()
+
+/**
+ * Gson used for everything sent over the websocket to the browser infoview.
+ *
+ * Events wrap lsp4j objects (e.g. `PublishDiagnosticsParams`, `InitializeResult`), and a plain `Gson()` serializes
+ * them reflectively: with lsp4j 1.0 (2026.x IDEs / LSP4IJ 0.21+) `Diagnostic.message` is an `Either<String, MarkupContent>`
+ * and came out as `{"left": "..."}`, `DiagnosticSeverity` came out as `"Error"` instead of `1`, etc. The infoview
+ * then rendered the message object as a React child and crashed the whole page (blank infoview that never recovers).
+ * `MessageJsonHandler` carries the lsp4j type adapters (Either, enums, tuples...) and produces wire-format JSON.
+ */
+private val wsGson: Gson = MessageJsonHandler(emptyMap()).gson
 
 /**
  * copy from https://github.com/ktorio/ktor-samples/blob/main/sse/src/main/kotlin/io/ktor/samples/sse/SseApplication.kt
@@ -121,31 +137,35 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
      * TODO weird, sometimes it seems that all messages no result?
      */
     webSocket("/ws") {
+        logger.info("infoview websocket connected: ${call.request.local.remoteAddress}:${call.request.local.remotePort}")
+        // one connection per websocket session; disconnected in `finally` so reconnecting clients do not pile up
+        // listeners that send into dead sessions
+        val messageBusConnection = project.messageBus.connect()
         try {
             val outgoingJob = launch {
                 // TODO this is a temporary try catch for https://github.com/onriv/lean4ij/issues/57
                 //      in a large chance it's caused by the client closing the connection
                 try {
                     val theme = createThemeCss(EditorColorsManager.getInstance().globalScheme)
-                    sendWithLog(Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme))))
+                    sendWithLog(wsGson.toJson(InfoviewEvent("updateTheme", mapOf("theme" to theme))))
 
-                    // TODO maybe this should be removed if disconnected for avoiding leak?
-                    project.messageBus.connect().subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener {
+                    messageBusConnection.subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener {
                         val scheme = it ?: EditorColorsManager.getInstance().globalScheme
                         scopeIO.launch {
                             @Suppress("NAME_SHADOWING")
-                            val themeJson = Gson().toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(scheme))))
+                            val themeJson = wsGson.toJson(InfoviewEvent("updateTheme", mapOf("theme" to createThemeCss(scheme))))
                             logger.trace(themeJson)
-                            sendWithLog(themeJson)
+                            runCatching { sendWithLog(themeJson) }
+                                .onFailure { e -> logger.info("could not send theme update, websocket is probably closed: $e") }
                         }
                     })
 
                     val serverRestarted = service.awaitInitializedResult()
-                    sendWithLog(Gson().toJson(InfoviewEvent("serverRestarted", serverRestarted)))
+                    sendWithLog(wsGson.toJson(InfoviewEvent("serverRestarted", serverRestarted)))
                     service.previousCursorLocation?.let {
                         // This is for showing the goal without moving the cursor at the startup
                         // TODO this should be handled earlier
-                        sendWithLog(Gson().toJson(InfoviewEvent("changedCursorLocation", it)))
+                        sendWithLog(wsGson.toJson(InfoviewEvent("changedCursorLocation", it)))
                     }
                     // here it's kind of lazy accessing LeanProjectService here directly
                     // TODO here we send all old notificationMessages to new connections that
@@ -159,11 +179,16 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                     // TODO it seems still not resolved, and the ConcurrentModificationException comes from Gson serialization, which means that something is changing some NotificationMessage?
                     val copiedMessages = service.notificationMessages.toList()
                     copiedMessages.forEach {
-                        sendWithLog(Gson().toJson(it))
+                        sendWithLog(wsGson.toJson(it))
                     }
                     service.events().collect {
-                        sendWithLog(Gson().toJson(it))
+                        sendWithLog(wsGson.toJson(it))
                     }
+                } catch (e: CancellationException) {
+                    // the incoming loop cancels this job when the client disconnects; not an error
+                    throw e
+                } catch (e: ClosedSendChannelException) {
+                    logger.info("infoview websocket closed while sending: $e")
                 } catch (e: Exception) {
                     thisLogger().error(e)
                 }
@@ -180,61 +205,49 @@ fun externalInfoViewRoute(project: Project, service : ExternalInfoViewService) :
                         logger.trace("ws received: $text")
                         val (requestId, method, data) = text.split(Regex(","), 3)
                         if (method == "createRpcSession") {
-                            launch {
+                            launchRequest(requestId) {
                                 val params: RpcConnectParams = fromJson(data)
-                                val session = service.getSession(params.uri)
-                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to session)
-                                sendWithLog(Gson().toJson(resp))
+                                service.getSession(params.uri)
                             }
                         }
                         // TODO better route than using string match
                         if (method == "sendClientRequest") {
-                            launch {
-                                try {
-                                    val params: RpcCallParamsRaw = fromJson(data)
-                                    val ret = service.rpcCallRaw(params)
-                                    if (params.method == "Lean.Widget.getGoToLocation") {
-                                        val targets : List<DefinitionTarget> = LeanLanguageServer.gson.fromJson(ret)
-                                        project.service<LeanProjectService>().getGoToLocation(targets)
-                                    }
-                                    val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
-                                    sendWithLog(Gson().toJson(resp))
-                                } catch (e: Exception) {
-                                    // TODO handle it seriously
-                                    e.printStackTrace()
-                                    e.cause?.printStackTrace()
-                                    e.cause?.cause?.printStackTrace()
-                                    thisLogger().error(e)
+                            launchRequest(requestId) {
+                                val params: RpcCallParamsRaw = fromJson(data)
+                                val ret = service.rpcCallRaw(params)
+                                if (params.method == "Lean.Widget.getGoToLocation") {
+                                    val targets : List<DefinitionTarget> = LeanLanguageServer.gson.fromJson(ret)
+                                    project.service<LeanProjectService>().getGoToLocation(targets)
                                 }
+                                ret
                             }
                         }
                         if (method == "applyEdit") {
-                            launch {
+                            launchRequest(requestId) {
                                 val params : ApplyEditParam = fromJson(data)
-                                val ret = service.applyEdit(params)
-                                val resp = mapOf("requestId" to requestId.toInt(), "method" to "rpcResponse", "data" to ret)
-                                sendWithLog(Gson().toJson(resp))
+                                service.applyEdit(params)
                             }
                         }
                     }
                 }
             }.onFailure { exception ->
-                // TODO handle it seriously
-                exception.printStackTrace()
-                exception.cause?.printStackTrace()
-                exception.cause?.cause?.printStackTrace()
-                thisLogger().error(exception)
-                // kotlinx.coroutines.channels.ClosedReceiveChannelException: Channel was closed
+                when (exception) {
+                    // `incoming` is closed when the client goes away (page reload, tab closed, JCEF dropped the
+                    // connection after sleep...). The browser infoview reconnects on its own, so this is routine.
+                    is ClosedReceiveChannelException, is CancellationException ->
+                        logger.info("infoview websocket disconnected: ${closeReason.await()}")
+                    else -> thisLogger().error(exception)
+                }
             }.also {
-                // TODO check what also means
                 outgoingJob.cancel()
             }
             outgoingJob.join()
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (ex: Exception) {
-            ex.cause?.cause?.printStackTrace()
-            ex.cause?.printStackTrace()
-            ex.printStackTrace()
             thisLogger().error(ex)
+        } finally {
+            messageBusConnection.disconnect()
         }
     }
 
@@ -329,6 +342,30 @@ private suspend fun ApplicationCall.respondJson(a: Any) {
 private suspend fun WebSocketSession.sendWithLog(msg: String) {
     logger.trace("ws send: $msg")
     send(msg)
+}
+
+/**
+ * Runs a request coming from the browser infoview and always answers it: with `data` on success, with `error`
+ * on failure. Before, a failing request was only logged and the frontend promise stayed pending forever, so
+ * the infoview kept showing "Updating..." for that position. Lean's error codes are passed through, which lets
+ * the infoview apply its own retry logic (e.g. `ContentModified`, `RpcNeedsReconnect`).
+ */
+private fun DefaultWebSocketServerSession.launchRequest(requestId: String, block: suspend () -> Any?) = launch {
+    val id = requestId.toInt()
+    val resp: Map<String, Any?> = try {
+        mapOf("requestId" to id, "method" to "rpcResponse", "data" to block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: ResponseErrorException) {
+        logger.warn("ws request $id failed: ${e.responseError}")
+        mapOf("requestId" to id, "method" to "rpcResponse",
+            "error" to mapOf("code" to e.responseError.code, "message" to e.responseError.message))
+    } catch (e: Exception) {
+        logger.error("ws request $id failed", e)
+        mapOf("requestId" to id, "method" to "rpcResponse",
+            "error" to mapOf("code" to -32603, "message" to (e.message ?: e.toString())))
+    }
+    sendWithLog(wsGson.toJson(resp))
 }
 
 inline fun <reified T> fromJson(json: String) : T {

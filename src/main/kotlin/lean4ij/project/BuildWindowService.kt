@@ -17,10 +17,8 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 open class BuildEvent(val file: String)
 class BuildStart(file: String): BuildEvent(file)
@@ -38,7 +36,14 @@ class BuildWindowService(val project: Project) {
     private val leanProject : LeanProjectService = project.service()
     private val systemId = ProjectSystemId("LEAN4")
     private val syncId = ExternalSystemTaskId.create(systemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
-    private var flow = MutableSharedFlow<BuildEvent>()
+    /**
+     * Events are posted with [Channel.trySend] directly from the calling thread (not from a separately launched
+     * coroutine per event), so the start/message/end order of a single caller is preserved. The channel is
+     * unlimited so nothing is dropped if an event arrives before the collector below has started: a plain
+     * [kotlinx.coroutines.flow.MutableSharedFlow] silently drops emissions while it has no subscribers, which
+     * produced "no build for <file>" errors for the external infoview's start-up build.
+     */
+    private val events = Channel<BuildEvent>(Channel.UNLIMITED)
     private val builds = HashMap<String, BuildProgress<*>>()
 
     init {
@@ -48,69 +53,41 @@ class BuildWindowService(val project: Project) {
              * and https://github.com/JetBrains/intellij-community/blob/1d45fcdd827f7bc3fde15d7eda2b4399780fb632/platform/lang-impl/testSources/com/intellij/build/BuildViewTest.kt#L50
              */
             var progress : BuildProgress<BuildProgressDescriptor>? = null
-            val mutex = Mutex()
 
-            // TODO is the mutex here really necessary?
-            // TODO here it seems blocking a thread
-            flow.collect { s ->
-                mutex.withLock {
-                    // TODO rather than using string, use class for this
-                    // TODO never mind, keep it running
-                    // if (s == "--") {
-                    //     if (builds.isEmpty()) {
-                    //         progress!!.finish()
-                    //         progress = null
-                    //     }
-                    // } else
-                    (s as? BuildStart)?.let {
-                        if (progress == null) {
-                            progress = createProgress()
-                        }
-                        // TODO there seems still some duplicated start events...
-                        // builds[s.file] = progress!!.startChildProgress(s.file)
-                        builds.computeIfAbsent(s.file) {
-                            progress!!.startChildProgress(s.file)
-                        }
+            // single consumer, events are handled strictly sequentially
+            for (s in events) {
+                (s as? BuildStart)?.let {
+                    if (progress == null) {
+                        progress = createProgress()
                     }
-                    (s as? BuildEnd)?.let {
-                        val build = builds[s.file]
-                        if (build == null) {
-                            thisLogger().error("no build for ${s.file}")
-                        }
-                        // TODO there still seems build end without build start
-                        builds[s.file]?.let {
-                            it.finish()
-                            builds.remove(s.file)
-                        }
-                        // launch {
-                        //     delay(10 * 1000)
-                        //     flow.emit("--")
-                        // }
+                    // TODO there seems still some duplicated start events...
+                    builds.computeIfAbsent(s.file) {
+                        progress!!.startChildProgress(s.file)
                     }
-                    (s as? BuildMessage)?.let {
-                        // TODO this can even before build start
-                        if (progress == null) {
-                            progress = createProgress()
-                        }
-                        val fileProgress = builds.computeIfAbsent(s.file) {
-                            progress!!.startChildProgress(s.file)
-                        }
-                        fileProgress.output("${s.message}\n", false)
-                        if (s.message.contains("error: build failed")) {
-                            try {
-                                // for (entry in builds.entries) {
-                                //     entry.value.cancel()
-                                // }
-                                // TODO better way for handling this
-                                fileProgress.cancel()
-                                builds.remove(s.file)
-                                // project.notifyErr("Build failed, check build window for detail:\n${s.message}")
-                                thisLogger().warn("${s.file} build failed with message:\n${s.message}")
-                            } catch(ex : Exception) {
-                                throw ex
-                            }
-
-                        }
+                }
+                (s as? BuildEnd)?.let {
+                    val build = builds.remove(s.file)
+                    if (build == null) {
+                        // Not an error worth a fatal-error dialog: the server may report an end without a start
+                        thisLogger().warn("no build for ${s.file}")
+                    } else {
+                        build.finish()
+                    }
+                }
+                (s as? BuildMessage)?.let {
+                    // TODO this can even before build start
+                    if (progress == null) {
+                        progress = createProgress()
+                    }
+                    val fileProgress = builds.computeIfAbsent(s.file) {
+                        progress!!.startChildProgress(s.file)
+                    }
+                    fileProgress.output("${s.message}\n", false)
+                    if (s.message.contains("error: build failed")) {
+                        // TODO better way for handling this
+                        fileProgress.cancel()
+                        builds.remove(s.file)
+                        thisLogger().warn("${s.file} build failed with message:\n${s.message}")
                     }
                 }
             }
@@ -131,21 +108,15 @@ class BuildWindowService(val project: Project) {
     }
 
     fun startBuild(file: String) {
-        leanProject.scope.launch {
-            flow.emit(BuildStart(leanProject.getRelativePath(LspUtil.unquote(file))))
-        }
+        events.trySend(BuildStart(leanProject.getRelativePath(LspUtil.unquote(file))))
     }
 
     fun endBuild(file: String) {
-        leanProject.scope.launch {
-            flow.emit(BuildEnd(leanProject.getRelativePath(LspUtil.unquote(file))))
-        }
+        events.trySend(BuildEnd(leanProject.getRelativePath(LspUtil.unquote(file))))
     }
 
     fun addBuildEvent(file: String, message: String) {
-        leanProject.scope.launch {
-            flow.emit(BuildMessage(leanProject.getRelativePath(LspUtil.unquote(file)), message))
-        }
+        events.trySend(BuildMessage(leanProject.getRelativePath(LspUtil.unquote(file)), message))
     }
 
 }

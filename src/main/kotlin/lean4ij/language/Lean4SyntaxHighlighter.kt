@@ -51,10 +51,7 @@ class Lean4SyntaxHighlighter : SyntaxHighlighterBase() {
         return Lean4LexerAdapter()
     }
 
-    override fun getTokenHighlights(tokenType: IElementType?): Array<TextAttributesKey> {
-        if (tokenType == null) {
-            return emptyArray()
-        }
+    override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
         if (tokenType == TokenType.KEYWORD_COMMAND1 ||
             tokenType == TokenType.KEYWORD_COMMAND2 ||
             tokenType == TokenType.KEYWORD_COMMAND3 ||

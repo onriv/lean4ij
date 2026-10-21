@@ -5,7 +5,6 @@ package lean4ij.language
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import com.google.common.util.concurrent.ExecutionError
 import com.google.common.util.concurrent.UncheckedExecutionException
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.navigation.ChooseByNameContributorEx
@@ -13,6 +12,9 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
@@ -74,6 +76,12 @@ abstract class Lean4ChooseByNameContributorEx : ChooseByNameContributorEx {
         processor: Processor<in NavigationItem?>,
         parameters: FindSymbolParameters
     ) {
+        // processElementsWithName is not only called from the Goto Symbol popup: e.g. the Markdown plugin
+        // resolves every `code` span through all gotoSymbolContributors (BacktickReference), inside a read action
+        // of the identifier-highlighting pass. Never do anything expensive here outside a Lean project.
+        if (!parameters.project.service<LeanProjectService>().isLeanProject()) {
+            return
+        }
         val items = getWorkspaceSymbols(name, parameters.project)
         items?.stream()
             ?.filter { data -> data.file != null && data.file.extension == "lean" }
@@ -115,8 +123,12 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) :
         //      maybe the best way is make a pr to lean4 for not file progress in didOpen request...
         project.service<LeanProjectService>().isEnable.set(true)
         // TODO change the old way getting language server to this maybe!
-        val languageServerItem = LanguageServerManager.getInstance(project)
-            .getLanguageServer("lean").get()
+        // Both futures below are awaited with checkCanceled: this loader runs inside (cancellable) read actions,
+        // and a plain Future.get() would block a pending write action on the EDT (see
+        // notes/2026-10-14-workspace-symbol-contributor-freeze.md).
+        val languageServerItem = ProgressIndicatorUtils.awaitWithCheckCanceled(
+            LanguageServerManager.getInstance(project).getLanguageServer("lean")
+        )
         if (languageServerItem == null) {
             // for guava loading cache, in fact this cannot be null
             // return null will trigger an exception and do not cache the value(null)
@@ -126,7 +138,7 @@ class WorkspaceSymbolsCacheLoader(private val project: Project) :
         }
         val ls = languageServerItem.server
         val params = WorkspaceSymbolParams(key)
-        val symbols = ls.workspaceService.symbol(params).get() ?: return listOf()
+        val symbols = ProgressIndicatorUtils.awaitWithCheckCanceled(ls.workspaceService.symbol(params)) ?: return listOf()
         val items: MutableList<LeanWorkspaceSymbolData> = ArrayList()
         if (symbols.isLeft) {
             val s = symbols.left
@@ -173,7 +185,7 @@ class WorkspaceSymbolsCache(private val project: Project) {
 
     fun getWorkspaceSymbolsTriggeredBySuffix(queryString: String): List<LeanWorkspaceSymbolData> {
         if (canTrigger(queryString)) {
-            symbolsCache.get(normalize(queryString))
+            loadSymbols(normalize(queryString))
             return listOf()
         }
         // immediately return if the cache contains it
@@ -199,6 +211,10 @@ class WorkspaceSymbolsCache(private val project: Project) {
             if (i * SLEEP_TIME > lean4Settings.workspaceSymbolTriggerDebouncingTime) {
                 break
             }
+            // Give up immediately when the surrounding read action is cancelled (a write action is pending on
+            // the EDT) or the Goto popup query changed; otherwise this loop freezes the IDE for up to
+            // workspaceSymbolTriggerDebouncingTime.
+            ProgressManager.checkCanceled()
             Thread.sleep(SLEEP_TIME)
             val newCnt = requestCounter.get()
             if (currentCnt != newCnt) {
@@ -206,17 +222,32 @@ class WorkspaceSymbolsCache(private val project: Project) {
                 return listOf()
             }
         }
+        val symbolDataList = loadSymbols(queryString)
+        for (symbolData in symbolDataList) {
+            // put all entries in the symbolsCache, for IJ seems making request to the returned entries too
+            symbolData.name.let { symbolsCache.put(it, listOf(symbolData)) }
+        }
+        return symbolDataList
+    }
+
+    /**
+     * Loads [key] through the guava cache. A [ProcessCanceledException] thrown by the loader (the surrounding
+     * read action was cancelled by a pending write action) is unwrapped and rethrown so the platform can retry;
+     * every other loader failure is logged and treated as "no symbols".
+     */
+    private fun loadSymbols(key: String): List<LeanWorkspaceSymbolData> {
         try {
-            // TODO here it in fact cannot be null
-            val symbolDataList = symbolsCache.get(queryString) ?: return listOf()
-            for (symbolData in symbolDataList) {
-                // put all entries in the symbolsCache, for IJ seems making request to the returned entries too
-                symbolData.name.let { symbolsCache.put(it, listOf(symbolData)) }
-            }
-            return symbolDataList
+            return symbolsCache.get(key) ?: listOf()
+        } catch (e: ProcessCanceledException) {
+            throw e
         } catch (e: Exception) {
+            val cause = e.cause
+            if (cause is ProcessCanceledException) {
+                throw cause
+            }
             when {
-                e is ExecutionException || e is UncheckedExecutionException || e is ExecutionError ->
+                // ExecutionError is an Error, it can never be caught by `catch (e: Exception)` above
+                e is ExecutionException || e is UncheckedExecutionException ->
                     thisLogger().info(e)
                 else ->
                     thisLogger().error(e)

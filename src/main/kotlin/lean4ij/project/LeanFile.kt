@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.withProgressText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +56,7 @@ import lean4ij.lsp.data.TaggedText
 import lean4ij.lsp.data.DefinitionTarget
 import lean4ij.util.Constants
 import lean4ij.util.LspUtil
+import lean4ij.util.reportFileProgress
 import lean4ij.util.step
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
@@ -192,7 +192,7 @@ class LeanFile(private val leanProjectService: LeanProjectService, private val f
     private suspend fun withBackgroundFileProgress(action: suspend (reporter: ProgressReporter) -> Unit) {
         withBackgroundProgress(project, Constants.FILE_PROGRESS) {
             withProgressText(leanProjectService.getRelativePath(file)) {
-                reportProgress { reporter ->
+                reportFileProgress { reporter ->
                     action(reporter)
                 }
             }

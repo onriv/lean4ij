@@ -25,7 +25,7 @@ class LeanLSPCompletionFeature : LSPCompletionFeature() {
      * LSP4IJ resolves the item synchronously on the EDT inside `handleInsert` when this returns true.
      * The Lean server's `completionItem/resolve` only fills `detail`/`documentation` (no additional text edits
      * or commands), so nothing is lost by skipping it, and it avoids a second EDT freeze path
-     * (see [LeanCompletionProposal]).
+     * LSP4IJ now also resolves completion details in its background renderer.
      */
     override fun shouldResolveOnApply(item: CompletionItem, file: PsiFile): Boolean {
         return false
@@ -89,7 +89,7 @@ class LeanLSPCompletionFeature : LSPCompletionFeature() {
             // same guard as LSPCompletionFeature.createLookupElement
             return null
         }
-        val parameters = context.parameters
-        return LeanCompletionProposal(item, context, this, parameters.originalFile.project, parameters.editor)
+        // LSP4IJ resolves details in the background renderer; use its public factory rather than internal classes.
+        return super.createLookupElement(item, context)
     }
 }

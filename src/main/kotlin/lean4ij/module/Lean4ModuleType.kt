@@ -13,7 +13,7 @@ package lean4ij.module
 
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManager
-import com.intellij.ide.IdeBundle
+import lean4ij.MyBundle
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.GeneratorNewProjectWizard
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter
@@ -342,7 +342,7 @@ class LeanPanel(propertyGraph: PropertyGraph, private val wizardContext: WizardC
         locationProperty: GraphProperty<String>,
         wizardContext: WizardContext,
     ): Cell<TextFieldWithBrowseButton> {
-        val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
+        val title = MyBundle.message("project.location.select.directory", wizardContext.presentationName)
         val fileChooserDescriptor =
             FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
                 .withTitle(title)

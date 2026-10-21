@@ -10,6 +10,7 @@ import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
@@ -72,6 +73,8 @@ kotlin {
 }
 tasks.withType<KotlinCompile>().configureEach {
     compilerOptions.jvmTarget = JvmTarget.JVM_21
+    // Avoid generating bridges for internal default methods inherited from platform interfaces.
+    compilerOptions.jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
 }
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -232,7 +235,7 @@ intellijPlatform {
             recommended()
             select {
                 types = listOf(IntelliJPlatformType.IntellijIdea)
-                sinceBuild = "2024.2"
+                sinceBuild = "2025.1"
                 // untilBuild = "2025.2"
             }
         }

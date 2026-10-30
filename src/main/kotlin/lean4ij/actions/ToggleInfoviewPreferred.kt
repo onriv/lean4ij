@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
+import lean4ij.infoview.external.JcefSupport
 import lean4ij.infoview.LeanInfoviewService
 import lean4ij.project.LeanProjectService
 import lean4ij.setting.Lean4Settings
@@ -23,7 +24,7 @@ class ToggleInfoviewPreferred : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         when {
-            lean4Settings.preferredInfoview == "Jcef" ->
+            lean4Settings.preferredInfoview == "Jcef" && JcefSupport.isSupported ->
                     toggleLeanInfoViewJcef.actionPerformed(e)
             else ->
                     toggleLeanInfoViewInternal.actionPerformed(e)

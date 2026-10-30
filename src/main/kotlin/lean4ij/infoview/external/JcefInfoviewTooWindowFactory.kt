@@ -25,7 +25,10 @@ class JcefInfoviewTooWindowFactory : ToolWindowFactory {
             ToolWindowManager.getInstance(project).getToolWindow("LeanInfoviewJcef")
     }
 
+    override fun isApplicable(project: Project): Boolean = JcefSupport.isSupported
+
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        if (!JcefSupport.isSupported) return
         val jcefInfoview = SimpleToolWindowPanel(true)
         val jcefService = project.service<JcefInfoviewService>()
         val browser = jcefService.browser

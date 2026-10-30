@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.IconLoader
-import lean4ij.infoview.external.JcefInfoviewService
+import lean4ij.infoview.external.ExternalInfoViewService
 import lean4ij.util.notify
 
 class OpenExternalInfoviewInBrowser : AnAction() {
@@ -21,7 +21,7 @@ class OpenExternalInfoviewInBrowser : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val service = project.service<JcefInfoviewService>()
+        val service = project.service<ExternalInfoViewService>()
         if (service.url == null) {
             project.notify("url for the external infoview is null. Please check build toolwindow for if the external infoview service starts or not.")
             return

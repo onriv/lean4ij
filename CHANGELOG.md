@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Skip the embedded browser when JCEF is unavailable and fall back to the Swing infoview; standalone-browser access remains available (#226).
+
 ## [0.2.9] - 2026-10-14
 
 ### Added

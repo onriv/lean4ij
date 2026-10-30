@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
-import lean4ij.infoview.InfoViewWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import lean4ij.util.LeanUtil
 
 class ToggleLeanInfoViewInternal : AnAction() {
@@ -16,8 +16,7 @@ class ToggleLeanInfoViewInternal : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val leanInfoview = InfoViewWindowFactory.getLeanInfoview(project)?:return
-        val toolWindow = leanInfoview.toolWindow
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("LeanInfoViewWindow") ?: return
         if (toolWindow.isVisible) {
             toolWindow.hide()
         } else {

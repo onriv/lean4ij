@@ -335,7 +335,7 @@ fun createThemeCss(scheme: EditorColorsScheme) : String {
     val traceLineHoverBackground = scheme.getColor(EditorColors.CARET_ROW_COLOR)?.toHexRgba()?:background
 
     // check https://plugins.jetbrains.com/docs/intellij/jcef.html?from=jetbrains.org#disposing-resources
-    val scrollbarStyle = JBCefScrollbarsHelper.buildScrollbarsStyle()
+    val scrollbarStyle = if (JcefSupport.isSupported) JBCefScrollbarsHelper.buildScrollbarsStyle() else ""
     val headerForeground = scheme.getAttributes(Lean4TextAttributesKeys.Header.key)?.foregroundColor?.toHexRgba() ?: foreground
     return """:root {
 ${themeSb}    --header-foreground-color: $headerForeground;

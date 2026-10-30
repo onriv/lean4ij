@@ -6,6 +6,7 @@
     <!-- ref: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules-specific-to-functionality -->
     <!-- we must depend on com.intellij.modules.platform for compatibility with Pycharm/Clion/RustRover etc -->
     <depends>com.intellij.modules.platform</depends>
+    <depends optional="true">com.intellij.modules.jcef</depends>
     <depends>com.redhat.devtools.lsp4ij</depends>
     <!-- For the creating new project feature the java dependence is necessary -->
 

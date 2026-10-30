@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.launch
+import lean4ij.infoview.external.JcefSupport
 import lean4ij.infoview.external.JcefInfoviewService
 import lean4ij.util.leanProjectScope
 
@@ -15,7 +16,12 @@ class FindInExternalInfoview : AnAction() {
         templatePresentation.icon = AllIcons.Actions.Find
     }
 
+    override fun update(e: AnActionEvent) {
+        e.presentation.isEnabledAndVisible = JcefSupport.isSupported
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
+        if (!JcefSupport.isSupported) return
         val project = e.project ?: return
         val jcefInfoviewService = project.service<JcefInfoviewService>()
         jcefInfoviewService.searchTextField.isVisible = !jcefInfoviewService.searchTextField.isVisible

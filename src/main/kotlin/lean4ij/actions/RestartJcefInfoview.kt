@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import lean4ij.infoview.external.JcefSupport
 import lean4ij.infoview.external.JcefInfoviewService
 
 class RestartJcefInfoview : AnAction() {
@@ -13,7 +14,12 @@ class RestartJcefInfoview : AnAction() {
         templatePresentation.icon = AllIcons.Actions.Restart
     }
 
+    override fun update(e: AnActionEvent) {
+        e.presentation.isEnabledAndVisible = JcefSupport.isSupported
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
+        if (!JcefSupport.isSupported) return
         e.project?.service<JcefInfoviewService>()?.reload()
     }
 

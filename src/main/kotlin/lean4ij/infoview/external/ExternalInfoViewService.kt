@@ -75,6 +75,9 @@ class ExternalInfoViewService(val project: Project) {
      */
     private val buildWindowService : BuildWindowService = project.service()
 
+    var url: String? = null
+        private set
+
     init {
         // TODO only for lean project
         if(leanProjectService.isLeanProject()) {
@@ -136,6 +139,7 @@ class ExternalInfoViewService(val project: Project) {
         embeddedServer.start(wait = false)
 
         val url = "http://127.0.0.1:$port"
+        this.url = url
         val message = "infoview server start at $url"
         // this is copied from com/intellij/internal/ui/ShowGotItDemoAction.kt:239
         val tooltipMessage : GotItTextBuilder.() -> String = {
@@ -153,8 +157,9 @@ class ExternalInfoViewService(val project: Project) {
 
         buildWindowService.addBuildEvent(fakeFile, message)
         buildWindowService.endBuild(fakeFile)
-        project.service<JcefInfoviewService>()
-            .loadUrl(url)
+        if (JcefSupport.isSupported) {
+            project.service<JcefInfoviewService>().loadUrl(url)
+        }
     }
 
     private val events = MutableSharedFlow<InfoviewEvent>()
